@@ -17,7 +17,7 @@ layout (binding = 0, std140) buffer Instances
    InstanceData instances[ ];
 };
 
-// Same layout as VkDrawIndexedIndirectCommand
+// Same layout as vk::DrawIndexedIndirectCommand
 struct IndexedIndirectCommand 
 {
 	uint indexCount;

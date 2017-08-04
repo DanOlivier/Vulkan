@@ -32,7 +32,7 @@ VulkanGear::~VulkanGear()
 	indexBuffer.destroy();
 }
 
-void VulkanGear::generate(GearInfo *gearinfo, VkQueue queue)
+void VulkanGear::generate(GearInfo *gearinfo, vk::Queue queue)
 {
 	this->color = gearinfo->color;
 	this->pos = gearinfo->pos;
@@ -178,15 +178,15 @@ void VulkanGear::generate(GearInfo *gearinfo, VkQueue queue)
 		// Create staging buffers
 		// Vertex data
 		vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+			vk::BufferUsageFlagBits::eTransferSrc,
+			vk::MemoryPropertyFlagBits::eHostVisible,
 			&vertexStaging,
 			vertexBufferSize,
 			vBuffer.data());
 		// Index data
 		vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+			vk::BufferUsageFlagBits::eTransferSrc,
+			vk::MemoryPropertyFlagBits::eHostVisible,
 			&indexStaging,
 			indexBufferSize,
 			iBuffer.data());
@@ -194,21 +194,21 @@ void VulkanGear::generate(GearInfo *gearinfo, VkQueue queue)
 		// Create device local buffers
 		// Vertex buffer
 		vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&vertexBuffer,
 			vertexBufferSize);
 		// Index buffer
 		vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&indexBuffer,
 			indexBufferSize);
 
 		// Copy from staging buffers
-		VkCommandBuffer copyCmd = vulkanDevice->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+		vk::CommandBuffer copyCmd = vulkanDevice->createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
 
-		VkBufferCopy copyRegion = {};
+		vk::BufferCopy copyRegion = {};
 
 		copyRegion.size = vertexBufferSize;
 		vkCmdCopyBuffer(
@@ -237,15 +237,15 @@ void VulkanGear::generate(GearInfo *gearinfo, VkQueue queue)
 	{
 		// Vertex buffer
 		vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+			vk::BufferUsageFlagBits::eVertexBuffer,
+			vk::MemoryPropertyFlagBits::eHostVisible,
 			&vertexBuffer,
 			vertexBufferSize,
 			vBuffer.data());
 		// Index buffer
 		vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+			vk::BufferUsageFlagBits::eIndexBuffer,
+			vk::MemoryPropertyFlagBits::eHostVisible,
 			&indexBuffer,
 			indexBufferSize,
 			iBuffer.data());
@@ -256,12 +256,12 @@ void VulkanGear::generate(GearInfo *gearinfo, VkQueue queue)
 	prepareUniformBuffer();
 }
 
-void VulkanGear::draw(VkCommandBuffer cmdbuffer, VkPipelineLayout pipelineLayout)
+void VulkanGear::draw(vk::CommandBuffer cmdbuffer, vk::PipelineLayout pipelineLayout)
 {
-	VkDeviceSize offsets[1] = { 0 };
-	vkCmdBindDescriptorSets(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+	vk::DeviceSize offsets[1] = { 0 };
+	vkCmdBindDescriptorSets(cmdbuffer, vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
 	vkCmdBindVertexBuffers(cmdbuffer, 0, 1, &vertexBuffer.buffer, offsets);
-	vkCmdBindIndexBuffer(cmdbuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdBindIndexBuffer(cmdbuffer, indexBuffer.buffer, 0, vk::IndexType::eUint32);
 	vkCmdDrawIndexed(cmdbuffer, indexCount, 1, 0, 0, 1);
 }
 
@@ -291,9 +291,9 @@ void VulkanGear::updateUniformBuffer(glm::mat4 perspective, glm::vec3 rotation, 
 	memcpy(uniformBuffer.mapped, &ubo, sizeof(ubo));
 }
 
-void VulkanGear::setupDescriptorSet(VkDescriptorPool pool, VkDescriptorSetLayout descriptorSetLayout)
+void VulkanGear::setupDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout descriptorSetLayout)
 {
-	VkDescriptorSetAllocateInfo allocInfo =
+	vk::DescriptorSetAllocateInfo allocInfo =
 		vks::initializers::descriptorSetAllocateInfo(
 			pool,
 			&descriptorSetLayout,
@@ -302,10 +302,10 @@ void VulkanGear::setupDescriptorSet(VkDescriptorPool pool, VkDescriptorSetLayout
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(vulkanDevice->logicalDevice, &allocInfo, &descriptorSet));
 
 	// Binding 0 : Vertex shader uniform buffer
-	VkWriteDescriptorSet writeDescriptorSet =
+	vk::WriteDescriptorSet writeDescriptorSet =
 		vks::initializers::writeDescriptorSet(
 			descriptorSet,
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			vk::DescriptorType::eUniformBuffer,
 			0,
 			&uniformBuffer.descriptor);
 
@@ -315,8 +315,8 @@ void VulkanGear::setupDescriptorSet(VkDescriptorPool pool, VkDescriptorSetLayout
 void VulkanGear::prepareUniformBuffer()
 {
 	VK_CHECK_RESULT(vulkanDevice->createBuffer(
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		vk::BufferUsageFlagBits::eUniformBuffer,
+		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 		&uniformBuffer,
 		sizeof(ubo)));
 	// Map persistent

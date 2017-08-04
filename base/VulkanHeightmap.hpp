@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 #include <gli/gli.hpp>
 
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanBuffer.hpp"
 
@@ -24,7 +24,7 @@ namespace vks
 		uint32_t scale;
 
 		vks::VulkanDevice *device = nullptr;
-		VkQueue copyQueue = VK_NULL_HANDLE;
+		vk::Queue copyQueue = VK_NULL_HANDLE;
 	public:
 		enum Topology { topologyTriangles, topologyQuads };
 
@@ -44,7 +44,7 @@ namespace vks
 		size_t indexBufferSize = 0;
 		uint32_t indexCount = 0;
 
-		HeightMap(vks::VulkanDevice *device, VkQueue copyQueue)
+		HeightMap(vks::VulkanDevice *device, vk::Queue copyQueue)
 		{
 			this->device = device;
 			this->copyQueue = copyQueue;
@@ -196,36 +196,36 @@ namespace vks
 
 			// Create staging buffers
 			device->createBuffer(
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				vk::BufferUsageFlagBits::eTransferSrc,
+				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 				&vertexStaging,
 				vertexBufferSize,
 				vertices);
 
 			device->createBuffer(
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				vk::BufferUsageFlagBits::eTransferSrc,
+				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 				&indexStaging,
 				indexBufferSize,
 				indices);
 
 			// Device local (target) buffer
 			device->createBuffer(
-				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+				vk::MemoryPropertyFlagBits::eDeviceLocal,
 				&vertexBuffer,
 				vertexBufferSize);
 
 			device->createBuffer(
-				VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+				vk::MemoryPropertyFlagBits::eDeviceLocal,
 				&indexBuffer,
 				indexBufferSize);
 
 			// Copy from staging buffers
-			VkCommandBuffer copyCmd = device->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+			vk::CommandBuffer copyCmd = device->createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
 
-			VkBufferCopy copyRegion = {};
+			vk::BufferCopy copyRegion = {};
 
 			copyRegion.size = vertexBufferSize;
 			vkCmdCopyBuffer(

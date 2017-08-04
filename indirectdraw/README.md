@@ -28,7 +28,7 @@ For details on the use of instancing (and instanced vertex attributes), see the 
 ## Points of interest
 
 ### Preparing the indirect draw
-The example generates the indirect drawing buffer right at the start. First step is to generate the data for the indirect draws. Vulkan has a dedicated struct for this called `VkDrawIndexedIndirectCommand` and the example uses a `std::vector<VkDrawIndexedIndirectCommand>` to store these before uploading them to the GPU:
+The example generates the indirect drawing buffer right at the start. First step is to generate the data for the indirect draws. Vulkan has a dedicated struct for this called `vk::DrawIndexedIndirectCommand` and the example uses a `std::vector<vk::DrawIndexedIndirectCommand>` to store these before uploading them to the GPU:
 ```cpp
 void prepareIndirectData()
 {
@@ -36,7 +36,7 @@ void prepareIndirectData()
   uint32_t m = 0;
   for (auto& meshDescriptor : meshes.plants.meshDescriptors)
   {
-    VkDrawIndexedIndirectCommand indirectCmd{};
+    vk::DrawIndexedIndirectCommand indirectCmd{};
     indirectCmd.instanceCount = OBJECT_INSTANCE_COUNT;
     indirectCmd.firstInstance = m * OBJECT_INSTANCE_COUNT;
     indirectCmd.firstIndex = meshDescriptor.indexBase;
@@ -80,7 +80,7 @@ void buildCommandBuffers()
   ...
   for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
   {
-    vkCmdDrawIndexedIndirect(drawCmdBuffers[i], indirectCommandsBuffer.buffer, 0, indirectDrawCount, sizeof(VkDrawIndexedIndirectCommand));
+    vkCmdDrawIndexedIndirect(drawCmdBuffers[i], indirectCommandsBuffer.buffer, 0, indirectDrawCount, sizeof(vk::DrawIndexedIndirectCommand));
   }
 }
 ```
@@ -101,7 +101,7 @@ If the GPU does not support ```multiDrawIndirect``` we have to issue the indirec
 ```cpp
 for (auto j = 0; j < indirectCommands.size(); j++)
 {
-  vkCmdDrawIndexedIndirect(drawCmdBuffers[i], indirectCommandsBuffer.buffer, j * sizeof(VkDrawIndexedIndirectCommand), 1, sizeof(VkDrawIndexedIndirectCommand));
+  vkCmdDrawIndexedIndirect(drawCmdBuffers[i], indirectCommandsBuffer.buffer, j * sizeof(vk::DrawIndexedIndirectCommand), 1, sizeof(vk::DrawIndexedIndirectCommand));
 }
 ```
 

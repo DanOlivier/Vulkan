@@ -35,7 +35,7 @@ texture.mipLevels = floor(log2(std::max(texture.width, texture.height))) + 1;
 This is then passed to the image creat info:
 
 ```cpp
-VkImageCreateInfo imageCreateInfo = vkTools::initializers::imageCreateInfo();
+vk::ImageCreateInfo imageCreateInfo = vkTools::initializers::imageCreateInfo();
 imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 imageCreateInfo.format = format;
 imageCreateInfo.mipLevels = texture.mipLevels;
@@ -49,7 +49,7 @@ Setting the number of desired mip levels is necessary as this is used for alloca
 Before generating the mip-chain we need to copy the image data loaded from disk into the newly generated image. This image will be the base for our mip-chain:
 
 ```cpp
-VkBufferImageCopy bufferCopyRegion = {};
+vk::BufferImageCopy bufferCopyRegion = {};
 bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 bufferCopyRegion.imageSubresource.mipLevel = 0;
 bufferCopyRegion.imageExtent.width = texture.width;
@@ -63,7 +63,7 @@ vkCmdCopyBufferToImage(copyCmd, stagingBuffer, texture.image, VK_IMAGE_LAYOUT_TR
 As we are going to blit ***from*** the base mip-level just uploaded we also need to set insert an image memory barrier that sets the image layout to ```TRANSFER_SRC``` for the base mip level:
 
 ```cpp
-VkImageSubresourceRange subresourceRange = {};
+vk::ImageSubresourceRange subresourceRange = {};
 subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 subresourceRange.levelCount = 1;
 subresourceRange.layerCount = 1;
@@ -84,13 +84,13 @@ There are two different ways of generating the mip-chain. The first one is to bl
 
 ***Note:*** Blitting (same for copying) images is done inside of a command buffer that has to be submitted and as such has to be synchronized before using the new image with e.g. a ```vkFence```. 
 
-We simply loop over all remaining mip levels (level 0 was loaded from disk) and prepare a ```VkImageBlit``` structure for each blit from mip level i-1 to level i.
+We simply loop over all remaining mip levels (level 0 was loaded from disk) and prepare a ```vk::ImageBlit``` structure for each blit from mip level i-1 to level i.
 
 First the source for out blit. This is the previous mip level. The dimensions of the blit source are specified by srcOffset:
 ```cpp
 for (int32_t i = 1; i < texture.mipLevels; i++)
 {
-  VkImageBlit imageBlit{};				
+  vk::ImageBlit imageBlit{};				
 
   // Source
   imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -113,7 +113,7 @@ Setup for the destination mip level (1), with the dimensions for the blit destin
 
 Before we can blit to this mip level, we need to transition it's image layout to ```TRANSFER_DST```:
 ```cpp
-  VkImageSubresourceRange mipSubRange = {};
+  vk::ImageSubresourceRange mipSubRange = {};
   mipSubRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   mipSubRange.baseMipLevel = i;
   mipSubRange.levelCount = 1;

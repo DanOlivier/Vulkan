@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanTools.h"
 
@@ -22,26 +22,26 @@ namespace vks
 	*/
 	struct FramebufferAttachment
 	{
-		VkImage image;
-		VkDeviceMemory memory;
-		VkImageView view;
-		VkFormat format;
-		VkImageSubresourceRange subresourceRange;
-		VkAttachmentDescription description;
+		vk::Image image;
+		vk::DeviceMemory memory;
+		vk::ImageView view;
+		vk::Format format;
+		vk::ImageSubresourceRange subresourceRange;
+		vk::AttachmentDescription description;
 
 		/**
 		* @brief Returns true if the attachment has a depth component
 		*/
 		bool hasDepth()
 		{
-			std::vector<VkFormat> formats = 
+			std::vector<vk::Format> formats = 
 			{
-				VK_FORMAT_D16_UNORM,
-				VK_FORMAT_X8_D24_UNORM_PACK32,
-				VK_FORMAT_D32_SFLOAT,
-				VK_FORMAT_D16_UNORM_S8_UINT,
-				VK_FORMAT_D24_UNORM_S8_UINT,
-				VK_FORMAT_D32_SFLOAT_S8_UINT,
+				vk::Format::eD16Unorm,
+				vk::Format::eX8D24UnormPack32,
+				vk::Format::eD32Sfloat,
+				vk::Format::eD16Unorm_S8_UINT,
+				vk::Format::eD24UnormS8Uint,
+				vk::Format::eD32Sfloat_S8_UINT,
 			};
 			return std::find(formats.begin(), formats.end(), format) != std::end(formats);
 		}
@@ -51,12 +51,12 @@ namespace vks
 		*/
 		bool hasStencil()
 		{
-			std::vector<VkFormat> formats = 
+			std::vector<vk::Format> formats = 
 			{
-				VK_FORMAT_S8_UINT,
-				VK_FORMAT_D16_UNORM_S8_UINT,
-				VK_FORMAT_D24_UNORM_S8_UINT,
-				VK_FORMAT_D32_SFLOAT_S8_UINT,
+				vk::Format::eS8Uint,
+				vk::Format::eD16Unorm_S8_UINT,
+				vk::Format::eD24UnormS8Uint,
+				vk::Format::eD32Sfloat_S8_UINT,
 			};
 			return std::find(formats.begin(), formats.end(), format) != std::end(formats);
 		}
@@ -78,8 +78,8 @@ namespace vks
 	{
 		uint32_t width, height;
 		uint32_t layerCount;
-		VkFormat format;
-		VkImageUsageFlags usage;
+		vk::Format format;
+		vk::ImageUsageFlags usage;
 	};
 
 	/**
@@ -91,9 +91,9 @@ namespace vks
 		vks::VulkanDevice *vulkanDevice;
 	public:
 		uint32_t width, height;
-		VkFramebuffer framebuffer;
-		VkRenderPass renderPass;
-		VkSampler sampler;
+		vk::Framebuffer framebuffer;
+		vk::RenderPass renderPass;
+		vk::Sampler sampler;
 		std::vector<vks::FramebufferAttachment> attachments;
 
 		/**
@@ -137,51 +137,51 @@ namespace vks
 
 			attachment.format = createinfo.format;
 
-			VkImageAspectFlags aspectMask = VK_FLAGS_NONE;
+			vk::ImageAspectFlags aspectMask = VK_FLAGS_NONE;
 
 			// Select aspect mask and layout depending on usage
 
 			// Color attachment
-			if (createinfo.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+			if (createinfo.usage & vk::ImageUsageFlagBits::eColorAttachment)
 			{
-				aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				aspectMask = vk::ImageAspectFlagBits::eColor;
 			}
 
 			// Depth (and/or stencil) attachment
-			if (createinfo.usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			if (createinfo.usage & vk::ImageUsageFlagBits::eDepthStencilAttachment)
 			{
 				if (attachment.hasDepth())
 				{
-					aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+					aspectMask = vk::ImageAspectFlagBits::eDepth;
 				}
 				if (attachment.hasStencil())
 				{
-					aspectMask = aspectMask | VK_IMAGE_ASPECT_STENCIL_BIT;
+					aspectMask = aspectMask | vk::ImageAspectFlagBits::eStencil;
 				}
 			}
 
 			assert(aspectMask > 0);
 
-			VkImageCreateInfo image = vks::initializers::imageCreateInfo();
-			image.imageType = VK_IMAGE_TYPE_2D;
+			vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
+			image.imageType = vk::ImageType::e2D;
 			image.format = createinfo.format;
 			image.extent.width = createinfo.width;
 			image.extent.height = createinfo.height;
 			image.extent.depth = 1;
 			image.mipLevels = 1;
 			image.arrayLayers = createinfo.layerCount;
-			image.samples = VK_SAMPLE_COUNT_1_BIT;
-			image.tiling = VK_IMAGE_TILING_OPTIMAL;
+			image.samples = vk::SampleCountFlagBits::e1;
+			image.tiling = vk::ImageTiling::eOptimal;
 			image.usage = createinfo.usage;
 
-			VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
-			VkMemoryRequirements memReqs;
+			vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+			vk::MemoryRequirements memReqs;
 
 			// Create image for this attachment
 			VK_CHECK_RESULT(vkCreateImage(vulkanDevice->logicalDevice, &image, nullptr, &attachment.image));
 			vkGetImageMemoryRequirements(vulkanDevice->logicalDevice, attachment.image, &memReqs);
 			memAlloc.allocationSize = memReqs.size;
-			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 			VK_CHECK_RESULT(vkAllocateMemory(vulkanDevice->logicalDevice, &memAlloc, nullptr, &attachment.memory));
 			VK_CHECK_RESULT(vkBindImageMemory(vulkanDevice->logicalDevice, attachment.image, attachment.memory, 0));
 
@@ -190,33 +190,33 @@ namespace vks
 			attachment.subresourceRange.levelCount = 1;
 			attachment.subresourceRange.layerCount = createinfo.layerCount;
 
-			VkImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
-			imageView.viewType = (createinfo.layerCount == 1) ? VK_IMAGE_VIEW_TYPE_2D : VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+			vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
+			imageView.viewType = (createinfo.layerCount == 1) ? vk::ImageViewType::e2D : vk::ImageViewType::e2D_ARRAY;
 			imageView.format = createinfo.format;
 			imageView.subresourceRange = attachment.subresourceRange;
 			//todo: workaround for depth+stencil attachments
-			imageView.subresourceRange.aspectMask = (attachment.hasDepth()) ? VK_IMAGE_ASPECT_DEPTH_BIT : aspectMask;
+			imageView.subresourceRange.aspectMask = (attachment.hasDepth()) ? vk::ImageAspectFlagBits::eDepth : aspectMask;
 			imageView.image = attachment.image;
 			VK_CHECK_RESULT(vkCreateImageView(vulkanDevice->logicalDevice, &imageView, nullptr, &attachment.view));
 
 			// Fill attachment description
 			attachment.description = {};
-			attachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
-			attachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			attachment.description.storeOp = (createinfo.usage & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			attachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			attachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachment.description.samples = vk::SampleCountFlagBits::e1;
+			attachment.description.loadOp = vk::AttachmentLoadOp::eClear;
+			attachment.description.storeOp = (createinfo.usage & vk::ImageUsageFlagBits::eSampled) ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare;
+			attachment.description.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+			attachment.description.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
 			attachment.description.format = createinfo.format;
-			attachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachment.description.initialLayout = vk::ImageLayout::eUndefined;
 			// Final layout
 			// If not, final layout depends on attachment type
 			if (attachment.hasDepth() || attachment.hasStencil())
 			{
-				attachment.description.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+				attachment.description.finalLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
 			}
 			else
 			{
-				attachment.description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				attachment.description.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 			}
 
 			attachments.push_back(attachment);
@@ -232,14 +232,14 @@ namespace vks
 		* @param minFilter Minification filter for lookups
 		* @param adressMode Adressing mode for the U,V and W coordinates
 		*
-		* @return VkResult for the sampler creation
+		* @return vk::Result for the sampler creation
 		*/
-		VkResult createSampler(VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode adressMode)
+		vk::Result createSampler(vk::Filter magFilter, vk::Filter minFilter, vk::SamplerAddressMode adressMode)
 		{
-			VkSamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
+			vk::SamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
 			samplerInfo.magFilter = magFilter;
 			samplerInfo.minFilter = minFilter;
-			samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
 			samplerInfo.addressModeU = adressMode;
 			samplerInfo.addressModeV = adressMode;
 			samplerInfo.addressModeW = adressMode;
@@ -247,26 +247,26 @@ namespace vks
 			samplerInfo.maxAnisotropy = 1.0f;
 			samplerInfo.minLod = 0.0f;
 			samplerInfo.maxLod = 1.0f;
-			samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+			samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
 			return vkCreateSampler(vulkanDevice->logicalDevice, &samplerInfo, nullptr, &sampler);
 		}
 
 		/**
 		* Creates a default render pass setup with one sub pass
 		*
-		* @return VK_SUCCESS if all resources have been created successfully
+		* @return vk::Result::eSuccess if all resources have been created successfully
 		*/
-		VkResult createRenderPass()
+		vk::Result createRenderPass()
 		{
-			std::vector<VkAttachmentDescription> attachmentDescriptions;
+			std::vector<vk::AttachmentDescription> attachmentDescriptions;
 			for (auto& attachment : attachments)
 			{
 				attachmentDescriptions.push_back(attachment.description);
 			};
 
 			// Collect attachment references
-			std::vector<VkAttachmentReference> colorReferences;
-			VkAttachmentReference depthReference = {};
+			std::vector<vk::AttachmentReference> colorReferences;
+			vk::AttachmentReference depthReference = {};
 			bool hasDepth = false; 
 			bool hasColor = false;
 
@@ -279,20 +279,20 @@ namespace vks
 					// Only one depth attachment allowed
 					assert(!hasDepth);
 					depthReference.attachment = attachmentIndex;
-					depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+					depthReference.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 					hasDepth = true;
 				}
 				else
 				{
-					colorReferences.push_back({ attachmentIndex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
+					colorReferences.push_back({ attachmentIndex, vk::ImageLayout::eColorAttachmentOptimal });
 					hasColor = true;
 				}
 				attachmentIndex++;
 			};
 
 			// Default render pass setup uses only one subpass
-			VkSubpassDescription subpass = {};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			vk::SubpassDescription subpass = {};
+			subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
 			if (hasColor)
 			{
 				subpass.pColorAttachments = colorReferences.data();
@@ -304,26 +304,26 @@ namespace vks
 			}
 
 			// Use subpass dependencies for attachment layout transitions
-			std::array<VkSubpassDependency, 2> dependencies;
+			std::array<vk::SubpassDependency, 2> dependencies;
 
 			dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
 			dependencies[0].dstSubpass = 0;
-			dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-			dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-			dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+			dependencies[0].srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+			dependencies[0].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			dependencies[0].srcAccessMask = vk::AccessFlagBits::eMemoryRead;
+			dependencies[0].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+			dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 			dependencies[1].srcSubpass = 0;
 			dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-			dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-			dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-			dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+			dependencies[1].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			dependencies[1].dstStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+			dependencies[1].srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+			dependencies[1].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+			dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 			// Create render pass
-			VkRenderPassCreateInfo renderPassInfo = {};
+			vk::RenderPassCreateInfo renderPassInfo = {};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 			renderPassInfo.pAttachments = attachmentDescriptions.data();
 			renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
@@ -333,7 +333,7 @@ namespace vks
 			renderPassInfo.pDependencies = dependencies.data();
 			VK_CHECK_RESULT(vkCreateRenderPass(vulkanDevice->logicalDevice, &renderPassInfo, nullptr, &renderPass));
 
-			std::vector<VkImageView> attachmentViews;
+			std::vector<vk::ImageView> attachmentViews;
 			for (auto attachment : attachments)
 			{
 				attachmentViews.push_back(attachment.view);
@@ -349,7 +349,7 @@ namespace vks
 				}
 			}
 
-			VkFramebufferCreateInfo framebufferInfo = {};
+			vk::FramebufferCreateInfo framebufferInfo = {};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = renderPass;
 			framebufferInfo.pAttachments = attachmentViews.data();
@@ -359,7 +359,7 @@ namespace vks
 			framebufferInfo.layers = maxLayers;
 			VK_CHECK_RESULT(vkCreateFramebuffer(vulkanDevice->logicalDevice, &framebufferInfo, nullptr, &framebuffer));
 
-			return VK_SUCCESS;
+			return vk::Result::eSuccess;
 		}
 	};
 }

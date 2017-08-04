@@ -10,7 +10,7 @@
 
 std::vector<const char*> VulkanExampleBase::args;
 
-VkResult VulkanExampleBase::createInstance(bool enableValidation)
+vk::Result VulkanExampleBase::createInstance(bool enableValidation)
 {
 	this->settings.validation = enableValidation;
 
@@ -19,7 +19,7 @@ VkResult VulkanExampleBase::createInstance(bool enableValidation)
 	this->settings.validation = true;
 #endif	
 
-	VkApplicationInfo appInfo = {};
+	vk::ApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = name.c_str();
 	appInfo.pEngineName = name.c_str();
@@ -44,7 +44,7 @@ VkResult VulkanExampleBase::createInstance(bool enableValidation)
     instanceExtensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #endif
 
-	VkInstanceCreateInfo instanceCreateInfo = {};
+	vk::InstanceCreateInfo instanceCreateInfo = {};
 	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instanceCreateInfo.pNext = NULL;
 	instanceCreateInfo.pApplicationInfo = &appInfo;
@@ -106,10 +106,10 @@ void VulkanExampleBase::createCommandBuffers()
 	// Create one command buffer for each swap chain image and reuse for rendering
 	drawCmdBuffers.resize(swapChain.imageCount);
 
-	VkCommandBufferAllocateInfo cmdBufAllocateInfo =
+	vk::CommandBufferAllocateInfo cmdBufAllocateInfo =
 		vks::initializers::commandBufferAllocateInfo(
 			cmdPool,
-			VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			vk::CommandBufferLevel::ePrimary,
 			static_cast<uint32_t>(drawCmdBuffers.size()));
 
 	VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &cmdBufAllocateInfo, drawCmdBuffers.data()));
@@ -120,11 +120,11 @@ void VulkanExampleBase::destroyCommandBuffers()
 	vkFreeCommandBuffers(device, cmdPool, static_cast<uint32_t>(drawCmdBuffers.size()), drawCmdBuffers.data());
 }
 
-VkCommandBuffer VulkanExampleBase::createCommandBuffer(VkCommandBufferLevel level, bool begin)
+vk::CommandBuffer VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel level, bool begin)
 {
-	VkCommandBuffer cmdBuffer;
+	vk::CommandBuffer cmdBuffer;
 
-	VkCommandBufferAllocateInfo cmdBufAllocateInfo =
+	vk::CommandBufferAllocateInfo cmdBufAllocateInfo =
 		vks::initializers::commandBufferAllocateInfo(
 			cmdPool,
 			level,
@@ -135,14 +135,14 @@ VkCommandBuffer VulkanExampleBase::createCommandBuffer(VkCommandBufferLevel leve
 	// If requested, also start the new command buffer
 	if (begin)
 	{
-		VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 		VK_CHECK_RESULT(vkBeginCommandBuffer(cmdBuffer, &cmdBufInfo));
 	}
 
 	return cmdBuffer;
 }
 
-void VulkanExampleBase::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, bool free)
+void VulkanExampleBase::flushCommandBuffer(vk::CommandBuffer commandBuffer, vk::Queue queue, bool free)
 {
 	if (commandBuffer == VK_NULL_HANDLE)
 	{
@@ -151,7 +151,7 @@ void VulkanExampleBase::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueu
 	
 	VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 
-	VkSubmitInfo submitInfo = {};
+	vk::SubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
@@ -167,7 +167,7 @@ void VulkanExampleBase::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueu
 
 void VulkanExampleBase::createPipelineCache()
 {
-	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+	vk::PipelineCacheCreateInfo pipelineCacheCreateInfo = {};
 	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 	VK_CHECK_RESULT(vkCreatePipelineCache(device, &pipelineCacheCreateInfo, nullptr, &pipelineCache));
 }
@@ -189,9 +189,9 @@ void VulkanExampleBase::prepare()
 	if (enableTextOverlay)
 	{
 		// Load the text rendering shaders
-		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-		shaderStages.push_back(loadShader(getAssetPath() + "shaders/base/textoverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT));
-		shaderStages.push_back(loadShader(getAssetPath() + "shaders/base/textoverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT));
+		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+		shaderStages.push_back(loadShader(getAssetPath() + "shaders/base/textoverlay.vert.spv", vk::ShaderStageFlagBits::eVertex));
+		shaderStages.push_back(loadShader(getAssetPath() + "shaders/base/textoverlay.frag.spv", vk::ShaderStageFlagBits::eFragment));
 		textOverlay = new VulkanTextOverlay(
 			vulkanDevice,
 			queue,
@@ -206,9 +206,9 @@ void VulkanExampleBase::prepare()
 	}
 }
 
-VkPipelineShaderStageCreateInfo VulkanExampleBase::loadShader(std::string fileName, VkShaderStageFlagBits stage)
+vk::PipelineShaderStageCreateInfo VulkanExampleBase::loadShader(std::string fileName, vk::ShaderStageFlagBits stage)
 {
-	VkPipelineShaderStageCreateInfo shaderStage = {};
+	vk::PipelineShaderStageCreateInfo shaderStage = {};
 	shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shaderStage.stage = stage;
 #if defined(__ANDROID__)
@@ -603,9 +603,9 @@ void VulkanExampleBase::getOverlayText(VulkanTextOverlay*) {}
 void VulkanExampleBase::prepareFrame()
 {
 	// Acquire the next image from the swap chain
-	VkResult err = swapChain.acquireNextImage(semaphores.presentComplete, &currentBuffer);
+	vk::Result err = swapChain.acquireNextImage(semaphores.presentComplete, &currentBuffer);
 	// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
-	if ((err == VK_ERROR_OUT_OF_DATE_KHR) || (err == VK_SUBOPTIMAL_KHR)) {
+	if ((err == vk::Result::eErrorOutOfDateKHR) || (err == vk::Result::eSuboptimalKHR)) {
 		windowResize();
 	}
 	else {
@@ -620,7 +620,7 @@ void VulkanExampleBase::submitFrame()
 	if (submitTextOverlay)
 	{
 		// Wait for color attachment output to finish before rendering the text overlay
-		VkPipelineStageFlags stageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		vk::PipelineStageFlags stageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 		submitInfo.pWaitDstStageMask = &stageFlags;
 
 		// Set semaphores
@@ -793,7 +793,7 @@ VulkanExampleBase::~VulkanExampleBase()
 
 void VulkanExampleBase::initVulkan()
 {
-	VkResult err;
+	vk::Result err;
 
 	// Vulkan instance
 	err = createInstance(settings.validation);
@@ -811,7 +811,7 @@ void VulkanExampleBase::initVulkan()
 	{
 		// The report flags determine what type of messages for the layers will be displayed
 		// For validating (debugging) an appplication the error and warning bits should suffice
-		VkDebugReportFlagsEXT debugReportFlags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+		vk::DebugReportFlagsEXT debugReportFlags = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning;
 		// Additional flags include performance info, loader and layer debug messages, etc.
 		vks::debug::setupDebugging(instance, debugReportFlags, VK_NULL_HANDLE);
 	}
@@ -822,7 +822,7 @@ void VulkanExampleBase::initVulkan()
 	VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
 	assert(gpuCount > 0);
 	// Enumerate devices
-	std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
+	std::vector<vk::PhysicalDevice> physicalDevices(gpuCount);
 	err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
 	if (err)
 	{
@@ -871,10 +871,10 @@ void VulkanExampleBase::initVulkan()
 			{
 				// Enumerate devices
 				std::cout << "Available Vulkan devices" << std::endl;
-				std::vector<VkPhysicalDevice> devices(gpuCount);
+				std::vector<vk::PhysicalDevice> devices(gpuCount);
 				VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, devices.data()));
 				for (uint32_t i = 0; i < gpuCount; i++) {
-					VkPhysicalDeviceProperties deviceProperties;
+					vk::PhysicalDeviceProperties deviceProperties;
 					vkGetPhysicalDeviceProperties(devices[i], &deviceProperties);
 					std::cout << "Device [" << i << "] : " << deviceProperties.deviceName << std::endl;
 					std::cout << " Type: " << vks::tools::physicalDeviceTypeString(deviceProperties.deviceType) << std::endl;
@@ -899,8 +899,8 @@ void VulkanExampleBase::initVulkan()
 	// This is handled by a separate class that gets a logical device representation
 	// and encapsulates functions related to a device
 	vulkanDevice = new vks::VulkanDevice(physicalDevice);
-	VkResult res = vulkanDevice->createLogicalDevice(enabledFeatures, enabledExtensions);
-	if (res != VK_SUCCESS) {
+	vk::Result res = vulkanDevice->createLogicalDevice(enabledFeatures, enabledExtensions);
+	if (res != vk::Result::eSuccess) {
 		vks::tools::exitFatal("Could not create Vulkan device: \n" + vks::tools::errorString(res), "Fatal error");
 	}
 	device = vulkanDevice->logicalDevice;
@@ -909,13 +909,13 @@ void VulkanExampleBase::initVulkan()
 	vkGetDeviceQueue(device, vulkanDevice->queueFamilyIndices.graphics, 0, &queue);
 
 	// Find a suitable depth format
-	VkBool32 validDepthFormat = vks::tools::getSupportedDepthFormat(physicalDevice, &depthFormat);
+	vk::Bool32 validDepthFormat = vks::tools::getSupportedDepthFormat(physicalDevice, &depthFormat);
 	assert(validDepthFormat);
 
 	swapChain.connect(instance, physicalDevice, device);
 
 	// Create synchronization objects
-	VkSemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
+	vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
 	// Create a semaphore used to synchronize image presentation
 	// Ensures that the image is displayed before we start submitting new commands to the queu
 	VK_CHECK_RESULT(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphores.presentComplete));
@@ -1928,53 +1928,53 @@ void VulkanExampleBase::buildCommandBuffers() {}
 
 void VulkanExampleBase::createCommandPool()
 {
-	VkCommandPoolCreateInfo cmdPoolInfo = {};
+	vk::CommandPoolCreateInfo cmdPoolInfo = {};
 	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	cmdPoolInfo.queueFamilyIndex = swapChain.queueNodeIndex;
-	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
 	VK_CHECK_RESULT(vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &cmdPool));
 }
 
 void VulkanExampleBase::setupDepthStencil()
 {
-	VkImageCreateInfo image = {};
+	vk::ImageCreateInfo image = {};
 	image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image.pNext = NULL;
-	image.imageType = VK_IMAGE_TYPE_2D;
+	image.imageType = vk::ImageType::e2D;
 	image.format = depthFormat;
 	image.extent = { width, height, 1 };
 	image.mipLevels = 1;
 	image.arrayLayers = 1;
-	image.samples = VK_SAMPLE_COUNT_1_BIT;
-	image.tiling = VK_IMAGE_TILING_OPTIMAL;
-	image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	image.samples = vk::SampleCountFlagBits::e1;
+	image.tiling = vk::ImageTiling::eOptimal;
+	image.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc;
 	image.flags = 0;
 
-	VkMemoryAllocateInfo mem_alloc = {};
+	vk::MemoryAllocateInfo mem_alloc = {};
 	mem_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	mem_alloc.pNext = NULL;
 	mem_alloc.allocationSize = 0;
 	mem_alloc.memoryTypeIndex = 0;
 
-	VkImageViewCreateInfo depthStencilView = {};
+	vk::ImageViewCreateInfo depthStencilView = {};
 	depthStencilView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	depthStencilView.pNext = NULL;
-	depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	depthStencilView.viewType = vk::ImageViewType::e2D;
 	depthStencilView.format = depthFormat;
 	depthStencilView.flags = 0;
 	depthStencilView.subresourceRange = {};
-	depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+	depthStencilView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 	depthStencilView.subresourceRange.baseMipLevel = 0;
 	depthStencilView.subresourceRange.levelCount = 1;
 	depthStencilView.subresourceRange.baseArrayLayer = 0;
 	depthStencilView.subresourceRange.layerCount = 1;
 
-	VkMemoryRequirements memReqs;
+	vk::MemoryRequirements memReqs;
 
 	VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &depthStencil.image));
 	vkGetImageMemoryRequirements(device, depthStencil.image, &memReqs);
 	mem_alloc.allocationSize = memReqs.size;
-	mem_alloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	mem_alloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 	VK_CHECK_RESULT(vkAllocateMemory(device, &mem_alloc, nullptr, &depthStencil.mem));
 	VK_CHECK_RESULT(vkBindImageMemory(device, depthStencil.image, depthStencil.mem, 0));
 
@@ -1984,12 +1984,12 @@ void VulkanExampleBase::setupDepthStencil()
 
 void VulkanExampleBase::setupFrameBuffer()
 {
-	VkImageView attachments[2];
+	vk::ImageView attachments[2];
 
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[1] = depthStencil.view;
 
-	VkFramebufferCreateInfo frameBufferCreateInfo = {};
+	vk::FramebufferCreateInfo frameBufferCreateInfo = {};
 	frameBufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	frameBufferCreateInfo.pNext = NULL;
 	frameBufferCreateInfo.renderPass = renderPass;
@@ -2010,36 +2010,36 @@ void VulkanExampleBase::setupFrameBuffer()
 
 void VulkanExampleBase::setupRenderPass()
 {
-	std::array<VkAttachmentDescription, 2> attachments = {};
+	std::array<vk::AttachmentDescription, 2> attachments = {};
 	// Color attachment
 	attachments[0].format = swapChain.colorFormat;
-	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachments[0].samples = vk::SampleCountFlagBits::e1;
+	attachments[0].loadOp = vk::AttachmentLoadOp::eClear;
+	attachments[0].storeOp = vk::AttachmentStoreOp::eStore;
+	attachments[0].stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+	attachments[0].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+	attachments[0].initialLayout = vk::ImageLayout::eUndefined;
+	attachments[0].finalLayout = vk::ImageLayout::ePresentSrcKHR;
 	// Depth attachment
 	attachments[1].format = depthFormat;
-	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	attachments[1].samples = vk::SampleCountFlagBits::e1;
+	attachments[1].loadOp = vk::AttachmentLoadOp::eClear;
+	attachments[1].storeOp = vk::AttachmentStoreOp::eStore;
+	attachments[1].stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+	attachments[1].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+	attachments[1].initialLayout = vk::ImageLayout::eUndefined;
+	attachments[1].finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
-	VkAttachmentReference colorReference = {};
+	vk::AttachmentReference colorReference = {};
 	colorReference.attachment = 0;
-	colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorReference.layout = vk::ImageLayout::eColorAttachmentOptimal;
 
-	VkAttachmentReference depthReference = {};
+	vk::AttachmentReference depthReference = {};
 	depthReference.attachment = 1;
-	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	depthReference.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
-	VkSubpassDescription subpassDescription = {};
-	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	vk::SubpassDescription subpassDescription = {};
+	subpassDescription.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
 	subpassDescription.colorAttachmentCount = 1;
 	subpassDescription.pColorAttachments = &colorReference;
 	subpassDescription.pDepthStencilAttachment = &depthReference;
@@ -2050,25 +2050,25 @@ void VulkanExampleBase::setupRenderPass()
 	subpassDescription.pResolveAttachments = nullptr;
 
 	// Subpass dependencies for layout transitions
-	std::array<VkSubpassDependency, 2> dependencies;
+	std::array<vk::SubpassDependency, 2> dependencies;
 
 	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass = 0;
-	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	dependencies[0].srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+	dependencies[0].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	dependencies[0].srcAccessMask = vk::AccessFlagBits::eMemoryRead;
+	dependencies[0].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 	dependencies[1].srcSubpass = 0;
 	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	dependencies[1].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	dependencies[1].dstStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+	dependencies[1].srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	dependencies[1].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+	dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
-	VkRenderPassCreateInfo renderPassInfo = {};
+	vk::RenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 	renderPassInfo.pAttachments = attachments.data();

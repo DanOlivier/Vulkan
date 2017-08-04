@@ -13,7 +13,7 @@
 #include <fstream>
 #include <vector>
 
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan.hpp"
 
 #include <assimp/Importer.hpp> 
 #include <assimp/scene.h>     
@@ -106,7 +106,7 @@ namespace vks
 	};
 
 	struct Model {
-		VkDevice device = nullptr;
+		vk::Device device = nullptr;
 		vks::Buffer vertices;
 		vks::Buffer indices;
 		uint32_t indexCount = 0;
@@ -153,7 +153,7 @@ namespace vks
 		* @param copyQueue Queue used for the memory staging copy commands (must support transfer)
 		* @param (Optional) flags ASSIMP model loading flags
 		*/
-		bool loadFromFile(const std::string& filename, vks::VertexLayout layout, vks::ModelCreateInfo *createInfo, vks::VulkanDevice *device, VkQueue copyQueue, const int flags = defaultFlags)
+		bool loadFromFile(const std::string& filename, vks::VertexLayout layout, vks::ModelCreateInfo *createInfo, vks::VulkanDevice *device, vk::Queue copyQueue, const int flags = defaultFlags)
 		{
 			this->device = device->logicalDevice;
 
@@ -313,16 +313,16 @@ namespace vks
 
 				// Vertex buffer
 				VK_CHECK_RESULT(device->createBuffer(
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+					vk::BufferUsageFlagBits::eTransferSrc,
+					vk::MemoryPropertyFlagBits::eHostVisible,
 					&vertexStaging,
 					vBufferSize,
 					vertexBuffer.data()));
 
 				// Index buffer
 				VK_CHECK_RESULT(device->createBuffer(
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+					vk::BufferUsageFlagBits::eTransferSrc,
+					vk::MemoryPropertyFlagBits::eHostVisible,
 					&indexStaging,
 					iBufferSize,
 					indexBuffer.data()));
@@ -330,22 +330,22 @@ namespace vks
 				// Create device local target buffers
 				// Vertex buffer
 				VK_CHECK_RESULT(device->createBuffer(
-					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+					vk::MemoryPropertyFlagBits::eDeviceLocal,
 					&vertices,
 					vBufferSize));
 
 				// Index buffer
 				VK_CHECK_RESULT(device->createBuffer(
-					VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+					vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+					vk::MemoryPropertyFlagBits::eDeviceLocal,
 					&indices,
 					iBufferSize));
 
 				// Copy from staging buffers
-				VkCommandBuffer copyCmd = device->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+				vk::CommandBuffer copyCmd = device->createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
 
-				VkBufferCopy copyRegion{};
+				vk::BufferCopy copyRegion{};
 
 				copyRegion.size = vertices.size;
 				vkCmdCopyBuffer(copyCmd, vertexStaging.buffer, vertices.buffer, 1, &copyRegion);
@@ -383,7 +383,7 @@ namespace vks
 		* @param copyQueue Queue used for the memory staging copy commands (must support transfer)
 		* @param (Optional) flags ASSIMP model loading flags
 		*/
-		bool loadFromFile(const std::string& filename, vks::VertexLayout layout, float scale, vks::VulkanDevice *device, VkQueue copyQueue, const int flags = defaultFlags)
+		bool loadFromFile(const std::string& filename, vks::VertexLayout layout, float scale, vks::VulkanDevice *device, vk::Queue copyQueue, const int flags = defaultFlags)
 		{
 			vks::ModelCreateInfo modelCreateInfo(scale, 1.0f, 0.0f);
 			return loadFromFile(filename, layout, &modelCreateInfo, device, copyQueue, flags);

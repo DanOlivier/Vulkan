@@ -19,7 +19,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan.hpp"
 
 #include "VulkanTools.h"
 #include "VulkanDevice.hpp"
@@ -89,17 +89,17 @@ private:
 
 	void prepareUniformBuffer();
 public:
-	VkDescriptorSet descriptorSet;
+	vk::DescriptorSet descriptorSet;
 
-	void draw(VkCommandBuffer cmdbuffer, VkPipelineLayout pipelineLayout);
+	void draw(vk::CommandBuffer cmdbuffer, vk::PipelineLayout pipelineLayout);
 	void updateUniformBuffer(glm::mat4 perspective, glm::vec3 rotation, float zoom, float timer);
 
-	void setupDescriptorSet(VkDescriptorPool pool, VkDescriptorSetLayout descriptorSetLayout);
+	void setupDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout descriptorSetLayout);
 
 	VulkanGear(vks::VulkanDevice *vulkanDevice) : vulkanDevice(vulkanDevice) {};
 	~VulkanGear();
 
-	void generate(GearInfo *gearinfo, VkQueue queue);
+	void generate(GearInfo *gearinfo, vk::Queue queue);
 
 };
 

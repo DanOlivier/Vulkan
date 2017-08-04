@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <vector>
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include "VulkanTools.h"
 
 #ifdef __ANDROID__
@@ -44,17 +44,17 @@
 }
 
 typedef struct _SwapChainBuffers {
-	VkImage image;
-	VkImageView view;
+	vk::Image image;
+	vk::ImageView view;
 } SwapChainBuffer;
 
 class VulkanSwapChain
 {
 private: 
-	VkInstance instance;
-	VkDevice device;
-	VkPhysicalDevice physicalDevice;
-	VkSurfaceKHR surface;
+	vk::Instance instance;
+	vk::Device device;
+	vk::PhysicalDevice physicalDevice;
+	vk::SurfaceKHR surface;
 	// Function pointers
 	PFN_vkGetPhysicalDeviceSurfaceSupportKHR fpGetPhysicalDeviceSurfaceSupportKHR;
 	PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR fpGetPhysicalDeviceSurfaceCapabilitiesKHR; 
@@ -66,12 +66,12 @@ private:
 	PFN_vkAcquireNextImageKHR fpAcquireNextImageKHR;
 	PFN_vkQueuePresentKHR fpQueuePresentKHR;
 public:
-	VkFormat colorFormat;
-	VkColorSpaceKHR colorSpace;
+	vk::Format colorFormat;
+	vk::ColorSpaceKHR colorSpace;
 	/** @brief Handle to the current swap chain, required for recreation */
-	VkSwapchainKHR swapChain = VK_NULL_HANDLE;	
+	vk::SwapchainKHR swapChain = VK_NULL_HANDLE;	
 	uint32_t imageCount;
-	std::vector<VkImage> images;
+	std::vector<vk::Image> images;
 	std::vector<SwapChainBuffer> buffers;
 	/** @brief Queue family index of the detected graphics and presenting device queue */
 	uint32_t queueNodeIndex = UINT32_MAX;
@@ -91,29 +91,29 @@ public:
 	void initSurface(uint32_t width, uint32_t height)
 #endif
 	{
-		VkResult err = VK_SUCCESS;
+		vk::Result err = vk::Result::eSuccess;
 
 		// Create the os-specific surface
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
-		VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
+		vk::Win32SurfaceCreateInfoKHR surfaceCreateInfo = {};
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 		surfaceCreateInfo.hinstance = (HINSTANCE)platformHandle;
 		surfaceCreateInfo.hwnd = (HWND)platformWindow;
 		err = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
-		VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo = {};
+		vk::AndroidSurfaceCreateInfoKHR surfaceCreateInfo = {};
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
 		surfaceCreateInfo.window = window;
 		err = vkCreateAndroidSurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
 #elif defined(VK_USE_PLATFORM_IOS_MVK)
-		VkIOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
+		vk::IOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
 		surfaceCreateInfo.pNext = NULL;
 		surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
 		err = vkCreateIOSSurfaceMVK(instance, &surfaceCreateInfo, nullptr, &surface);
 #elif defined(VK_USE_PLATFORM_MACOS_MVK)
-		VkMacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
+		vk::MacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
 		surfaceCreateInfo.pNext = NULL;
 		surfaceCreateInfo.flags = 0;
@@ -122,20 +122,20 @@ public:
 #elif defined(_DIRECT2DISPLAY)
 		createDirect2DisplaySurface(width, height);
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-		VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo = {};
+		vk::WaylandSurfaceCreateInfoKHR surfaceCreateInfo = {};
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
 		surfaceCreateInfo.display = display;
 		surfaceCreateInfo.surface = window;
 		err = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
-		VkXcbSurfaceCreateInfoKHR surfaceCreateInfo = {};
+		vk::XcbSurfaceCreateInfoKHR surfaceCreateInfo = {};
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
 		surfaceCreateInfo.connection = connection;
 		surfaceCreateInfo.window = window;
 		err = vkCreateXcbSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
 #endif
 
-		if (err != VK_SUCCESS) {
+		if (err != vk::Result::eSuccess) {
 			vks::tools::exitFatal("Could not create surface!", "Fatal error");
 		}
 
@@ -144,13 +144,13 @@ public:
 		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, NULL);
 		assert(queueCount >= 1);
 
-		std::vector<VkQueueFamilyProperties> queueProps(queueCount);
+		std::vector<vk::QueueFamilyProperties> queueProps(queueCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, queueProps.data());
 
 		// Iterate over each queue to learn whether it supports presenting:
 		// Find a queue with present support
 		// Will be used to present the swap chain images to the windowing system
-		std::vector<VkBool32> supportsPresent(queueCount);
+		std::vector<vk::Bool32> supportsPresent(queueCount);
 		for (uint32_t i = 0; i < queueCount; i++) 
 		{
 			fpGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &supportsPresent[i]);
@@ -162,7 +162,7 @@ public:
 		uint32_t presentQueueNodeIndex = UINT32_MAX;
 		for (uint32_t i = 0; i < queueCount; i++) 
 		{
-			if ((queueProps[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) 
+			if ((queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) != 0) 
 			{
 				if (graphicsQueueNodeIndex == UINT32_MAX) 
 				{
@@ -210,24 +210,24 @@ public:
 		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, NULL));
 		assert(formatCount > 0);
 
-		std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
+		std::vector<vk::SurfaceFormatKHR> surfaceFormats(formatCount);
 		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, surfaceFormats.data()));
 
-		// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
-		// there is no preferered format, so we assume VK_FORMAT_B8G8R8A8_UNORM
-		if ((formatCount == 1) && (surfaceFormats[0].format == VK_FORMAT_UNDEFINED))
+		// If the surface format list only includes one entry with vk::Format::eUndefined,
+		// there is no preferered format, so we assume vk::Format::eB8G8R8A8Unorm
+		if ((formatCount == 1) && (surfaceFormats[0].format == vk::Format::eUndefined))
 		{
-			colorFormat = VK_FORMAT_B8G8R8A8_UNORM;
+			colorFormat = vk::Format::eB8G8R8A8Unorm;
 			colorSpace = surfaceFormats[0].colorSpace;
 		}
 		else
 		{
 			// iterate over the list of available surface format and
-			// check for the presence of VK_FORMAT_B8G8R8A8_UNORM
+			// check for the presence of vk::Format::eB8G8R8A8Unorm
 			bool found_B8G8R8A8_UNORM = false;
 			for (auto&& surfaceFormat : surfaceFormats)
 			{
-				if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
+				if (surfaceFormat.format == vk::Format::eB8G8R8A8Unorm)
 				{
 					colorFormat = surfaceFormat.format;
 					colorSpace = surfaceFormat.colorSpace;
@@ -236,7 +236,7 @@ public:
 				}
 			}
 
-			// in case VK_FORMAT_B8G8R8A8_UNORM is not available
+			// in case vk::Format::eB8G8R8A8Unorm is not available
 			// select the first available color format
 			if (!found_B8G8R8A8_UNORM)
 			{
@@ -255,7 +255,7 @@ public:
 	* @param device Logical representation of the device to create the swapchain for
 	*
 	*/
-	void connect(VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device)
+	void connect(vk::Instance instance, vk::PhysicalDevice physicalDevice, vk::Device device)
 	{
 		this->instance = instance;
 		this->physicalDevice = physicalDevice;
@@ -276,14 +276,14 @@ public:
 	* 
 	* @param width Pointer to the width of the swapchain (may be adjusted to fit the requirements of the swapchain)
 	* @param height Pointer to the height of the swapchain (may be adjusted to fit the requirements of the swapchain)
-	* @param vsync (Optional) Can be used to force vsync'd rendering (by using VK_PRESENT_MODE_FIFO_KHR as presentation mode)
+	* @param vsync (Optional) Can be used to force vsync'd rendering (by using vk::PresentModeKHR::eFifo as presentation mode)
 	*/
 	void create(uint32_t *width, uint32_t *height, bool vsync = false)
 	{
-		VkSwapchainKHR oldSwapchain = swapChain;
+		vk::SwapchainKHR oldSwapchain = swapChain;
 
 		// Get physical device surface properties and formats
-		VkSurfaceCapabilitiesKHR surfCaps;
+		vk::SurfaceCapabilitiesKHR surfCaps;
 		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfCaps));
 
 		// Get available present modes
@@ -291,10 +291,10 @@ public:
 		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, NULL));
 		assert(presentModeCount > 0);
 
-		std::vector<VkPresentModeKHR> presentModes(presentModeCount);
+		std::vector<vk::PresentModeKHR> presentModes(presentModeCount);
 		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data()));
 
-		VkExtent2D swapchainExtent = {};
+		vk::Extent2D swapchainExtent = {};
 		// If width (and height) equals the special value 0xFFFFFFFF, the size of the surface will be set by the swapchain
 		if (surfCaps.currentExtent.width == (uint32_t)-1)
 		{
@@ -314,9 +314,9 @@ public:
 
 		// Select a present mode for the swapchain
 
-		// The VK_PRESENT_MODE_FIFO_KHR mode must always be present as per spec
+		// The vk::PresentModeKHR::eFifo mode must always be present as per spec
 		// This mode waits for the vertical blank ("v-sync")
-		VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+		vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
 
 		// If v-sync is not requested, try to find a mailbox mode
 		// It's the lowest latency non-tearing present mode available
@@ -324,14 +324,14 @@ public:
 		{
 			for (size_t i = 0; i < presentModeCount; i++)
 			{
-				if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+				if (presentModes[i] == vk::PresentModeKHR::eMailbox)
 				{
-					swapchainPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+					swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 					break;
 				}
-				if ((swapchainPresentMode != VK_PRESENT_MODE_MAILBOX_KHR) && (presentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR))
+				if ((swapchainPresentMode != vk::PresentModeKHR::eMailbox) && (presentModes[i] == vk::PresentModeKHR::eImmediate))
 				{
-					swapchainPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+					swapchainPresentMode = vk::PresentModeKHR::eImmediate;
 				}
 			}
 		}
@@ -344,11 +344,11 @@ public:
 		}
 
 		// Find the transformation of the surface
-		VkSurfaceTransformFlagsKHR preTransform;
-		if (surfCaps.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+		vk::SurfaceTransformFlagsKHR preTransform;
+		if (surfCaps.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity)
 		{
 			// We prefer a non-rotated transform
-			preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			preTransform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
 		}
 		else
 		{
@@ -356,13 +356,13 @@ public:
 		}
 
 		// Find a supported composite alpha format (not all devices support alpha opaque)
-		VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		vk::CompositeAlphaFlagBitsKHR compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
 		// Simply select the first composite alpha format available
-		std::vector<VkCompositeAlphaFlagBitsKHR> compositeAlphaFlags = {
-			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-			VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-			VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
-			VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+		std::vector<vk::CompositeAlphaFlagBitsKHR> compositeAlphaFlags = {
+			vk::CompositeAlphaFlagBitsKHR::eOpaque,
+			vk::CompositeAlphaFlagBitsKHR::ePreMultiplied,
+			vk::CompositeAlphaFlagBitsKHR::ePostMultiplied,
+			vk::CompositeAlphaFlagBitsKHR::eInherit,
 		};
 		for (auto& compositeAlphaFlag : compositeAlphaFlags) {
 			if (surfCaps.supportedCompositeAlpha & compositeAlphaFlag) {
@@ -371,7 +371,7 @@ public:
 			};
 		}
 
-		VkSwapchainCreateInfoKHR swapchainCI = {};
+		vk::SwapchainCreateInfoKHR swapchainCI = {};
 		swapchainCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainCI.pNext = NULL;
 		swapchainCI.surface = surface;
@@ -379,10 +379,10 @@ public:
 		swapchainCI.imageFormat = colorFormat;
 		swapchainCI.imageColorSpace = colorSpace;
 		swapchainCI.imageExtent = { swapchainExtent.width, swapchainExtent.height };
-		swapchainCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		swapchainCI.preTransform = (VkSurfaceTransformFlagBitsKHR)preTransform;
+		swapchainCI.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+		swapchainCI.preTransform = (vk::SurfaceTransformFlagBitsKHR)preTransform;
 		swapchainCI.imageArrayLayers = 1;
-		swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchainCI.imageSharingMode = vk::SharingMode::eExclusive;
 		swapchainCI.queueFamilyIndexCount = 0;
 		swapchainCI.pQueueFamilyIndices = NULL;
 		swapchainCI.presentMode = swapchainPresentMode;
@@ -392,10 +392,10 @@ public:
 		swapchainCI.compositeAlpha = compositeAlpha;
 
 		// Set additional usage flag for blitting from the swapchain images if supported
-		VkFormatProperties formatProps;
+		vk::FormatProperties formatProps;
 		vkGetPhysicalDeviceFormatProperties(physicalDevice, colorFormat, &formatProps);
-		if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT) {
-			swapchainCI.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		if (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst) {
+			swapchainCI.imageUsage |= vk::ImageUsageFlagBits::eTransferSrc;
 		}
 
 		VK_CHECK_RESULT(fpCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapChain));
@@ -420,22 +420,22 @@ public:
 		buffers.resize(imageCount);
 		for (uint32_t i = 0; i < imageCount; i++)
 		{
-			VkImageViewCreateInfo colorAttachmentView = {};
+			vk::ImageViewCreateInfo colorAttachmentView = {};
 			colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			colorAttachmentView.pNext = NULL;
 			colorAttachmentView.format = colorFormat;
 			colorAttachmentView.components = {
-				VK_COMPONENT_SWIZZLE_R,
-				VK_COMPONENT_SWIZZLE_G,
-				VK_COMPONENT_SWIZZLE_B,
-				VK_COMPONENT_SWIZZLE_A
+				vk::ComponentSwizzle::eR,
+				vk::ComponentSwizzle::eG,
+				vk::ComponentSwizzle::eB,
+				vk::ComponentSwizzle::eA
 			};
-			colorAttachmentView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			colorAttachmentView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			colorAttachmentView.subresourceRange.baseMipLevel = 0;
 			colorAttachmentView.subresourceRange.levelCount = 1;
 			colorAttachmentView.subresourceRange.baseArrayLayer = 0;
 			colorAttachmentView.subresourceRange.layerCount = 1;
-			colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			colorAttachmentView.viewType = vk::ImageViewType::e2D;
 			colorAttachmentView.flags = 0;
 
 			buffers[i].image = images[i];
@@ -454,13 +454,13 @@ public:
 	*
 	* @note The function will always wait until the next image has been acquired by setting timeout to UINT64_MAX
 	*
-	* @return VkResult of the image acquisition
+	* @return vk::Result of the image acquisition
 	*/
-	VkResult acquireNextImage(VkSemaphore presentCompleteSemaphore, uint32_t *imageIndex)
+	vk::Result acquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32_t *imageIndex)
 	{
 		// By setting timeout to UINT64_MAX we will always wait until the next image has been acquired or an actual error is thrown
-		// With that we don't have to handle VK_NOT_READY
-		return fpAcquireNextImageKHR(device, swapChain, UINT64_MAX, presentCompleteSemaphore, (VkFence)nullptr, imageIndex);
+		// With that we don't have to handle vk::Result::eNotReady
+		return fpAcquireNextImageKHR(device, swapChain, UINT64_MAX, presentCompleteSemaphore, (vk::Fence)nullptr, imageIndex);
 	}
 
 	/**
@@ -470,11 +470,11 @@ public:
 	* @param imageIndex Index of the swapchain image to queue for presentation
 	* @param waitSemaphore (Optional) Semaphore that is waited on before the image is presented (only used if != VK_NULL_HANDLE)
 	*
-	* @return VkResult of the queue presentation
+	* @return vk::Result of the queue presentation
 	*/
-	VkResult queuePresent(VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore = VK_NULL_HANDLE)
+	vk::Result queuePresent(vk::Queue queue, uint32_t imageIndex, vk::Semaphore waitSemaphore = VK_NULL_HANDLE)
 	{
-		VkPresentInfoKHR presentInfo = {};
+		vk::PresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = NULL;
 		presentInfo.swapchainCount = 1;
@@ -521,18 +521,18 @@ public:
 		
 		// Get display property
 		vkGetPhysicalDeviceDisplayPropertiesKHR(physicalDevice, &displayPropertyCount, NULL);
-		VkDisplayPropertiesKHR* pDisplayProperties = new VkDisplayPropertiesKHR[displayPropertyCount];
+		vk::DisplayPropertiesKHR* pDisplayProperties = new vk::DisplayPropertiesKHR[displayPropertyCount];
 		vkGetPhysicalDeviceDisplayPropertiesKHR(physicalDevice, &displayPropertyCount, pDisplayProperties);
 
 		// Get plane property
 		uint32_t planePropertyCount;
 		vkGetPhysicalDeviceDisplayPlanePropertiesKHR(physicalDevice, &planePropertyCount, NULL);
-		VkDisplayPlanePropertiesKHR* pPlaneProperties = new VkDisplayPlanePropertiesKHR[planePropertyCount];
+		vk::DisplayPlanePropertiesKHR* pPlaneProperties = new vk::DisplayPlanePropertiesKHR[planePropertyCount];
 		vkGetPhysicalDeviceDisplayPlanePropertiesKHR(physicalDevice, &planePropertyCount, pPlaneProperties);
 
-		VkDisplayKHR display = VK_NULL_HANDLE;
-		VkDisplayModeKHR displayMode;
-		VkDisplayModePropertiesKHR* pModeProperties;
+		vk::DisplayKHR display = VK_NULL_HANDLE;
+		vk::DisplayModeKHR displayMode;
+		vk::DisplayModePropertiesKHR* pModeProperties;
 		bool foundMode = false;
 
 		for(uint32_t i = 0; i < displayPropertyCount;++i)
@@ -540,12 +540,12 @@ public:
 			display = pDisplayProperties[i].display;
 			uint32_t modeCount;
 			vkGetDisplayModePropertiesKHR(physicalDevice, display, &modeCount, NULL);
-			pModeProperties = new VkDisplayModePropertiesKHR[modeCount];
+			pModeProperties = new vk::DisplayModePropertiesKHR[modeCount];
 			vkGetDisplayModePropertiesKHR(physicalDevice, display, &modeCount, pModeProperties);
 
 			for (uint32_t j = 0; j < modeCount; ++j)
 			{
-				const VkDisplayModePropertiesKHR* mode = &pModeProperties[j];
+				const vk::DisplayModePropertiesKHR* mode = &pModeProperties[j];
 
 				if (mode->parameters.visibleRegion.width == width && mode->parameters.visibleRegion.height == height)
 				{
@@ -569,7 +569,7 @@ public:
 
 		// Search for a best plane we can use
 		uint32_t bestPlaneIndex = UINT32_MAX;
-		VkDisplayKHR* pDisplays = NULL;
+		vk::DisplayKHR* pDisplays = NULL;
 		for(uint32_t i = 0; i < planePropertyCount; i++)
 		{
 			uint32_t planeIndex=i;
@@ -579,7 +579,7 @@ public:
 			{
 				delete [] pDisplays;
 			}
-			pDisplays = new VkDisplayKHR[displayCount];
+			pDisplays = new vk::DisplayKHR[displayCount];
 			vkGetDisplayPlaneSupportedDisplaysKHR(physicalDevice, planeIndex, &displayCount, pDisplays);
 
 			// Find a display that matches the current plane
@@ -604,9 +604,9 @@ public:
 			return;
 		}
 
-		VkDisplayPlaneCapabilitiesKHR planeCap;
+		vk::DisplayPlaneCapabilitiesKHR planeCap;
 		vkGetDisplayPlaneCapabilitiesKHR(physicalDevice, displayMode, bestPlaneIndex, &planeCap);
-		VkDisplayPlaneAlphaFlagBitsKHR alphaMode;
+		vk::DisplayPlaneAlphaFlagBitsKHR alphaMode;
 
 		if (planeCap.supportedAlpha & VK_DISPLAY_PLANE_ALPHA_PER_PIXEL_PREMULTIPLIED_BIT_KHR)
 		{
@@ -622,21 +622,21 @@ public:
 			alphaMode = VK_DISPLAY_PLANE_ALPHA_GLOBAL_BIT_KHR;
 		}
 
-		VkDisplaySurfaceCreateInfoKHR surfaceInfo{};
+		vk::DisplaySurfaceCreateInfoKHR surfaceInfo{};
 		surfaceInfo.sType = VK_STRUCTURE_TYPE_DISPLAY_SURFACE_CREATE_INFO_KHR;
 		surfaceInfo.pNext = NULL;
 		surfaceInfo.flags = 0;
 		surfaceInfo.displayMode = displayMode;
 		surfaceInfo.planeIndex = bestPlaneIndex;
 		surfaceInfo.planeStackIndex = pPlaneProperties[bestPlaneIndex].currentStackIndex;
-		surfaceInfo.transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		surfaceInfo.transform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
 		surfaceInfo.globalAlpha = 1.0;
 		surfaceInfo.alphaMode = alphaMode;
 		surfaceInfo.imageExtent.width = width;
 		surfaceInfo.imageExtent.height = height;
 
-		VkResult result = vkCreateDisplayPlaneSurfaceKHR(instance, &surfaceInfo, NULL, &surface);
-		if(result !=VK_SUCCESS)
+		vk::Result result = vkCreateDisplayPlaneSurfaceKHR(instance, &surfaceInfo, NULL, &surface);
+		if(result !=vk::Result::eSuccess)
 		{
 			vks::tools::exitFatal("Failed to create surface!", "Fatal error");
 		}

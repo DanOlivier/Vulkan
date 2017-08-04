@@ -12,7 +12,7 @@ namespace vks
 {
 	namespace tools
 	{
-		std::string errorString(VkResult errorCode)
+		std::string errorString(vk::Result errorCode)
 		{
 			switch (errorCode)
 			{
@@ -46,7 +46,7 @@ namespace vks
 			}
 		}
 
-		std::string physicalDeviceTypeString(VkPhysicalDeviceType type)
+		std::string physicalDeviceTypeString(vk::PhysicalDeviceType type)
 		{
 			switch (type)
 			{
@@ -60,24 +60,24 @@ namespace vks
 			}
 		}
 
-		VkBool32 getSupportedDepthFormat(VkPhysicalDevice physicalDevice, VkFormat *depthFormat)
+		vk::Bool32 getSupportedDepthFormat(vk::PhysicalDevice physicalDevice, vk::Format *depthFormat)
 		{
 			// Since all depth formats may be optional, we need to find a suitable depth format to use
 			// Start with the highest precision packed format
-			std::vector<VkFormat> depthFormats = {
-				VK_FORMAT_D32_SFLOAT_S8_UINT,
-				VK_FORMAT_D32_SFLOAT,
-				VK_FORMAT_D24_UNORM_S8_UINT,
-				VK_FORMAT_D16_UNORM_S8_UINT,
-				VK_FORMAT_D16_UNORM
+			std::vector<vk::Format> depthFormats = {
+				vk::Format::eD32Sfloat_S8_UINT,
+				vk::Format::eD32Sfloat,
+				vk::Format::eD24UnormS8Uint,
+				vk::Format::eD16Unorm_S8_UINT,
+				vk::Format::eD16Unorm
 			};
 
 			for (auto& format : depthFormats)
 			{
-				VkFormatProperties formatProps;
+				vk::FormatProperties formatProps;
 				vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProps);
 				// Format must support depth stencil attachment for optimal tiling
-				if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+				if (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
 				{
 					*depthFormat = format;
 					return true;
@@ -92,16 +92,16 @@ namespace vks
 		// See chapter 11.4 "Image Layout" for details
 
 		void setImageLayout(
-			VkCommandBuffer cmdbuffer,
-			VkImage image,
-			VkImageLayout oldImageLayout,
-			VkImageLayout newImageLayout,
-			VkImageSubresourceRange subresourceRange,
-			VkPipelineStageFlags srcStageMask,
-			VkPipelineStageFlags dstStageMask)
+			vk::CommandBuffer cmdbuffer,
+			vk::Image image,
+			vk::ImageLayout oldImageLayout,
+			vk::ImageLayout newImageLayout,
+			vk::ImageSubresourceRange subresourceRange,
+			vk::PipelineStageFlags srcStageMask,
+			vk::PipelineStageFlags dstStageMask)
 		{
 			// Create an image barrier object
-			VkImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
+			vk::ImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
 			imageMemoryBarrier.oldLayout = oldImageLayout;
 			imageMemoryBarrier.newLayout = newImageLayout;
 			imageMemoryBarrier.image = image;
@@ -112,48 +112,48 @@ namespace vks
 			// before it will be transitioned to the new layout
 			switch (oldImageLayout)
 			{
-			case VK_IMAGE_LAYOUT_UNDEFINED:
+			case vk::ImageLayout::eUndefined:
 				// Image layout is undefined (or does not matter)
 				// Only valid as initial layout
 				// No flags required, listed only for completeness
 				imageMemoryBarrier.srcAccessMask = 0;
 				break;
 
-			case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			case vk::ImageLayout::ePreinitialized:
 				// Image is preinitialized
 				// Only valid as initial layout for linear images, preserves memory contents
 				// Make sure host writes have been finished
-				imageMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+				imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eHostWrite;
 				break;
 
-			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			case vk::ImageLayout::eColorAttachmentOptimal:
 				// Image is a color attachment
 				// Make sure any writes to the color buffer have been finished
-				imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
 				break;
 
-			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			case vk::ImageLayout::eDepthStencilAttachmentOptimal:
 				// Image is a depth/stencil attachment
 				// Make sure any writes to the depth/stencil buffer have been finished
-				imageMemoryBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 				break;
 
-			case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			case vk::ImageLayout::eTransferSrcOptimal:
 				// Image is a transfer source 
 				// Make sure any reads from the image have been finished
-				imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
 				break;
 
-			case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			case vk::ImageLayout::eTransferDstOptimal:
 				// Image is a transfer destination
 				// Make sure any writes to the image have been finished
-				imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
 				break;
 
-			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			case vk::ImageLayout::eShaderReadOnlyOptimal:
 				// Image is read by a shader
 				// Make sure any shader reads from the image have been finished
-				imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
 				break;
 			default:
 				// Other source layouts aren't handled (yet)
@@ -164,38 +164,38 @@ namespace vks
 			// Destination access mask controls the dependency for the new image layout
 			switch (newImageLayout)
 			{
-			case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			case vk::ImageLayout::eTransferDstOptimal:
 				// Image will be used as a transfer destination
 				// Make sure any writes to the image have been finished
-				imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
 				break;
 
-			case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			case vk::ImageLayout::eTransferSrcOptimal:
 				// Image will be used as a transfer source
 				// Make sure any reads from the image have been finished
-				imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
 				break;
 
-			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			case vk::ImageLayout::eColorAttachmentOptimal:
 				// Image will be used as a color attachment
 				// Make sure any writes to the color buffer have been finished
-				imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
 				break;
 
-			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			case vk::ImageLayout::eDepthStencilAttachmentOptimal:
 				// Image layout will be used as a depth/stencil attachment
 				// Make sure any writes to depth/stencil buffer have been finished
-				imageMemoryBarrier.dstAccessMask = imageMemoryBarrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				imageMemoryBarrier.dstAccessMask = imageMemoryBarrier.dstAccessMask | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 				break;
 
-			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			case vk::ImageLayout::eShaderReadOnlyOptimal:
 				// Image will be read in a shader (sampler, input attachment)
 				// Make sure any writes to the image have been finished
 				if (imageMemoryBarrier.srcAccessMask == 0)
 				{
-					imageMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+					imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite;
 				}
-				imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 				break;
 			default:
 				// Other source layouts aren't handled (yet)
@@ -215,15 +215,15 @@ namespace vks
 
 		// Fixed sub resource on first mip level and layer
 		void setImageLayout(
-			VkCommandBuffer cmdbuffer,
-			VkImage image,
-			VkImageAspectFlags aspectMask,
-			VkImageLayout oldImageLayout,
-			VkImageLayout newImageLayout,
-			VkPipelineStageFlags srcStageMask,
-			VkPipelineStageFlags dstStageMask)
+			vk::CommandBuffer cmdbuffer,
+			vk::Image image,
+			vk::ImageAspectFlags aspectMask,
+			vk::ImageLayout oldImageLayout,
+			vk::ImageLayout newImageLayout,
+			vk::PipelineStageFlags srcStageMask,
+			vk::PipelineStageFlags dstStageMask)
 		{
-			VkImageSubresourceRange subresourceRange = {};
+			vk::ImageSubresourceRange subresourceRange = {};
 			subresourceRange.aspectMask = aspectMask;
 			subresourceRange.baseMipLevel = 0;
 			subresourceRange.levelCount = 1;
@@ -232,17 +232,17 @@ namespace vks
 		}
 
 		void insertImageMemoryBarrier(
-			VkCommandBuffer cmdbuffer,
-			VkImage image,
-			VkAccessFlags srcAccessMask,
-			VkAccessFlags dstAccessMask,
-			VkImageLayout oldImageLayout,
-			VkImageLayout newImageLayout,
-			VkPipelineStageFlags srcStageMask,
-			VkPipelineStageFlags dstStageMask,
-			VkImageSubresourceRange subresourceRange)
+			vk::CommandBuffer cmdbuffer,
+			vk::Image image,
+			vk::AccessFlags srcAccessMask,
+			vk::AccessFlags dstAccessMask,
+			vk::ImageLayout oldImageLayout,
+			vk::ImageLayout newImageLayout,
+			vk::PipelineStageFlags srcStageMask,
+			vk::PipelineStageFlags dstStageMask,
+			vk::ImageSubresourceRange subresourceRange)
 		{
-			VkImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
+			vk::ImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
 			imageMemoryBarrier.srcAccessMask = srcAccessMask;
 			imageMemoryBarrier.dstAccessMask = dstAccessMask;
 			imageMemoryBarrier.oldLayout = oldImageLayout;
@@ -292,7 +292,7 @@ namespace vks
 #if defined(__ANDROID__)
 		// Android shaders are stored as assets in the apk
 		// So they need to be loaded via the asset manager
-		VkShaderModule loadShader(AAssetManager* assetManager, const char *fileName, VkDevice device)
+		vk::ShaderModule loadShader(AAssetManager* assetManager, const char *fileName, vk::Device device)
 		{
 			// Load shader from compressed asset
 			AAsset* asset = AAssetManager_open(assetManager, fileName, AASSET_MODE_STREAMING);
@@ -304,8 +304,8 @@ namespace vks
 			AAsset_read(asset, shaderCode, size);
 			AAsset_close(asset);
 
-			VkShaderModule shaderModule;
-			VkShaderModuleCreateInfo moduleCreateInfo;
+			vk::ShaderModule shaderModule;
+			vk::ShaderModuleCreateInfo moduleCreateInfo;
 			moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 			moduleCreateInfo.pNext = NULL;
 			moduleCreateInfo.codeSize = size;
@@ -319,7 +319,7 @@ namespace vks
 			return shaderModule;
 		}
 #else
-		VkShaderModule loadShader(const char *fileName, VkDevice device)
+		vk::ShaderModule loadShader(const char *fileName, vk::Device device)
 		{
 			std::ifstream is(fileName, std::ios::binary | std::ios::in | std::ios::ate);
 
@@ -333,8 +333,8 @@ namespace vks
 
 				assert(size > 0);
 
-				VkShaderModule shaderModule;
-				VkShaderModuleCreateInfo moduleCreateInfo{};
+				vk::ShaderModule shaderModule;
+				vk::ShaderModuleCreateInfo moduleCreateInfo{};
 				moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 				moduleCreateInfo.codeSize = size;
 				moduleCreateInfo.pCode = (uint32_t*)shaderCode;
@@ -353,15 +353,15 @@ namespace vks
 		}
 #endif
 
-		VkShaderModule loadShaderGLSL(const char *fileName, VkDevice device, VkShaderStageFlagBits stage)
+		vk::ShaderModule loadShaderGLSL(const char *fileName, vk::Device device, vk::ShaderStageFlagBits stage)
 		{
 			std::string shaderSrc = readTextFile(fileName);
 			const char *shaderCode = shaderSrc.c_str();
 			size_t size = strlen(shaderCode);
 			assert(size > 0);
 
-			VkShaderModule shaderModule;
-			VkShaderModuleCreateInfo moduleCreateInfo;
+			vk::ShaderModule shaderModule;
+			vk::ShaderModuleCreateInfo moduleCreateInfo;
 			moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 			moduleCreateInfo.pNext = NULL;
 			moduleCreateInfo.codeSize = 3 * sizeof(uint32_t) + size + 1;

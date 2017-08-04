@@ -84,7 +84,7 @@ The example uses one dynamic uniform buffer, so we need to request at least one 
 void setupDescriptorPool()
 {
   ...
-  std::vector<VkDescriptorPoolSize> poolSizes = {
+  std::vector<vk::DescriptorPoolSize> poolSizes = {
     ...
     vkTools::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
     ...
@@ -98,7 +98,7 @@ The vertex shader interface defines the uniform with the model matrices (sampled
 ```cpp
 void setupDescriptorSetLayout()
 {
-  std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings =  {
+  std::vector<vk::DescriptorSetLayoutBinding> setLayoutBindings =  {
     ...
     vkTools::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
     ...
@@ -112,7 +112,7 @@ The example uses the same descriptor set based on the set layout above for all o
 ```cpp
 void setupDescriptorSet()
 {
-  std::vector<VkWriteDescriptorSet> writeDescriptorSets = {    
+  std::vector<vk::WriteDescriptorSet> writeDescriptorSets = {    
     // Binding 1 : Instance matrix as dynamic uniform buffer
     vkTools::initializers::writeDescriptorSet(descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &uniformBuffers.dynamic.descriptor),
   };
@@ -148,7 +148,7 @@ While creating the buffer we did not specify the ```VK_MEMORY_PROPERTY_HOST_COHE
 This would be done using e.g. [vkFlushMappedMemoryRanges](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkFlushMappedMemoryRanges.html).
 
 ```cpp
-VkMappedMemoryRange memoryRange = vkTools::initializers::mappedMemoryRange();
+vk::MappedMemoryRange memoryRange = vkTools::initializers::mappedMemoryRange();
 memoryRange.memory = uniformBuffers.dynamic.memory;
 memoryRange.size = sizeof(uboDataDynamic);
 vkFlushMappedMemoryRanges(device, 1, &memoryRange);

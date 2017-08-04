@@ -18,7 +18,7 @@
 #ifndef VULKANANDROID_HPP
 #define VULKANANDROID_HPP
 
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan.hpp"
 
 #if defined(__ANDROID__)
 
@@ -164,7 +164,7 @@ namespace vks
 		extern int32_t screenDensity;
 
 		bool loadVulkanLibrary();
-		void loadVulkanFunctions(VkInstance instance);
+		void loadVulkanFunctions(vk::Instance instance);
 		void freeVulkanLibrary();
 		void getDeviceConfig();
 	}

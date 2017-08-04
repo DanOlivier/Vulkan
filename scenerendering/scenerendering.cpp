@@ -38,7 +38,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include "vulkanexamplebase.h"
 #include "VulkanTexture.hpp"
 #include "VulkanDevice.hpp"
@@ -76,9 +76,9 @@ struct SceneMaterial
 	// The example only uses a diffuse channel
 	vks::Texture2D diffuse;
 	// The material's descriptor contains the material descriptors
-	VkDescriptorSet descriptorSet;
+	vk::DescriptorSet descriptorSet;
 	// Pointer to the pipeline used by this material
-	VkPipeline *pipeline;
+	vk::Pipeline *pipeline;
 };
 
 // Stores per-mesh Vulkan resources
@@ -97,16 +97,16 @@ class Scene
 {
 private:
 	vks::VulkanDevice *vulkanDevice;
-	VkQueue queue;
+	vk::Queue queue;
 
-	VkDescriptorPool descriptorPool;
+	vk::DescriptorPool descriptorPool;
 
 	// We will be using separate descriptor sets (and bindings)
 	// for material and scene related uniforms
 	struct
 	{
-		VkDescriptorSetLayout material;
-		VkDescriptorSetLayout scene;
+		vk::DescriptorSetLayout material;
+		vk::DescriptorSetLayout scene;
 	} descriptorSetLayouts;
 
 	// We will be using one single index and vertex buffer
@@ -115,7 +115,7 @@ private:
 	vks::Buffer vertexBuffer;
 	vks::Buffer indexBuffer;
 
-	VkDescriptorSet descriptorSetScene;
+	vk::DescriptorSet descriptorSetScene;
 
 	const aiScene* aScene;
 
@@ -149,19 +149,19 @@ private:
 
 			// Textures
 			std::string texFormatSuffix;
-			VkFormat texFormat;
+			vk::Format texFormat;
 			// Get supported compressed texture format
 			if (vulkanDevice->features.textureCompressionBC) {
 				texFormatSuffix = "_bc3_unorm";
-				texFormat = VK_FORMAT_BC3_UNORM_BLOCK;
+				texFormat = vk::Format::eBc3UnormBlock;
 			}
 			else if (vulkanDevice->features.textureCompressionASTC_LDR) {
 				texFormatSuffix = "_astc_8x8_unorm";
-				texFormat = VK_FORMAT_ASTC_8x8_UNORM_BLOCK;
+				texFormat = vk::Format::eAstc8x8UnormBlock;
 			}
 			else if (vulkanDevice->features.textureCompressionETC2) {
 				texFormatSuffix = "_etc2_unorm";
-				texFormat = VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK;
+				texFormat = vk::Format::eEtc2R8G8B8UnormBlock;
 			}
 			else {
 				vks::tools::exitFatal("Device does not support any compressed texture format!", "Error");
@@ -182,7 +182,7 @@ private:
 			{
 				std::cout << "  Material has no diffuse, using dummy texture!" << std::endl;
 				// todo : separate pipeline and layout
-				materials[i].diffuse.loadFromFile(assetPath + "dummy_rgba_unorm.ktx", VK_FORMAT_R8G8B8A8_UNORM, vulkanDevice, queue);
+				materials[i].diffuse.loadFromFile(assetPath + "dummy_rgba_unorm.ktx", vk::Format::eR8G8B8A8Unorm, vulkanDevice, queue);
 			}
 
 			// For scenes with multiple textures per material we would need to check for additional texture types, e.g.:
@@ -195,11 +195,11 @@ private:
 		// Generate descriptor sets for the materials
 
 		// Descriptor pool
-		std::vector<VkDescriptorPoolSize> poolSizes;
-		poolSizes.push_back(vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(materials.size())));
-		poolSizes.push_back(vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(materials.size())));
+		std::vector<vk::DescriptorPoolSize> poolSizes;
+		poolSizes.push_back(vks::initializers::descriptorPoolSize(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(materials.size())));
+		poolSizes.push_back(vks::initializers::descriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(materials.size())));
 
-		VkDescriptorPoolCreateInfo descriptorPoolInfo =
+		vk::DescriptorPoolCreateInfo descriptorPoolInfo =
 			vks::initializers::descriptorPoolCreateInfo(
 				static_cast<uint32_t>(poolSizes.size()),
 				poolSizes.data(),
@@ -208,13 +208,13 @@ private:
 		VK_CHECK_RESULT(vkCreateDescriptorPool(vulkanDevice->logicalDevice, &descriptorPoolInfo, nullptr, &descriptorPool));
 
 		// Descriptor set and pipeline layouts
-		std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings;
-		VkDescriptorSetLayoutCreateInfo descriptorLayout;
+		std::vector<vk::DescriptorSetLayoutBinding> setLayoutBindings;
+		vk::DescriptorSetLayoutCreateInfo descriptorLayout;
 
 		// Set 0: Scene matrices
 		setLayoutBindings.push_back(vks::initializers::descriptorSetLayoutBinding(
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			VK_SHADER_STAGE_VERTEX_BIT,
+			vk::DescriptorType::eUniformBuffer,
+			vk::ShaderStageFlagBits::eVertex,
 			0));
 		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(
 				setLayoutBindings.data(),
@@ -224,18 +224,18 @@ private:
 		// Set 1: Material data
 		setLayoutBindings.clear();
 		setLayoutBindings.push_back(vks::initializers::descriptorSetLayoutBinding(
-			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-			VK_SHADER_STAGE_FRAGMENT_BIT,
+			vk::DescriptorType::eCombinedImageSampler,
+			vk::ShaderStageFlagBits::eFragment,
 			0));
 		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(vulkanDevice->logicalDevice, &descriptorLayout, nullptr, &descriptorSetLayouts.material));
 
 		// Setup pipeline layout
-		std::array<VkDescriptorSetLayout, 2> setLayouts = { descriptorSetLayouts.scene, descriptorSetLayouts.material };
-		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(setLayouts.data(), static_cast<uint32_t>(setLayouts.size()));
+		std::array<vk::DescriptorSetLayout, 2> setLayouts = { descriptorSetLayouts.scene, descriptorSetLayouts.material };
+		vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(setLayouts.data(), static_cast<uint32_t>(setLayouts.size()));
 
 		// We will be using a push constant block to pass material properties to the fragment shaders
-		VkPushConstantRange pushConstantRange = vks::initializers::pushConstantRange(
-			VK_SHADER_STAGE_FRAGMENT_BIT, 
+		vk::PushConstantRange pushConstantRange = vks::initializers::pushConstantRange(
+			vk::ShaderStageFlagBits::eFragment, 
 			sizeof(SceneMaterialProperties), 
 			0);
 		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
@@ -247,7 +247,7 @@ private:
 		for (size_t i = 0; i < materials.size(); i++)
 		{
 			// Descriptor set
-			VkDescriptorSetAllocateInfo allocInfo =
+			vk::DescriptorSetAllocateInfo allocInfo =
 				vks::initializers::descriptorSetAllocateInfo(
 					descriptorPool,
 					&descriptorSetLayouts.material,
@@ -255,14 +255,14 @@ private:
 
 			VK_CHECK_RESULT(vkAllocateDescriptorSets(vulkanDevice->logicalDevice, &allocInfo, &materials[i].descriptorSet));
 
-			std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 
 			// todo : only use image sampler descriptor set and use one scene ubo for matrices
 
 			// Binding 0: Diffuse texture
 			writeDescriptorSets.push_back(vks::initializers::writeDescriptorSet(
 				materials[i].descriptorSet,
-				VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				vk::DescriptorType::eCombinedImageSampler,
 				0,
 				&materials[i].diffuse.descriptor));
 
@@ -270,18 +270,18 @@ private:
 		}
 
 		// Scene descriptor set
-		VkDescriptorSetAllocateInfo allocInfo =
+		vk::DescriptorSetAllocateInfo allocInfo =
 			vks::initializers::descriptorSetAllocateInfo(
 				descriptorPool,
 				&descriptorSetLayouts.scene,
 				1);
 		VK_CHECK_RESULT(vkAllocateDescriptorSets(vulkanDevice->logicalDevice, &allocInfo, &descriptorSetScene));
 
-		std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		// Binding 0 : Vertex shader uniform buffer
 		writeDescriptorSets.push_back(vks::initializers::writeDescriptorSet(
 			descriptorSetScene,
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			vk::DescriptorType::eUniformBuffer,
 			0,
 			&uniformBuffer.descriptor));
 
@@ -289,7 +289,7 @@ private:
 	}
 
 	// Load all meshes from the scene and generate the buffers for rendering them
-	void loadMeshes(VkCommandBuffer copyCmd)
+	void loadMeshes(vk::CommandBuffer copyCmd)
 	{
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
@@ -347,37 +347,37 @@ private:
 		// Vertex buffer
 		// Staging buffer
 		VK_CHECK_RESULT(vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			vk::BufferUsageFlagBits::eTransferSrc,
+			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&vertexStaging,
 			static_cast<uint32_t>(vertexDataSize),
 			vertices.data()));
 		// Target
 		VK_CHECK_RESULT(vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&vertexBuffer,
 			static_cast<uint32_t>(vertexDataSize)));
 
 		// Index buffer
 		VK_CHECK_RESULT(vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			vk::BufferUsageFlagBits::eTransferSrc,
+			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&indexStaging,
 			static_cast<uint32_t>(indexDataSize),
 			indices.data()));
 		// Target
 		VK_CHECK_RESULT(vulkanDevice->createBuffer(
-			VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&indexBuffer,
 			static_cast<uint32_t>(indexDataSize)));
 
 		// Copy
-		VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 		VK_CHECK_RESULT(vkBeginCommandBuffer(copyCmd, &cmdBufInfo));
 
-		VkBufferCopy copyRegion = {};
+		vk::BufferCopy copyRegion = {};
 
 		copyRegion.size = vertexDataSize;
 		vkCmdCopyBuffer(
@@ -397,7 +397,7 @@ private:
 
 		VK_CHECK_RESULT(vkEndCommandBuffer(copyCmd));
 
-		VkSubmitInfo submitInfo = {};
+		vk::SubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &copyCmd;
@@ -432,32 +432,32 @@ public:
 
 	// Scene uses multiple pipelines
 	struct {
-		VkPipeline solid;
-		VkPipeline blending;
-		VkPipeline wireframe;
+		vk::Pipeline solid;
+		vk::Pipeline blending;
+		vk::Pipeline wireframe;
 	} pipelines;
 
 	// Shared pipeline layout
-	VkPipelineLayout pipelineLayout;
+	vk::PipelineLayout pipelineLayout;
 
 	// For displaying only a single part of the scene
 	bool renderSingleScenePart = false;
 	uint32_t scenePartIndex = 0;
 
 	// Default constructor
-	Scene(vks::VulkanDevice *vulkanDevice, VkQueue queue)
+	Scene(vks::VulkanDevice *vulkanDevice, vk::Queue queue)
 	{
 		this->vulkanDevice = vulkanDevice;
 		this->queue = queue;
 
 		// Prepare uniform buffer for global matrices
-		VkMemoryRequirements memReqs;
-		VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
-		VkBufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(uniformData));
+		vk::MemoryRequirements memReqs;
+		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::BufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(uniformData));
 		VK_CHECK_RESULT(vkCreateBuffer(vulkanDevice->logicalDevice, &bufferCreateInfo, nullptr, &uniformBuffer.buffer));
 		vkGetBufferMemoryRequirements(vulkanDevice->logicalDevice, uniformBuffer.buffer, &memReqs);
 		memAlloc.allocationSize = memReqs.size;
-		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 		VK_CHECK_RESULT(vkAllocateMemory(vulkanDevice->logicalDevice, &memAlloc, nullptr, &uniformBuffer.memory));
 		VK_CHECK_RESULT(vkBindBufferMemory(vulkanDevice->logicalDevice, uniformBuffer.buffer, uniformBuffer.memory, 0));
 		VK_CHECK_RESULT(vkMapMemory(vulkanDevice->logicalDevice, uniformBuffer.memory, 0, sizeof(uniformData), 0, (void **)&uniformBuffer.mapped));
@@ -486,7 +486,7 @@ public:
 		uniformBuffer.destroy();
 	}
 
-	void load(std::string filename, VkCommandBuffer copyCmd)
+	void load(std::string filename, vk::CommandBuffer copyCmd)
 	{
 		Assimp::Importer Importer;
 
@@ -522,13 +522,13 @@ public:
 
 	// Renders the scene into an active command buffer
 	// In a real world application we would do some visibility culling in here
-	void render(VkCommandBuffer cmdBuffer, bool wireframe)
+	void render(vk::CommandBuffer cmdBuffer, bool wireframe)
 	{
-		VkDeviceSize offsets[1] = { 0 };
+		vk::DeviceSize offsets[1] = { 0 };
 
 		// Bind scene vertex and index buffers
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBuffer.buffer, offsets);
-		vkCmdBindIndexBuffer(cmdBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(cmdBuffer, indexBuffer.buffer, 0, vk::IndexType::eUint32);
 
 		for (size_t i = 0; i < meshes.size(); i++)
 		{
@@ -536,27 +536,27 @@ public:
 				continue;
 
 			// todo : per material pipelines
-			// vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *mesh.material->pipeline);
+			// vkCmdBindPipeline(cmdBuffer, vk::PipelineBindPoint::eGraphics, *mesh.material->pipeline);
 
 			// We will be using multiple descriptor sets for rendering
 			// In GLSL the selection is done via the set and binding keywords
 			// VS: layout (set = 0, binding = 0) uniform UBO;
 			// FS: layout (set = 1, binding = 0) uniform sampler2D samplerColorMap;
 
-			std::array<VkDescriptorSet, 2> descriptorSets;
+			std::array<vk::DescriptorSet, 2> descriptorSets;
 			// Set 0: Scene descriptor set containing global matrices
 			descriptorSets[0] = descriptorSetScene;
 			// Set 1: Per-Material descriptor set containing bound images
 			descriptorSets[1] = meshes[i].material->descriptorSet;
 
-			vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframe ? pipelines.wireframe : *meshes[i].material->pipeline);
-			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, NULL);
+			vkCmdBindPipeline(cmdBuffer, vk::PipelineBindPoint::eGraphics, wireframe ? pipelines.wireframe : *meshes[i].material->pipeline);
+			vkCmdBindDescriptorSets(cmdBuffer, vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, NULL);
 
 			// Pass material properies via push constants
 			vkCmdPushConstants(
 				cmdBuffer,
 				pipelineLayout,
-				VK_SHADER_STAGE_FRAGMENT_BIT,
+				vk::ShaderStageFlagBits::eFragment,
 				0,
 				sizeof(SceneMaterialProperties),
 				&meshes[i].material->properties);
@@ -576,9 +576,9 @@ public:
 	Scene *scene = nullptr;
 
 	struct {
-		VkPipelineVertexInputStateCreateInfo inputState;
-		std::vector<VkVertexInputBindingDescription> bindingDescriptions;
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+		vk::PipelineVertexInputStateCreateInfo inputState;
+		std::vector<vk::VertexInputBindingDescription> bindingDescriptions;
+		std::vector<vk::VertexInputAttributeDescription> attributeDescriptions;
 	} vertices;
 
 	VulkanExample() : VulkanExampleBase(ENABLE_VALIDATION)
@@ -619,14 +619,14 @@ public:
 
 	void buildCommandBuffers()
 	{
-		VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
-		VkClearValue clearValues[2];
+		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
 		clearValues[0].color = { { 0.25f, 0.25f, 0.25f, 1.0f} };
 		clearValues[1].depthStencil = { 1.0f, 0 };
 
-		VkRenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -641,12 +641,12 @@ public:
 
 			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
 
-			VkViewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
+			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
 			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
 
-			VkRect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
+			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
 			scene->render(drawCmdBuffers[i], wireframe);
@@ -665,7 +665,7 @@ public:
 			vks::initializers::vertexInputBindingDescription(
 				VERTEX_BUFFER_BIND_ID,
 				sizeof(Vertex),
-				VK_VERTEX_INPUT_RATE_VERTEX);
+				vk::VertexInputRate::eVertex);
 
 		// Attribute descriptions
 		// Describes memory layout and shader positions
@@ -675,28 +675,28 @@ public:
 			vks::initializers::vertexInputAttributeDescription(
 				VERTEX_BUFFER_BIND_ID,
 				0,
-				VK_FORMAT_R32G32B32_SFLOAT,
+				vk::Format::eR32G32B32Sfloat,
 				0);
 		// Location 1 : Normal
 		vertices.attributeDescriptions[1] =
 			vks::initializers::vertexInputAttributeDescription(
 				VERTEX_BUFFER_BIND_ID,
 				1,
-				VK_FORMAT_R32G32B32_SFLOAT,
+				vk::Format::eR32G32B32Sfloat,
 				sizeof(float) * 3);
 		// Location 2 : Texture coordinates
 		vertices.attributeDescriptions[2] =
 			vks::initializers::vertexInputAttributeDescription(
 				VERTEX_BUFFER_BIND_ID,
 				2,
-				VK_FORMAT_R32G32_SFLOAT,
+				vk::Format::eR32G32Sfloat,
 				sizeof(float) * 6);
 		// Location 3 : Color
 		vertices.attributeDescriptions[3] =
 			vks::initializers::vertexInputAttributeDescription(
 				VERTEX_BUFFER_BIND_ID,
 				3,
-				VK_FORMAT_R32G32B32_SFLOAT,
+				vk::Format::eR32G32B32Sfloat,
 				sizeof(float) * 8);
 
 		vertices.inputState = vks::initializers::pipelineVertexInputStateCreateInfo();
@@ -708,60 +708,60 @@ public:
 
 	void preparePipelines()
 	{
-		VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
-				VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+				vk::PrimitiveTopology::eTriangleList,
 				0,
 				VK_FALSE);
 
-		VkPipelineRasterizationStateCreateInfo rasterizationState =
+		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
-				VK_POLYGON_MODE_FILL,
-				VK_CULL_MODE_BACK_BIT,
-				VK_FRONT_FACE_COUNTER_CLOCKWISE,
+				vk::PolygonMode::eFill,
+				vk::CullModeFlagBits::eBack,
+				vk::FrontFace::eCounterClockwise,
 				0);
 
-		VkPipelineColorBlendAttachmentState blendAttachmentState =
+		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
 				0xf,
 				VK_FALSE);
 
-		VkPipelineColorBlendStateCreateInfo colorBlendState =
+		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
 				1,
 				&blendAttachmentState);
 
-		VkPipelineDepthStencilStateCreateInfo depthStencilState =
+		vk::PipelineDepthStencilStateCreateInfo depthStencilState =
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				VK_COMPARE_OP_LESS_OR_EQUAL);
+				vk::CompareOp::eLess_OR_EQUAL);
 
-		VkPipelineViewportStateCreateInfo viewportState =
+		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
 
-		VkPipelineMultisampleStateCreateInfo multisampleState =
+		vk::PipelineMultisampleStateCreateInfo multisampleState =
 			vks::initializers::pipelineMultisampleStateCreateInfo(
-				VK_SAMPLE_COUNT_1_BIT,
+				vk::SampleCountFlagBits::e1,
 				0);
 
-		std::vector<VkDynamicState> dynamicStateEnables = {
-			VK_DYNAMIC_STATE_VIEWPORT,
-			VK_DYNAMIC_STATE_SCISSOR
+		std::vector<vk::DynamicState> dynamicStateEnables = {
+			vk::DynamicState::eViewport,
+			vk::DynamicState::eScissor
 		};
-		VkPipelineDynamicStateCreateInfo dynamicState =
+		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
 				dynamicStateEnables.data(),
 				static_cast<uint32_t>(dynamicStateEnables.size()),
 				0);
 
-		std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages;
+		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
 		// Solid rendering pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/scenerendering/scene.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/scenerendering/scene.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/scenerendering/scene.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/scenerendering/scene.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
-		VkGraphicsPipelineCreateInfo pipelineCreateInfo =
+		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				scene->pipelineLayout,
 				renderPass,
@@ -781,19 +781,19 @@ public:
 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &scene->pipelines.solid));
 
 		// Alpha blended pipeline
-		rasterizationState.cullMode = VK_CULL_MODE_NONE;
+		rasterizationState.cullMode = vk::CullModeFlagBits::eNone;
 		blendAttachmentState.blendEnable = VK_TRUE;
-		blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-		blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
-		blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+		blendAttachmentState.colorBlendOp = vk::BlendOp::eAdd;
+		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcColor;
+		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOne_MINUS_SRC_COLOR;
 
 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &scene->pipelines.blending));
 
 		// Wire frame rendering pipeline
 		if (deviceFeatures.fillModeNonSolid) {
-			rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+			rasterizationState.cullMode = vk::CullModeFlagBits::eBack;
 			blendAttachmentState.blendEnable = VK_FALSE;
-			rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
+			rasterizationState.polygonMode = vk::PolygonMode::eLine;
 			rasterizationState.lineWidth = 1.0f;
 			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &scene->pipelines.wireframe));
 		}
@@ -829,7 +829,7 @@ public:
 
 	void loadScene()
 	{
-		VkCommandBuffer copyCmd = VulkanExampleBase::createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, false);
+		vk::CommandBuffer copyCmd = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, false);
 		scene = new Scene(vulkanDevice, queue);
 
 #if defined(__ANDROID__)

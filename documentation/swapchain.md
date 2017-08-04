@@ -19,7 +19,7 @@ std::vector<const char*> enabledExtensions = { VK_KHR_SURFACE_EXTENSION_NAME };
 // For windows
 enabledExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 
-VkInstanceCreateInfo instanceCreateInfo = {};
+vk::InstanceCreateInfo instanceCreateInfo = {};
 ...
 instanceCreateInfo.enabledExtensionCount = enabledExtensions.size();
 instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
@@ -30,7 +30,7 @@ And the swap chain extension at device level :
 ```cpp
 std::vector<const char*> enabledExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-VkDeviceCreateInfo deviceCreateInfo = {};
+vk::DeviceCreateInfo deviceCreateInfo = {};
 ...
 deviceCreateInfo.enabledExtensionCount = enabledExtensions.size();
 deviceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
@@ -73,7 +73,7 @@ err = swapChain.acquireNextImage(presentCompleteSemaphore, &currentBuffer);
 assert(!err);
 
 // Submit command buffers
-VkSubmitInfo submitInfo = vkTools::initializers::submitInfo();
+vk::SubmitInfo submitInfo = vkTools::initializers::submitInfo();
 ...
 err = vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
 assert(!err);

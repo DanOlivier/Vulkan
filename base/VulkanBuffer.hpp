@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan.hpp"
 #include "VulkanTools.h"
 
 namespace vks
@@ -23,18 +23,18 @@ namespace vks
 	*/
 	struct Buffer
 	{
-		VkDevice device;
-		VkBuffer buffer = VK_NULL_HANDLE;
-		VkDeviceMemory memory = VK_NULL_HANDLE;
-		VkDescriptorBufferInfo descriptor;
-		VkDeviceSize size = 0;
-		VkDeviceSize alignment = 0;
+		vk::Device device;
+		vk::Buffer buffer = VK_NULL_HANDLE;
+		vk::DeviceMemory memory = VK_NULL_HANDLE;
+		vk::DescriptorBufferInfo descriptor;
+		vk::DeviceSize size = 0;
+		vk::DeviceSize alignment = 0;
 		void* mapped = nullptr;
 
 		/** @brief Usage flags to be filled by external source at buffer creation (to query at some later point) */
-		VkBufferUsageFlags usageFlags;
+		vk::BufferUsageFlags usageFlags;
 		/** @brief Memory propertys flags to be filled by external source at buffer creation (to query at some later point) */
-		VkMemoryPropertyFlags memoryPropertyFlags;
+		vk::MemoryPropertyFlags memoryPropertyFlags;
 
 		/** 
 		* Map a memory range of this buffer. If successful, mapped points to the specified buffer range.
@@ -42,9 +42,9 @@ namespace vks
 		* @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to map the complete buffer range.
 		* @param offset (Optional) Byte offset from beginning
 		* 
-		* @return VkResult of the buffer mapping call
+		* @return vk::Result of the buffer mapping call
 		*/
-		VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0)
+		vk::Result map(vk::DeviceSize size = VK_WHOLE_SIZE, vk::DeviceSize offset = 0)
 		{
 			return vkMapMemory(device, memory, offset, size, 0, &mapped);
 		}
@@ -68,9 +68,9 @@ namespace vks
 		* 
 		* @param offset (Optional) Byte offset (from the beginning) for the memory region to bind
 		* 
-		* @return VkResult of the bindBufferMemory call
+		* @return vk::Result of the bindBufferMemory call
 		*/
-		VkResult bind(VkDeviceSize offset = 0)
+		vk::Result bind(vk::DeviceSize offset = 0)
 		{
 			return vkBindBufferMemory(device, buffer, memory, offset);
 		}
@@ -82,7 +82,7 @@ namespace vks
 		* @param offset (Optional) Byte offset from beginning
 		*
 		*/
-		void setupDescriptor(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0)
+		void setupDescriptor(vk::DeviceSize size = VK_WHOLE_SIZE, vk::DeviceSize offset = 0)
 		{
 			descriptor.offset = offset;
 			descriptor.buffer = buffer;
@@ -96,7 +96,7 @@ namespace vks
 		* @param size Size of the data to copy in machine units
 		*
 		*/
-		void copyTo(void* data, VkDeviceSize size)
+		void copyTo(void* data, vk::DeviceSize size)
 		{
 			assert(mapped);
 			memcpy(mapped, data, size);
@@ -110,11 +110,11 @@ namespace vks
 		* @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE to flush the complete buffer range.
 		* @param offset (Optional) Byte offset from beginning
 		*
-		* @return VkResult of the flush call
+		* @return vk::Result of the flush call
 		*/
-		VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0)
+		vk::Result flush(vk::DeviceSize size = VK_WHOLE_SIZE, vk::DeviceSize offset = 0)
 		{
-			VkMappedMemoryRange mappedRange = {};
+			vk::MappedMemoryRange mappedRange = {};
 			mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 			mappedRange.memory = memory;
 			mappedRange.offset = offset;
@@ -130,11 +130,11 @@ namespace vks
 		* @param size (Optional) Size of the memory range to invalidate. Pass VK_WHOLE_SIZE to invalidate the complete buffer range.
 		* @param offset (Optional) Byte offset from beginning
 		*
-		* @return VkResult of the invalidate call
+		* @return vk::Result of the invalidate call
 		*/
-		VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0)
+		vk::Result invalidate(vk::DeviceSize size = VK_WHOLE_SIZE, vk::DeviceSize offset = 0)
 		{
-			VkMappedMemoryRange mappedRange = {};
+			vk::MappedMemoryRange mappedRange = {};
 			mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 			mappedRange.memory = memory;
 			mappedRange.offset = offset;
