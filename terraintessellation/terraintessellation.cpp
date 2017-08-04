@@ -324,7 +324,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
@@ -489,9 +489,9 @@ public:
 		// Indices
 		const uint32_t w = (PATCH_SIZE - 1);
 		uint32_t *indices = new uint32_t[w * w * 4];
-		for (auto x = 0; x < w; x++)
+		for (uint32_t x = 0; x < w; x++)
 		{
-			for (auto y = 0; y < w; y++)
+			for (uint32_t y = 0; y < w; y++)
 			{
 				uint32_t index = (x + y * w) * 4;
 				indices[index] = (x + y * PATCH_SIZE);

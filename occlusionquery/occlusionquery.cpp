@@ -189,7 +189,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
@@ -218,7 +218,7 @@ public:
 
 			VkDeviceSize offsets[1] = { 0 };
 
-			glm::mat4 modelMatrix = glm::mat4();
+			//glm::mat4 modelMatrix = glm::mat4();
 
 			// Occlusion pass
 			vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.simple);
@@ -580,8 +580,6 @@ public:
 		rotMatrix = glm::rotate(rotMatrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
 		uboVS.model = viewMatrix * rotMatrix;
-
-		uint8_t *pData;
 
 		// Occluder
 		uboVS.visible = 1.0f;

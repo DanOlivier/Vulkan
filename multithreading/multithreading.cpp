@@ -189,9 +189,9 @@ public:
 		
 		threadData.resize(numThreads);
 
-		float maxX = std::floor(std::sqrt(numThreads * numObjectsPerThread));
-		uint32_t posX = 0;
-		uint32_t posZ = 0;
+		//float maxX = std::floor(std::sqrt(numThreads * numObjectsPerThread));
+		//uint32_t posX = 0;
+		//uint32_t posZ = 0;
 
 		std::mt19937 rndGenerator((unsigned)time(NULL));
 		std::uniform_real_distribution<float> uniformDist(0.0f, 1.0f);

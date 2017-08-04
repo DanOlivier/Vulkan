@@ -341,8 +341,8 @@ public:
 
 		// Init imGui windows and elements
 
-		ImVec4 clear_color = ImColor(114, 144, 154);
-		static float f = 0.0f;
+		//ImVec4 clear_color = ImColor(114, 144, 154);
+		//static float f = 0.0f;
 		ImGui::Text(example->title.c_str());
 		ImGui::Text(device->properties.deviceName);
 
@@ -403,7 +403,7 @@ public:
 		}
 
 		// Index buffer
-		VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
+		//VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 		if ((indexBuffer.buffer == VK_NULL_HANDLE) || (indexCount < imDrawData->TotalIdxCount)) {
 			indexBuffer.unmap();
 			indexBuffer.destroy();
@@ -555,7 +555,7 @@ public:
 
 		imGui->updateBuffers();
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];

@@ -140,6 +140,8 @@ public:
 			// Make sure any writes to the image have been finished
 			imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
+		default:
+			break;
 		}
 		
 		// Target layouts (new)
@@ -158,6 +160,8 @@ public:
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
 			// Shader read (sampler, input attachment)
 			imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			break;
+		default:
 			break;
 		}
 
@@ -524,7 +528,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];

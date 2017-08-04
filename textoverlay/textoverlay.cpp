@@ -568,12 +568,14 @@ public:
 
 		switch (align)
 		{
-			case alignRight:
-				x -= textWidth;
-				break;
-			case alignCenter:
-				x -= textWidth / 2.0f;
-				break;
+		case alignRight:
+			x -= textWidth;
+			break;
+		case alignCenter:
+			x -= textWidth / 2.0f;
+			break;
+		default:
+			break;
 		}
 
 		// Generate a uv mapped quad per char in the new text
@@ -634,7 +636,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < cmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < cmdBuffers.size(); ++i)
 		{
 			renderPassBeginInfo.framebuffer = *frameBuffers[i];
 
@@ -774,7 +776,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];

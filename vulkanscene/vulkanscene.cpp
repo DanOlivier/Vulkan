@@ -122,7 +122,7 @@ public:
 		// Models
 		std::vector<std::string> modelFiles = { "vulkanscenelogos.dae", "vulkanscenebackground.dae", "vulkanscenemodels.dae", "cube.obj" };
 		std::vector<VkPipeline*> modelPipelines = { &pipelines.logos, &pipelines.models, &pipelines.models, &pipelines.skybox };
-		for (auto i = 0; i < modelFiles.size(); i++) {
+		for (uint32_t i = 0; i < modelFiles.size(); i++) {
 			DemoModel model;
 			model.pipeline = modelPipelines[i];
 			vks::ModelCreateInfo modelCreateInfo(glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(0.0f));
@@ -153,7 +153,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
@@ -169,7 +169,7 @@ public:
 
 			vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
 
-			VkDeviceSize offsets[1] = { 0 };
+			//VkDeviceSize offsets[1] = { 0 };
 			for (auto model : demoModels) {
 				model.draw(drawCmdBuffers[i]);
 			}
