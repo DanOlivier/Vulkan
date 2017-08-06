@@ -56,7 +56,7 @@ bufferCopyRegion.imageExtent.width = texture.width;
 bufferCopyRegion.imageExtent.height = texture.height;
 bufferCopyRegion.imageExtent.depth = 1;
 
-vkCmdCopyBufferToImage(copyCmd, stagingBuffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
+copyCmd.copyBufferToImage(stagingBuffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, bufferCopyRegion);
 ```
 
 ### Prepare base mip level

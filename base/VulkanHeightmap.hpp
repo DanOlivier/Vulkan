@@ -24,7 +24,7 @@ namespace vks
 		uint32_t scale;
 
 		vks::VulkanDevice *device = nullptr;
-		vk::Queue copyQueue = VK_NULL_HANDLE;
+		vk::Queue copyQueue;
 	public:
 		enum Topology { topologyTriangles, topologyQuads };
 
@@ -73,7 +73,7 @@ namespace vks
 #endif
 		{
 			assert(device);
-			assert(copyQueue != VK_NULL_HANDLE);
+			assert(copyQueue);
 
 #if defined(__ANDROID__)
 			AAsset* asset = AAssetManager_open(assetManager, filename.c_str(), AASSET_MODE_STREAMING);
@@ -228,27 +228,23 @@ namespace vks
 			vk::BufferCopy copyRegion = {};
 
 			copyRegion.size = vertexBufferSize;
-			vkCmdCopyBuffer(
-				copyCmd,
+			copyCmd.copyBuffer(
 				vertexStaging.buffer,
 				vertexBuffer.buffer,
-				1,
-				&copyRegion);
+				copyRegion);
 
 			copyRegion.size = indexBufferSize;
-			vkCmdCopyBuffer(
-				copyCmd,
+			copyCmd.copyBuffer(
 				indexStaging.buffer,
 				indexBuffer.buffer,
-				1,
-				&copyRegion);
+				copyRegion);
 
 			device->flushCommandBuffer(copyCmd, copyQueue, true);
 
-			vkDestroyBuffer(device->logicalDevice, vertexStaging.buffer, nullptr);
-			vkFreeMemory(device->logicalDevice, vertexStaging.memory, nullptr);
-			vkDestroyBuffer(device->logicalDevice, indexStaging.buffer, nullptr);
-			vkFreeMemory(device->logicalDevice, indexStaging.memory, nullptr);
+			device->logicalDevice.destroyBuffer(vertexStaging.buffer);
+			device->logicalDevice.freeMemory(vertexStaging.memory);
+			device->logicalDevice.destroyBuffer(indexStaging.buffer);
+			device->logicalDevice.freeMemory(indexStaging.memory);
 		}
 	};
 }

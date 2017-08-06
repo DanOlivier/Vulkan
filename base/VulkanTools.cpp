@@ -75,7 +75,7 @@ namespace vks
 			for (auto& format : depthFormats)
 			{
 				vk::FormatProperties formatProps;
-				vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProps);
+				formatProps = physicalDevice.getFormatProperties(format);
 				// Format must support depth stencil attachment for optimal tiling
 				if (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
 				{
@@ -306,7 +306,7 @@ namespace vks
 
 			vk::ShaderModule shaderModule;
 			vk::ShaderModuleCreateInfo moduleCreateInfo;
-			moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+
 			moduleCreateInfo.pNext = NULL;
 			moduleCreateInfo.codeSize = size;
 			moduleCreateInfo.pCode = (uint32_t*)shaderCode;
@@ -335,7 +335,7 @@ namespace vks
 
 				vk::ShaderModule shaderModule;
 				vk::ShaderModuleCreateInfo moduleCreateInfo{};
-				moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+
 				moduleCreateInfo.codeSize = size;
 				moduleCreateInfo.pCode = (uint32_t*)shaderCode;
 
@@ -362,7 +362,7 @@ namespace vks
 
 			vk::ShaderModule shaderModule;
 			vk::ShaderModuleCreateInfo moduleCreateInfo;
-			moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+
 			moduleCreateInfo.pNext = NULL;
 			moduleCreateInfo.codeSize = 3 * sizeof(uint32_t) + size + 1;
 			moduleCreateInfo.pCode = (uint32_t*)malloc(moduleCreateInfo.codeSize);

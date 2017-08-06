@@ -71,9 +71,9 @@ public:
 
 	struct Pipelines {
 		vk::Pipeline solid;
-		vk::Pipeline wire = VK_NULL_HANDLE;
+		vk::Pipeline wire;
 		vk::Pipeline solidPassThrough;
-		vk::Pipeline wirePassThrough = VK_NULL_HANDLE;
+		vk::Pipeline wirePassThrough;
 	} pipelines;
 	vk::Pipeline *pipelineLeft = &pipelines.wirePassThrough;
 	vk::Pipeline *pipelineRight = &pipelines.wire;
@@ -95,17 +95,17 @@ public:
 	{
 		// Clean up used Vulkan resources 
 		// Note : Inherited destructor cleans up resources stored in base class
-		vkDestroyPipeline(device, pipelines.solid, nullptr);
-		if (pipelines.wire != VK_NULL_HANDLE) {
-			vkDestroyPipeline(device, pipelines.wire, nullptr);
+		device.destroyPipeline(pipelines.solid);
+		if (pipelines.wire) {
+			device.destroyPipeline(pipelines.wire);
 		};
-		vkDestroyPipeline(device, pipelines.solidPassThrough, nullptr);
-		if (pipelines.wirePassThrough != VK_NULL_HANDLE) {
-			vkDestroyPipeline(device, pipelines.wirePassThrough, nullptr);
+		device.destroyPipeline(pipelines.solidPassThrough);
+		if (pipelines.wirePassThrough) {
+			device.destroyPipeline(pipelines.wirePassThrough);
 		};
 
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyPipelineLayout(pipelineLayout);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 		models.object.destroy();
 		uniformBuffers.tessControl.destroy();
@@ -166,39 +166,39 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport(splitScreen ? (float)width / 2.0f : (float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
 			vkCmdSetLineWidth(drawCmdBuffers[i], 1.0f);
 
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 
 			vk::DeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.object.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.object.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.object.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.object.indices.buffer, 0, vk::IndexType::eUint32);
 
 			if (splitScreen)
 			{
-				vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
-				vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, *pipelineLeft);
-				vkCmdDrawIndexed(drawCmdBuffers[i], models.object.indexCount, 1, 0, 0, 0);
+				drawCmdBuffers[i].setViewport(0, viewport);
+				drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, *pipelineLeft);
+				drawCmdBuffers[i].drawIndexed(models.object.indexCount, 1, 0, 0, 0);
 				viewport.x = float(width) / 2;
 			}
 
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, *pipelineRight);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.object.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].setViewport(0, viewport);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, *pipelineRight);
+			drawCmdBuffers[i].drawIndexed(models.object.indexCount, 1, 0, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -279,7 +279,7 @@ public:
 				poolSizes.data(),
 				1);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -308,14 +308,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSet()
@@ -326,7 +326,7 @@ public:
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet));
+		descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		vk::DescriptorImageInfo texDescriptor =
 			vks::initializers::descriptorImageInfo(
@@ -388,7 +388,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -442,11 +442,11 @@ public:
 
 		// Tessellation pipelines
 		// Solid
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.solid));
+		pipelines.solid = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		// Wireframe
 		if (deviceFeatures.fillModeNonSolid) {
 			rasterizationState.polygonMode = vk::PolygonMode::eLine;
-			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.wire));
+			pipelines.wire = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		}
 
 		// Pass through pipelines
@@ -456,11 +456,11 @@ public:
 
 		// Solid
 		rasterizationState.polygonMode = vk::PolygonMode::eFill;
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.solidPassThrough));
+		pipelines.solidPassThrough = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		// Wireframe
 		if (deviceFeatures.fillModeNonSolid) {
 			rasterizationState.polygonMode = vk::PolygonMode::eLine;
-			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.wirePassThrough));
+			pipelines.wirePassThrough = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		}
 	}
 
@@ -482,8 +482,8 @@ public:
 			sizeof(uboTessControl)));
 
 		// Map persistent
-		VK_CHECK_RESULT(uniformBuffers.tessControl.map());
-		VK_CHECK_RESULT(uniformBuffers.tessEval.map());
+		uniformBuffers.tessControl.map();
+		uniformBuffers.tessEval.map();
 
 		updateUniformBuffers();
 	}
@@ -514,7 +514,7 @@ public:
 
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

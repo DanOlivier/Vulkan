@@ -134,12 +134,12 @@ namespace vks
 		void destroy()
 		{		
 			assert(device);
-			vkDestroyBuffer(device, vertices.buffer, nullptr);
-			vkFreeMemory(device, vertices.memory, nullptr);
-			if (indices.buffer != VK_NULL_HANDLE)
+			device.destroyBuffer(vertices.buffer);
+			device.freeMemory(vertices.memory);
+			if (indices.buffer)
 			{
-				vkDestroyBuffer(device, indices.buffer, nullptr);
-				vkFreeMemory(device, indices.memory, nullptr);
+				device.destroyBuffer(indices.buffer);
+				device.freeMemory(indices.memory);
 			}
 		}
 
@@ -348,18 +348,18 @@ namespace vks
 				vk::BufferCopy copyRegion{};
 
 				copyRegion.size = vertices.size;
-				vkCmdCopyBuffer(copyCmd, vertexStaging.buffer, vertices.buffer, 1, &copyRegion);
+				copyCmd.copyBuffer(vertexStaging.buffer, vertices.buffer, copyRegion);
 
 				copyRegion.size = indices.size;
-				vkCmdCopyBuffer(copyCmd, indexStaging.buffer, indices.buffer, 1, &copyRegion);
+				copyCmd.copyBuffer(indexStaging.buffer, indices.buffer, copyRegion);
 
 				device->flushCommandBuffer(copyCmd, copyQueue);
 
 				// Destroy staging resources
-				vkDestroyBuffer(device->logicalDevice, vertexStaging.buffer, nullptr);
-				vkFreeMemory(device->logicalDevice, vertexStaging.memory, nullptr);
-				vkDestroyBuffer(device->logicalDevice, indexStaging.buffer, nullptr);
-				vkFreeMemory(device->logicalDevice, indexStaging.memory, nullptr);
+				device->logicalDevice.destroyBuffer(vertexStaging.buffer);
+				device->logicalDevice.freeMemory(vertexStaging.memory);
+				device->logicalDevice.destroyBuffer(indexStaging.buffer);
+				device->logicalDevice.freeMemory(indexStaging.memory);
 
 				return true;
 			}

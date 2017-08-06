@@ -102,17 +102,17 @@ public:
 	{
 		// Clean up used Vulkan resources 
 		// Note : Inherited destructor cleans up resources stored in base class
-		vkDestroyPipeline(device, pipelines.solid, nullptr);
-		vkDestroyPipeline(device, pipelines.occluder, nullptr);
-		vkDestroyPipeline(device, pipelines.simple, nullptr);
+		device.destroyPipeline(pipelines.solid);
+		device.destroyPipeline(pipelines.occluder);
+		device.destroyPipeline(pipelines.simple);
 
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyPipelineLayout(pipelineLayout);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 		vkDestroyQueryPool(device, queryPool, nullptr);
 
-		vkDestroyBuffer(device, queryResult.buffer, nullptr);
-		vkFreeMemory(device, queryResult.memory, nullptr);
+		device.destroyBuffer(queryResult.buffer);
+		device.freeMemory(queryResult.memory);
 
 		uniformBuffers.occluder.destroy();
 		uniformBuffers.sphere.destroy();
@@ -137,16 +137,16 @@ public:
 				bufSize);
 
 		// Results are saved in a host visible buffer for easy access by the application
-		VK_CHECK_RESULT(vkCreateBuffer(device, &bufferCreateInfo, nullptr, &queryResult.buffer));
-		vkGetBufferMemoryRequirements(device, queryResult.buffer, &memReqs);
+		queryResult.buffer = device.createBuffer(bufferCreateInfo);
+		memReqs = device.getBufferMemoryRequirements(queryResult.buffer);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &queryResult.memory));
-		VK_CHECK_RESULT(vkBindBufferMemory(device, queryResult.buffer, queryResult.memory, 0));
+		&queryResult.memory = device.allocateMemory(memAlloc);
+		device.bindBufferMemory(queryResult.buffer, queryResult.memory, 0);
 
 		// Create query pool
 		vk::QueryPoolCreateInfo queryPoolInfo = {};
-		queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+
 		// Query pool will be created for occlusion queries
 		queryPoolInfo.queryType = vk::QueryType::eOcclusion;
 		queryPoolInfo.queryCount = 2;
@@ -194,20 +194,20 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
 			// Reset query pool
 			// Must be done outside of render pass
 			vkCmdResetQueryPool(drawCmdBuffers[i], queryPool, 0, 2);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport(
 				(float)width,
 				(float)height,
 				0.0f,
 				1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(
 				width,
@@ -221,31 +221,31 @@ public:
 			//glm::mat4 modelMatrix = glm::mat4();
 
 			// Occlusion pass
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.simple);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.simple);
 
 			// Occluder first
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.plane.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.plane.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.plane.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.plane.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.plane.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.plane.indexCount, 1, 0, 0, 0);
 
 			// Teapot
 			vkCmdBeginQuery(drawCmdBuffers[i], queryPool, 0, VK_FLAGS_NONE);
 
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.teapot, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.teapot.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.teapot.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.teapot.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.teapot, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.teapot.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.teapot.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.teapot.indexCount, 1, 0, 0, 0);
 
 			vkCmdEndQuery(drawCmdBuffers[i], queryPool, 0);
 
 			// Sphere
 			vkCmdBeginQuery(drawCmdBuffers[i], queryPool, 1, VK_FLAGS_NONE);
 
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.sphere, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.sphere.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.sphere.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.sphere.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.sphere, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.sphere.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.sphere.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.sphere.indexCount, 1, 0, 0, 0);
 
 			vkCmdEndQuery(drawCmdBuffers[i], queryPool, 1);
 
@@ -272,30 +272,30 @@ public:
 				1,
 				&clearRect);
 
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.solid);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.solid);
 
 			// Teapot
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.teapot, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.teapot.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.teapot.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.teapot.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.teapot, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.teapot.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.teapot.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.teapot.indexCount, 1, 0, 0, 0);
 
 			// Sphere
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.sphere, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.sphere.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.sphere.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.sphere.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.sphere, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.sphere.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.sphere.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.sphere.indexCount, 1, 0, 0, 0);
 
 			// Occluder
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.occluder);
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.plane.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.plane.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.plane.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.occluder);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.plane.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.plane.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.plane.indexCount, 1, 0, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -305,7 +305,7 @@ public:
 
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		// Read query results for displaying in next frame
 		getQueryResults();
@@ -376,7 +376,7 @@ public:
 				poolSizes.data(),
 				3);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -395,14 +395,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSets()
@@ -414,7 +414,7 @@ public:
 				1);
 
 		// Occluder (plane)
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet));
+		descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets =
 		{
@@ -429,13 +429,13 @@ public:
 		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
 
 		// Teapot
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.teapot));
+		descriptorSets.teapot = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets[0].dstSet = descriptorSets.teapot;
 		writeDescriptorSets[0].pBufferInfo = &uniformBuffers.teapot.descriptor;
 		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
 
 		// Sphere
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.sphere));
+		descriptorSets.sphere = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets[0].dstSet = descriptorSets.sphere;
 		writeDescriptorSets[0].pBufferInfo = &uniformBuffers.sphere.descriptor;
 		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
@@ -470,7 +470,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -514,14 +514,14 @@ public:
 		pipelineCreateInfo.stageCount = shaderStages.size();
 		pipelineCreateInfo.pStages = shaderStages.data();
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.solid));
+		pipelines.solid = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Basic pipeline for coloring occluded objects
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/occlusionquery/simple.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/occlusionquery/simple.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		rasterizationState.cullMode = vk::CullModeFlagBits::eNone;
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.simple));
+		pipelines.simple = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Visual pipeline for the occluder
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/occlusionquery/occluder.vert.spv", vk::ShaderStageFlagBits::eVertex);
@@ -533,7 +533,7 @@ public:
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcColor;
 		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOne_MINUS_SRC_COLOR;
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.occluder));
+		pipelines.occluder = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	// Prepare and initialize uniform buffer containing shader uniforms
@@ -561,9 +561,9 @@ public:
 			sizeof(uboVS)));
 
 		// Map persistent
-		VK_CHECK_RESULT(uniformBuffers.occluder.map());
-		VK_CHECK_RESULT(uniformBuffers.teapot.map());
-		VK_CHECK_RESULT(uniformBuffers.sphere.map());
+		uniformBuffers.occluder.map();
+		uniformBuffers.teapot.map();
+		uniformBuffers.sphere.map();
 
 		updateUniformBuffers();
 	}

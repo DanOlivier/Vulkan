@@ -69,7 +69,7 @@ public:
 	vk::Format colorFormat;
 	vk::ColorSpaceKHR colorSpace;
 	/** @brief Handle to the current swap chain, required for recreation */
-	vk::SwapchainKHR swapChain = VK_NULL_HANDLE;	
+	vk::SwapchainKHR swapChain;	
 	uint32_t imageCount;
 	std::vector<vk::Image> images;
 	std::vector<SwapChainBuffer> buffers;
@@ -96,43 +96,43 @@ public:
 		// Create the os-specific surface
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 		vk::Win32SurfaceCreateInfoKHR surfaceCreateInfo = {};
-		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+
 		surfaceCreateInfo.hinstance = (HINSTANCE)platformHandle;
 		surfaceCreateInfo.hwnd = (HWND)platformWindow;
-		err = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
+		surface = instance.createWin32SurfaceKHR(surfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 		vk::AndroidSurfaceCreateInfoKHR surfaceCreateInfo = {};
-		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+
 		surfaceCreateInfo.window = window;
-		err = vkCreateAndroidSurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+		surface = instancecreateAndroidSurfaceKHR(surfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_IOS_MVK)
 		vk::IOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
+
 		surfaceCreateInfo.pNext = NULL;
 		surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
-		err = vkCreateIOSSurfaceMVK(instance, &surfaceCreateInfo, nullptr, &surface);
+		surface = instance.createIOSSurfaceMVK(instancesurfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_MACOS_MVK)
 		vk::MacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+
 		surfaceCreateInfo.pNext = NULL;
 		surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
-		err = vkCreateMacOSSurfaceMVK(instance, &surfaceCreateInfo, NULL, &surface);
+		surface = instance.createMacOSSurfaceMVK(surfaceCreateInfo);
 #elif defined(_DIRECT2DISPLAY)
 		createDirect2DisplaySurface(width, height);
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
 		vk::WaylandSurfaceCreateInfoKHR surfaceCreateInfo = {};
-		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+
 		surfaceCreateInfo.display = display;
 		surfaceCreateInfo.surface = window;
-		err = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
+		surface = instance.ceateWaylandSurfaceKHR(surfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
 		vk::XcbSurfaceCreateInfoKHR surfaceCreateInfo = {};
-		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+
 		surfaceCreateInfo.connection = connection;
 		surfaceCreateInfo.window = window;
-		err = vkCreateXcbSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
+		surface = instance.createXcbSurfaceKHR(surfaceCreateInfo);
 #endif
 
 		if (err != vk::Result::eSuccess) {
@@ -140,12 +140,8 @@ public:
 		}
 
 		// Get available queue family properties
-		uint32_t queueCount;
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, NULL);
-		assert(queueCount >= 1);
-
-		std::vector<vk::QueueFamilyProperties> queueProps(queueCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, queueProps.data());
+		std::vector<vk::QueueFamilyProperties> queueProps = physicalDevice.getQueueFamilyProperties();
+		uint32_t queueCount = queueProps.size();
 
 		// Iterate over each queue to learn whether it supports presenting:
 		// Find a queue with present support
@@ -153,7 +149,7 @@ public:
 		std::vector<vk::Bool32> supportsPresent(queueCount);
 		for (uint32_t i = 0; i < queueCount; i++) 
 		{
-			fpGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &supportsPresent[i]);
+			supportsPresent[i] = physicalDevice.getSurfaceSupportKHR(i, surface);
 		}
 
 		// Search for a graphics and a present queue in the array of queue
@@ -372,15 +368,15 @@ public:
 		}
 
 		vk::SwapchainCreateInfoKHR swapchainCI = {};
-		swapchainCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+
 		swapchainCI.pNext = NULL;
 		swapchainCI.surface = surface;
 		swapchainCI.minImageCount = desiredNumberOfSwapchainImages;
 		swapchainCI.imageFormat = colorFormat;
 		swapchainCI.imageColorSpace = colorSpace;
-		swapchainCI.imageExtent = { swapchainExtent.width, swapchainExtent.height };
+		swapchainCI.imageExtent = vk::Extent2D{ swapchainExtent.width, swapchainExtent.height };
 		swapchainCI.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
-		swapchainCI.preTransform = (vk::SurfaceTransformFlagBitsKHR)preTransform;
+		swapchainCI.preTransform = preTransform;
 		swapchainCI.imageArrayLayers = 1;
 		swapchainCI.imageSharingMode = vk::SharingMode::eExclusive;
 		swapchainCI.queueFamilyIndexCount = 0;
@@ -393,35 +389,33 @@ public:
 
 		// Set additional usage flag for blitting from the swapchain images if supported
 		vk::FormatProperties formatProps;
-		vkGetPhysicalDeviceFormatProperties(physicalDevice, colorFormat, &formatProps);
+		formatProps = physicalDevice.getFormatProperties(colorFormat);
 		if (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst) {
 			swapchainCI.imageUsage |= vk::ImageUsageFlagBits::eTransferSrc;
 		}
 
-		VK_CHECK_RESULT(fpCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapChain));
+		swapChain = device.createSwapchainKHR(swapchainCI));
 
 		// If an existing swap chain is re-created, destroy the old swap chain
 		// This also cleans up all the presentable images
-		if (oldSwapchain != VK_NULL_HANDLE) 
+		if (oldSwapchain) 
 		{ 
 			for (uint32_t i = 0; i < imageCount; i++)
 			{
-				vkDestroyImageView(device, buffers[i].view, nullptr);
+				device.destroyImageView(buffers[i].view);
 			}
 			fpDestroySwapchainKHR(device, oldSwapchain, nullptr);
 		}
-		VK_CHECK_RESULT(fpGetSwapchainImagesKHR(device, swapChain, &imageCount, NULL));
 
 		// Get the swap chain images
-		images.resize(imageCount);
-		VK_CHECK_RESULT(fpGetSwapchainImagesKHR(device, swapChain, &imageCount, images.data()));
+		images = device.getSwapchainImagesKHR(swapChain);
 
 		// Get the swap chain buffers containing the image and imageview
 		buffers.resize(imageCount);
 		for (uint32_t i = 0; i < imageCount; i++)
 		{
 			vk::ImageViewCreateInfo colorAttachmentView = {};
-			colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+
 			colorAttachmentView.pNext = NULL;
 			colorAttachmentView.format = colorFormat;
 			colorAttachmentView.components = {
@@ -442,7 +436,7 @@ public:
 
 			colorAttachmentView.image = buffers[i].image;
 
-			VK_CHECK_RESULT(vkCreateImageView(device, &colorAttachmentView, nullptr, &buffers[i].view));
+			buffers[i].view = device.createImageView(colorAttachmentView);
 		}
 	}
 
@@ -468,20 +462,20 @@ public:
 	*
 	* @param queue Presentation queue for presenting the image
 	* @param imageIndex Index of the swapchain image to queue for presentation
-	* @param waitSemaphore (Optional) Semaphore that is waited on before the image is presented (only used if != VK_NULL_HANDLE)
+	* @param waitSemaphore (Optional) Semaphore that is waited on before the image is presented (only used if)
 	*
 	* @return vk::Result of the queue presentation
 	*/
-	vk::Result queuePresent(vk::Queue queue, uint32_t imageIndex, vk::Semaphore waitSemaphore = VK_NULL_HANDLE)
+	vk::Result queuePresent(vk::Queue queue, uint32_t imageIndex, vk::Semaphore waitSemaphore)
 	{
 		vk::PresentInfoKHR presentInfo = {};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
 		presentInfo.pNext = NULL;
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &swapChain;
 		presentInfo.pImageIndices = &imageIndex;
 		// Check if a wait semaphore has been specified to wait for before presenting the image
-		if (waitSemaphore != VK_NULL_HANDLE)
+		if (waitSemaphore)
 		{
 			presentInfo.pWaitSemaphores = &waitSemaphore;
 			presentInfo.waitSemaphoreCount = 1;
@@ -495,20 +489,20 @@ public:
 	*/
 	void cleanup()
 	{
-		if (swapChain != VK_NULL_HANDLE)
+		if (swapChain)
 		{
 			for (uint32_t i = 0; i < imageCount; i++)
 			{
-				vkDestroyImageView(device, buffers[i].view, nullptr);
+				device.destroyImageView(buffers[i].view);
 			}
 		}
-		if (surface != VK_NULL_HANDLE)
+		if (surface)
 		{
 			fpDestroySwapchainKHR(device, swapChain, nullptr);
 			vkDestroySurfaceKHR(instance, surface, nullptr);
 		}
-		surface = VK_NULL_HANDLE;
-		swapChain = VK_NULL_HANDLE;
+		surface;
+		swapChain;
 	}
 
 #if defined(_DIRECT2DISPLAY)
@@ -530,7 +524,7 @@ public:
 		vk::DisplayPlanePropertiesKHR* pPlaneProperties = new vk::DisplayPlanePropertiesKHR[planePropertyCount];
 		vkGetPhysicalDeviceDisplayPlanePropertiesKHR(physicalDevice, &planePropertyCount, pPlaneProperties);
 
-		vk::DisplayKHR display = VK_NULL_HANDLE;
+		vk::DisplayKHR display;
 		vk::DisplayModeKHR displayMode;
 		vk::DisplayModePropertiesKHR* pModeProperties;
 		bool foundMode = false;
@@ -623,7 +617,7 @@ public:
 		}
 
 		vk::DisplaySurfaceCreateInfoKHR surfaceInfo{};
-		surfaceInfo.sType = VK_STRUCTURE_TYPE_DISPLAY_SURFACE_CREATE_INFO_KHR;
+
 		surfaceInfo.pNext = NULL;
 		surfaceInfo.flags = 0;
 		surfaceInfo.displayMode = displayMode;

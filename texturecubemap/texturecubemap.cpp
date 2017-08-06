@@ -93,16 +93,16 @@ public:
 		// Note : Inherited destructor cleans up resources stored in base class
 
 		// Clean up texture resources
-		vkDestroyImageView(device, cubeMap.view, nullptr);
-		vkDestroyImage(device, cubeMap.image, nullptr);
-		vkDestroySampler(device, cubeMap.sampler, nullptr);
-		vkFreeMemory(device, cubeMap.deviceMemory, nullptr);
+		device.destroyImageView(cubeMap.view);
+		device.destroyImage(cubeMap.image);
+		device.destroySampler(cubeMap.sampler);
+		device.freeMemory(cubeMap.deviceMemory);
 
-		vkDestroyPipeline(device, pipelines.skybox, nullptr);
-		vkDestroyPipeline(device, pipelines.reflect, nullptr);
+		device.destroyPipeline(pipelines.skybox);
+		device.destroyPipeline(pipelines.reflect);
 
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyPipelineLayout(pipelineLayout);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 		for (auto& model : models.objects) {
 			model.destroy();
@@ -151,21 +151,21 @@ public:
 		bufferCreateInfo.usage = vk::BufferUsageFlagBits::eTransferSrc;
 		bufferCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 
-		VK_CHECK_RESULT(vkCreateBuffer(device, &bufferCreateInfo, nullptr, &stagingBuffer));
+		stagingBuffer = device.createBuffer(bufferCreateInfo);
 
 		// Get memory requirements for the staging buffer (alignment, memory type bits)
-		vkGetBufferMemoryRequirements(device, stagingBuffer, &memReqs);
+		memReqs = device.getBufferMemoryRequirements(stagingBuffer);
 		memAllocInfo.allocationSize = memReqs.size;
 		// Get memory type index for a host visible buffer
 		memAllocInfo.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAllocInfo, nullptr, &stagingMemory));
-		VK_CHECK_RESULT(vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0));
+		stagingMemory = device.allocateMemory(memAllocInfo);
+		device.bindBufferMemory(stagingBuffer, stagingMemory, 0);
 
 		// Copy texture data into staging buffer
 		uint8_t *data;
-		VK_CHECK_RESULT(vkMapMemory(device, stagingMemory, 0, memReqs.size, 0, (void **)&data));
+		data = device.mapMemory(stagingMemory, 0, memReqs.size, 0);
 		memcpy(data, texCube.data(), texCube.size());
-		vkUnmapMemory(device, stagingMemory);
+		device.unmapMemory(stagingMemory);
 
 		// Create optimal tiled target image
 		vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
@@ -184,15 +184,15 @@ public:
 		// This flag is required for cube map images
 		imageCreateInfo.flags = vk::ImageCreateFlagBits::eCubeCompatible;
 
-		VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &cubeMap.image));
+		cubeMap.image = device.createImage(imageCreateInfo);
 
-		vkGetImageMemoryRequirements(device, cubeMap.image, &memReqs);
+		memReqs = device.getImageMemoryRequirements(cubeMap.image);
 
 		memAllocInfo.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAllocInfo, nullptr, &cubeMap.deviceMemory));
-		VK_CHECK_RESULT(vkBindImageMemory(device, cubeMap.image, cubeMap.deviceMemory, 0));
+		&cubeMap.deviceMemory = device.allocateMemory(memAllocInfo);
+		device.bindImageMemory(cubeMap.image, cubeMap.deviceMemory, 0);
 
 		vk::CommandBuffer copyCmd = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
 
@@ -237,14 +237,12 @@ public:
 			subresourceRange);
 
 		// Copy the cube map faces from the staging buffer to the optimal tiled image
-		vkCmdCopyBufferToImage(
+		copyCmd.copyBufferToImage(
 			copyCmd,
 			stagingBuffer,
 			cubeMap.image,
 			vk::ImageLayout::eTransferDstOptimal,
-			static_cast<uint32_t>(bufferCopyRegions.size()),
-			bufferCopyRegions.data()
-			);
+			bufferCopyRegions);
 
 		// Change texture image layout to shader read after all faces have been copied
 		cubeMap.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
@@ -276,7 +274,7 @@ public:
 			sampler.maxAnisotropy = vulkanDevice->properties.limits.maxSamplerAnisotropy;
 			sampler.anisotropyEnable = VK_TRUE;
 		}
-		VK_CHECK_RESULT(vkCreateSampler(device, &sampler, nullptr, &cubeMap.sampler));
+		cubeMap.sampler = device.createSampler(sampler);
 
 		// Create image view
 		vk::ImageViewCreateInfo view = vks::initializers::imageViewCreateInfo();
@@ -290,11 +288,11 @@ public:
 		// Set number of mip levels
 		view.subresourceRange.levelCount = cubeMap.mipLevels;
 		view.image = cubeMap.image;
-		VK_CHECK_RESULT(vkCreateImageView(device, &view, nullptr, &cubeMap.view));
+		cubeMap.view = device.createImageView(view);
 
 		// Clean up staging resources
-		vkFreeMemory(device, stagingMemory, nullptr);
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
+		device.freeMemory(stagingMemory);
+		device.destroyBuffer(stagingBuffer);
 	}
 
 	void loadTextures()
@@ -354,12 +352,12 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width,	(float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width,	height,	0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
@@ -369,23 +367,23 @@ public:
 			// Skybox
 			if (displaySkybox)
 			{
-				vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.skybox, 0, NULL);
-				vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.skybox.vertices.buffer, offsets);
-				vkCmdBindIndexBuffer(drawCmdBuffers[i], models.skybox.indices.buffer, 0, vk::IndexType::eUint32);
-				vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.skybox);
-				vkCmdDrawIndexed(drawCmdBuffers[i], models.skybox.indexCount, 1, 0, 0, 0);
+				drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.skybox, nullptr);
+				drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.skybox.vertices.buffer, offsets);
+				drawCmdBuffers[i].bindIndexBuffer(models.skybox.indices.buffer, 0, vk::IndexType::eUint32);
+				drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.skybox);
+				drawCmdBuffers[i].drawIndexed(models.skybox.indexCount, 1, 0, 0, 0);
 			}
 
 			// 3D object
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.object, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.objects[models.objectIndex].vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.objects[models.objectIndex].indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.reflect);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.objects[models.objectIndex].indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.object, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.objects[models.objectIndex].vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.objects[models.objectIndex].indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.reflect);
+			drawCmdBuffers[i].drawIndexed(models.objects[models.objectIndex].indexCount, 1, 0, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -458,7 +456,7 @@ public:
 				poolSizes.data(),
 				2);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -482,14 +480,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSets()
@@ -508,7 +506,7 @@ public:
 				1);
 
 		// 3D object descriptor set
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.object));
+		descriptorSets.object = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets =
 		{
@@ -528,7 +526,7 @@ public:
 		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
 
 		// Sky box descriptor set
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.skybox));
+		descriptorSets.skybox = device.allocateDescriptorSets(allocInfo)[0];
 
 		writeDescriptorSets =
 		{
@@ -577,7 +575,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_FALSE,
 				VK_FALSE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -620,7 +618,7 @@ public:
 		pipelineCreateInfo.stageCount = shaderStages.size();
 		pipelineCreateInfo.pStages = shaderStages.data();
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.skybox));
+		pipelines.skybox = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Cube map reflect pipeline
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/cubemap/reflect.vert.spv", vk::ShaderStageFlagBits::eVertex);
@@ -630,7 +628,7 @@ public:
 		depthStencilState.depthTestEnable = VK_TRUE;
 		// Flip cull mode
 		rasterizationState.cullMode = vk::CullModeFlagBits::eFront;
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.reflect));
+		pipelines.reflect = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	// Prepare and initialize uniform buffer containing shader uniforms
@@ -651,8 +649,8 @@ public:
 			sizeof(uboVS)));
 
 		// Map persistent
-		VK_CHECK_RESULT(uniformBuffers.object.map());
-		VK_CHECK_RESULT(uniformBuffers.skybox.map());
+		uniformBuffers.object.map();
+		uniformBuffers.skybox.map();
 
 		updateUniformBuffers();
 	}
@@ -691,7 +689,7 @@ public:
 
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

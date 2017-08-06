@@ -34,9 +34,9 @@ namespace vks
 		};
 #endif
 
-		PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallback = VK_NULL_HANDLE;
-		PFN_vkDestroyDebugReportCallbackEXT DestroyDebugReportCallback = VK_NULL_HANDLE;
-		PFN_vkDebugReportMessageEXT dbgBreakCallback = VK_NULL_HANDLE;
+		PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallback = nullptr;
+		PFN_vkDestroyDebugReportCallbackEXT DestroyDebugReportCallback = nullptr;
+		PFN_vkDebugReportMessageEXT dbgBreakCallback = nullptr;
 
 		vk::DebugReportCallbackEXT msgCallback;
 
@@ -119,7 +119,7 @@ namespace vks
 			dbgBreakCallback = reinterpret_cast<PFN_vkDebugReportMessageEXT>(vkGetInstanceProcAddr(instance, "vkDebugReportMessageEXT"));
 
 			vk::DebugReportCallbackCreateInfoEXT dbgCreateInfo = {};
-			dbgCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+
 			dbgCreateInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT)messageCallback;
 			dbgCreateInfo.flags = flags;
 
@@ -127,13 +127,13 @@ namespace vks
 				instance,
 				&dbgCreateInfo,
 				nullptr,
-				(callBack != VK_NULL_HANDLE) ? &callBack : &msgCallback);
+				(callBack) ? &callBack : &msgCallback);
 			assert(!err);
 		}
 
 		void freeDebugCallback(vk::Instance instance)
 		{
-			if (msgCallback != VK_NULL_HANDLE)
+			if (msgCallback)
 			{
 				DestroyDebugReportCallback(instance, msgCallback, nullptr);
 			}
@@ -144,11 +144,11 @@ namespace vks
 	{
 		bool active = false;
 
-		PFN_vkDebugMarkerSetObjectTagEXT pfnDebugMarkerSetObjectTag = VK_NULL_HANDLE;
-		PFN_vkDebugMarkerSetObjectNameEXT pfnDebugMarkerSetObjectName = VK_NULL_HANDLE;
-		PFN_vkCmdDebugMarkerBeginEXT pfnCmdDebugMarkerBegin = VK_NULL_HANDLE;
-		PFN_vkCmdDebugMarkerEndEXT pfnCmdDebugMarkerEnd = VK_NULL_HANDLE;
-		PFN_vkCmdDebugMarkerInsertEXT pfnCmdDebugMarkerInsert = VK_NULL_HANDLE;
+		PFN_vkDebugMarkerSetObjectTagEXT pfnDebugMarkerSetObjectTag = nullptr;
+		PFN_vkDebugMarkerSetObjectNameEXT pfnDebugMarkerSetObjectName = nullptr;
+		PFN_vkCmdDebugMarkerBeginEXT pfnCmdDebugMarkerBegin = nullptr;
+		PFN_vkCmdDebugMarkerEndEXT pfnCmdDebugMarkerEnd = nullptr;
+		PFN_vkCmdDebugMarkerInsertEXT pfnCmdDebugMarkerInsert = nullptr;
 
 		void setup(vk::Device device)
 		{
@@ -159,7 +159,7 @@ namespace vks
 			pfnCmdDebugMarkerInsert = reinterpret_cast<PFN_vkCmdDebugMarkerInsertEXT>(vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT"));
 
 			// Set flag if at least one function pointer is present
-			active = (pfnDebugMarkerSetObjectName != VK_NULL_HANDLE);
+			active = (pfnDebugMarkerSetObjectName != nullptr);
 		}
 
 		void setObjectName(vk::Device device, uint64_t object, vk::DebugReportObjectTypeEXT objectType, const char *name)
@@ -168,7 +168,7 @@ namespace vks
 			if (pfnDebugMarkerSetObjectName)
 			{
 				vk::DebugMarkerObjectNameInfoEXT nameInfo = {};
-				nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+
 				nameInfo.objectType = objectType;
 				nameInfo.object = object;
 				nameInfo.pObjectName = name;
@@ -182,7 +182,7 @@ namespace vks
 			if (pfnDebugMarkerSetObjectTag)
 			{
 				vk::DebugMarkerObjectTagInfoEXT tagInfo = {};
-				tagInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
+
 				tagInfo.objectType = objectType;
 				tagInfo.object = object;
 				tagInfo.tagName = name;
@@ -198,7 +198,7 @@ namespace vks
 			if (pfnCmdDebugMarkerBegin)
 			{
 				vk::DebugMarkerMarkerInfoEXT markerInfo = {};
-				markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+
 				memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
 				markerInfo.pMarkerName = pMarkerName;
 				pfnCmdDebugMarkerBegin(cmdbuffer, &markerInfo);
@@ -211,7 +211,7 @@ namespace vks
 			if (pfnCmdDebugMarkerInsert)
 			{
 				vk::DebugMarkerMarkerInfoEXT markerInfo = {};
-				markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+
 				memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
 				markerInfo.pMarkerName = markerName.c_str();
 				pfnCmdDebugMarkerInsert(cmdbuffer, &markerInfo);

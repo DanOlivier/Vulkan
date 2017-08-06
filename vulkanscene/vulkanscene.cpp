@@ -50,10 +50,10 @@ public:
 		void draw(vk::CommandBuffer cmdBuffer)
 		{
 			vk::DeviceSize offsets[1] = { 0 };
-			vkCmdBindPipeline(cmdBuffer, vk::PipelineBindPoint::eGraphics, *pipeline);
-			vkCmdBindVertexBuffers(cmdBuffer, VERTEX_BUFFER_BIND_ID, 1, &model.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(cmdBuffer, model.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(cmdBuffer, model.indexCount, 1, 0, 0, 0);
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
+			cmdBuffer.bindVertexBuffers(VERTEX_BUFFER_BIND_ID, model.vertices.buffer, offsets);
+			cmdBuffer.bindIndexBuffer(model.indices.buffer, 0, vk::IndexType::eUint32);
+			cmdBuffer.drawIndexed(model.indexCount, 1, 0, 0, 0);
 		}
 	};
 
@@ -101,12 +101,12 @@ public:
 	{
 		// Clean up used Vulkan resources 
 		// Note : Inherited destructor cleans up resources stored in base class
-		vkDestroyPipeline(device, pipelines.logos, nullptr);
-		vkDestroyPipeline(device, pipelines.models, nullptr);
-		vkDestroyPipeline(device, pipelines.skybox, nullptr);
+		device.destroyPipeline(pipelines.logos);
+		device.destroyPipeline(pipelines.models);
+		device.destroyPipeline(pipelines.skybox);
 
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyPipelineLayout(pipelineLayout);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 		uniformData.meshVS.destroy();
 
@@ -157,26 +157,26 @@ public:
 		{
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 
 			//vk::DeviceSize offsets[1] = { 0 };
 			for (auto model : demoModels) {
 				model.draw(drawCmdBuffers[i]);
 			}
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -195,7 +195,7 @@ public:
 				poolSizes.data(),
 				2);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -219,14 +219,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSet()
@@ -237,7 +237,7 @@ public:
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet));
+		descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		// Cube map image descriptor
 		vk::DescriptorImageInfo texDescriptorCubeMap =
@@ -294,7 +294,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -357,19 +357,19 @@ public:
 		// Default mesh rendering pipeline
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/vulkanscene/mesh.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/vulkanscene/mesh.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.models));
+		pipelines.models = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Pipeline for the logos
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/vulkanscene/logo.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/vulkanscene/logo.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.logos));
+		pipelines.logos = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Pipeline for the sky sphere
 		rasterizationState.cullMode = vk::CullModeFlagBits::eFront; // Inverted culling
 		depthStencilState.depthWriteEnable = VK_FALSE; // No depth writes
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/vulkanscene/skybox.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/vulkanscene/skybox.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.skybox));
+		pipelines.skybox = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	// Prepare and initialize uniform buffer containing shader uniforms
@@ -403,7 +403,7 @@ public:
 
 		uboVS.lightPos = lightPos;
 
-		VK_CHECK_RESULT(uniformData.meshVS.map());
+		uniformData.meshVS.map();
 		memcpy(uniformData.meshVS.mapped, &uboVS, sizeof(uboVS));
 		uniformData.meshVS.unmap();
 	}
@@ -414,7 +414,7 @@ public:
 
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

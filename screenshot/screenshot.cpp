@@ -67,9 +67,9 @@ public:
 	{
 		// Clean up used Vulkan resources 
 		// Note : Inherited destructor cleans up resources stored in base class
-		vkDestroyPipeline(device, pipeline, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyPipeline(pipeline);
+		device.destroyPipelineLayout(pipelineLayout);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 		models.object.destroy();
 
@@ -103,28 +103,28 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height,	0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipeline);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
 			vk::DeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.object.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.object.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.object.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.object.indices.buffer, 0, vk::IndexType::eUint32);
 
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.object.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].drawIndexed(models.object.indexCount, 1, 0, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -141,7 +141,7 @@ public:
 				poolSizes.data(),
 				2);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -155,14 +155,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSet()
@@ -173,7 +173,7 @@ public:
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet));
+		descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets = {			
 			vks::initializers::writeDescriptorSet(descriptorSet, vk::DescriptorType::eUniformBuffer, 0, &uniformBuffer.descriptor),	// Binding 0 : Vertex shader uniform buffer
@@ -211,7 +211,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -273,7 +273,7 @@ public:
 		// Mesh rendering pipeline
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/screenshot/mesh.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/screenshot/mesh.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
+		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	void prepareUniformBuffers()
@@ -294,7 +294,7 @@ public:
 		uboVS.view = camera.matrices.view;
 		uboVS.model = glm::mat4();
 
-		VK_CHECK_RESULT(uniformBuffer.map());
+		uniformBuffer.map();
 		uniformBuffer.copyTo(&uboVS, sizeof(uboVS));
 		uniformBuffer.unmap();
 	}
@@ -313,14 +313,14 @@ public:
 		// Check blit support for source and destination
 
 		// Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
-		vkGetPhysicalDeviceFormatProperties(physicalDevice, swapChain.colorFormat, &formatProps);
+		formatProps = physicalDevice.getFormatProperties(swapChain.colorFormat);
 		if (!(formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc)) {
 			std::cerr << "Device does not support blitting from optimal tiled images, using copy instead of blit!" << std::endl;
 			supportsBlit = false;
 		}
 
 		// Check if the device supports blitting to linear images 
-		vkGetPhysicalDeviceFormatProperties(physicalDevice, vk::Format::eR8G8B8A8Unorm, &formatProps);
+		formatProps = physicalDevice.getFormatProperties(vk::Format::eR8G8B8A8Unorm);
 		if (!(formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst)) {
 			std::cerr << "Device does not support blitting to linear tiled images, using copy instead of blit!" << std::endl;
 			supportsBlit = false;
@@ -345,17 +345,17 @@ public:
 		imgCreateInfo.usage = vk::ImageUsageFlagBits::eTransferDst;
 		// Create the image
 		vk::Image dstImage;
-		VK_CHECK_RESULT(vkCreateImage(device, &imgCreateInfo, nullptr, &dstImage));
+		dstImage = device.createImage(imgCreateInfo);
 		// Create memory to back up the image
 		vk::MemoryRequirements memRequirements;
 		vk::MemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
 		vk::DeviceMemory dstImageMemory;
-		vkGetImageMemoryRequirements(device, dstImage, &memRequirements);
+		memRequirements = device.getImageMemoryRequirements(dstImage);
 		memAllocInfo.allocationSize = memRequirements.size;
 		// Memory must be host visible to copy from
 		memAllocInfo.memoryTypeIndex = vulkanDevice->getMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAllocInfo, nullptr, &dstImageMemory));
-		VK_CHECK_RESULT(vkBindImageMemory(device, dstImage, dstImageMemory, 0));
+		dstImageMemory = device.allocateMemory(memAllocInfo);
+		device.bindImageMemory(dstImage, dstImageMemory, 0);
 
 		// Do the actual blit from the swapchain image to our host visible destination image
 		vk::CommandBuffer copyCmd = vulkanDevice->createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
@@ -510,9 +510,9 @@ public:
 		std::cout << "Screenshot saved to disk" << std::endl;
 
 		// Clean up resources
-		vkUnmapMemory(device, dstImageMemory);
-		vkFreeMemory(device, dstImageMemory, nullptr);
-		vkDestroyImage(device, dstImage, nullptr);
+		device.unmapMemory(dstImageMemory);
+		device.freeMemory(dstImageMemory);
+		device.destroyImage(dstImage);
 	}
 
 	void draw()
@@ -521,7 +521,7 @@ public:
 
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

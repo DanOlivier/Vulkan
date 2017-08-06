@@ -92,19 +92,19 @@ public:
 	~VulkanExample()
 	{
 		// Graphics
-		vkDestroyPipeline(device, graphics.pipeline, nullptr);
-		vkDestroyPipelineLayout(device, graphics.pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, graphics.descriptorSetLayout, nullptr);
+		device.destroyPipeline(graphics.pipeline);
+		device.destroyPipelineLayout(graphics.pipelineLayout);
+		device.destroyDescriptorSetLayout(graphics.descriptorSetLayout);
 
 		// Compute
 		for (auto& pipeline : compute.pipelines)
 		{
-			vkDestroyPipeline(device, pipeline, nullptr);
+			device.destroyPipeline(pipeline);
 		}
-		vkDestroyPipelineLayout(device, compute.pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, compute.descriptorSetLayout, nullptr);
-		vkDestroyFence(device, compute.fence, nullptr);
-		vkDestroyCommandPool(device, compute.commandPool, nullptr);
+		device.destroyPipelineLayout(compute.pipelineLayout);
+		device.destroyDescriptorSetLayout(compute.descriptorSetLayout);
+		device.destroyFence(compute.fence);
+		device.destroyCommandPool(compute.commandPool);
 
 		vertexBuffer.destroy();
 		indexBuffer.destroy();
@@ -120,7 +120,7 @@ public:
 		vk::FormatProperties formatProperties;
 
 		// Get device properties for the requested texture format
-		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
+		formatProperties = physicalDevice.getFormatProperties(format);
 		// Check if requested image format supports image storage operations
 		assert(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eStorageImage);
 
@@ -145,13 +145,13 @@ public:
 		vk::MemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
 		vk::MemoryRequirements memReqs;
 
-		VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &tex->image));
+		tex->image = device.createImage(imageCreateInfo);
 
-		vkGetImageMemoryRequirements(device, tex->image, &memReqs);
+		memReqs = device.getImageMemoryRequirements(tex->image);
 		memAllocInfo.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAllocInfo, nullptr, &tex->deviceMemory));
-		VK_CHECK_RESULT(vkBindImageMemory(device, tex->image, tex->deviceMemory, 0));
+		&tex->deviceMemory = device.allocateMemory(memAllocInfo);
+		device.bindImageMemory(tex->image, tex->deviceMemory, 0);
 
 		vk::CommandBuffer layoutCmd = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
 
@@ -178,17 +178,16 @@ public:
 		sampler.minLod = 0.0f;
 		sampler.maxLod = 0.0f;
 		sampler.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-		VK_CHECK_RESULT(vkCreateSampler(device, &sampler, nullptr, &tex->sampler));
+		tex->sampler = device.createSampler(sampler);
 
 		// Create image view
 		vk::ImageViewCreateInfo view = vks::initializers::imageViewCreateInfo();
-		view.image = VK_NULL_HANDLE;
 		view.viewType = vk::ImageViewType::e2D;
 		view.format = format;
 		view.components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA };
 		view.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
 		view.image = tex->image;
-		VK_CHECK_RESULT(vkCreateImageView(device, &view, nullptr, &tex->view));
+		tex->view = device.createImageView(view);
 
 		// Initialize a descriptor for later use
 		tex->descriptor.imageLayout = tex->imageLayout;
@@ -237,11 +236,11 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
 			// Image memory barrier to make sure that compute shader writes are finished before sampling from the texture
 			vk::ImageMemoryBarrier imageMemoryBarrier = {};
-			imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
 			// We won't be changing the layout of the image
 			imageMemoryBarrier.oldLayout = vk::ImageLayout::eGeneral;
 			imageMemoryBarrier.newLayout = vk::ImageLayout::eGeneral;
@@ -257,35 +256,35 @@ public:
 				0, nullptr,
 				0, nullptr,
 				1, &imageMemoryBarrier);
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width * 0.5f, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
 			vk::DeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &vertexBuffer.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], indexBuffer.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(indexBuffer.buffer, 0, vk::IndexType::eUint32);
 
 			// Left (pre compute)
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, 0, 1, &graphics.descriptorSetPreCompute, 0, NULL);
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, graphics.pipeline);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, graphics.descriptorSetPreCompute, nullptr);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphics.pipeline);
 
-			vkCmdDrawIndexed(drawCmdBuffers[i], indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].drawIndexed(indexCount, 1, 0, 0, 0);
 
 			// Right (post compute)
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, 0, 1, &graphics.descriptorSetPostCompute, 0, NULL);
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, graphics.pipeline);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, graphics.descriptorSetPostCompute, nullptr);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphics.pipeline);
 
 			viewport.x = (float)width / 2.0f;
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
-			vkCmdDrawIndexed(drawCmdBuffers[i], indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].setViewport(0, viewport);
+			drawCmdBuffers[i].drawIndexed(indexCount, 1, 0, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 
 	}
@@ -293,14 +292,14 @@ public:
 	void buildComputeCommandBuffer()
 	{
 		// Flush the queue if we're rebuilding the command buffer after a pipeline change to ensure it's not currently in use
-		vkQueueWaitIdle(compute.queue);
+		compute.queue.waitIdle();
 
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(compute.commandBuffer, &cmdBufInfo));
+		compute.commandBuffer.begin(cmdBufInfo);
 
-		vkCmdBindPipeline(compute.commandBuffer, vk::PipelineBindPoint::eCompute, compute.pipelines[compute.pipelineIndex]);
-		vkCmdBindDescriptorSets(compute.commandBuffer, vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0, 1, &compute.descriptorSet, 0, 0);
+		compute.commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, compute.pipelines[compute.pipelineIndex]);
+		compute.commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0, compute.descriptorSet, nullptr);
 
 		vkCmdDispatch(compute.commandBuffer, textureComputeTarget.width / 16, textureComputeTarget.height / 16, 1);
 
@@ -396,7 +395,7 @@ public:
 				poolSizes.data(),
 				3);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -420,14 +419,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &graphics.descriptorSetLayout));
+		graphics.descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 		
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&graphics.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &graphics.pipelineLayout));
+		graphics.pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSet()
@@ -438,7 +437,7 @@ public:
 				&graphics.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &graphics.descriptorSetPostCompute));
+		graphics.descriptorSetPostCompute = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets =
 		{
@@ -465,7 +464,7 @@ public:
 				&graphics.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &graphics.descriptorSetPreCompute));
+		graphics.descriptorSetPreCompute = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> baseImageWriteDescriptorSets =
 		{
@@ -515,7 +514,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -560,7 +559,7 @@ public:
 		pipelineCreateInfo.pStages = shaderStages.data();
 		pipelineCreateInfo.renderPass = renderPass;
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &graphics.pipeline));
+		graphics.pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	// Find and create a compute capable device queue
@@ -572,7 +571,7 @@ public:
 
 		std::vector<vk::QueueFamilyProperties> queueFamilyProperties;
 		queueFamilyProperties.resize(queueFamilyCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
+		queueFamilyProperties = physicalDevice.getQueueFamilyProperties(queueFamilyCount);
 
 		// Some devices have dedicated compute queues, so we first try to find a queue that supports compute and not graphics
 		bool computeQueueFound = false;
@@ -602,7 +601,7 @@ public:
 		// Compute is mandatory in Vulkan, so there must be at least one queue family that supports compute
 		assert(computeQueueFound);
 		// Get a compute queue from the device
-		vkGetDeviceQueue(device, compute.queueFamilyIndex, 0, &compute.queue);
+		compute.queue = device.getQueue(compute.queueFamilyIndex);
 	}
 
 	void prepareCompute()
@@ -637,7 +636,7 @@ public:
 				&compute.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &compute.pipelineLayout));
+		compute.pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 
 		vk::DescriptorSetAllocateInfo allocInfo =
 			vks::initializers::descriptorSetAllocateInfo(
@@ -645,7 +644,7 @@ public:
 				&compute.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &compute.descriptorSet));
+		compute.descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> computeWriteDescriptorSets =
 		{
@@ -679,17 +678,17 @@ public:
 			std::string fileName = getAssetPath() + "shaders/computeshader/" + shaderName + ".comp.spv";
 			computePipelineCreateInfo.stage = loadShader(fileName.c_str(), vk::ShaderStageFlagBits::eCompute);
 			vk::Pipeline pipeline;
-			VK_CHECK_RESULT(vkCreateComputePipelines(device, pipelineCache, 1, &computePipelineCreateInfo, nullptr, &pipeline));
+			pipeline = device.createComputePipelines(pipelineCache, computePipelineCreateInfo);
 
 			compute.pipelines.push_back(pipeline);
 		}
 
 		// Separate command pool as queue family for compute may be different than graphics
 		vk::CommandPoolCreateInfo cmdPoolInfo = {};
-		cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+
 		cmdPoolInfo.queueFamilyIndex = compute.queueFamilyIndex;
 		cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-		VK_CHECK_RESULT(vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &compute.commandPool));
+		compute.commandPool = device.createCommandPool(cmdPoolInfo);
 
 		// Create a command buffer for compute operations
 		vk::CommandBufferAllocateInfo cmdBufAllocateInfo =
@@ -698,11 +697,11 @@ public:
 				vk::CommandBufferLevel::ePrimary,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &cmdBufAllocateInfo, &compute.commandBuffer));
+		compute.commandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
 
 		// Fence for compute CB sync
 		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-		VK_CHECK_RESULT(vkCreateFence(device, &fenceCreateInfo, nullptr, &compute.fence));
+		compute.fence = device.createFence(fenceCreateInfo);
 
 		// Build a single command buffer containing the compute dispatch commands
 		buildComputeCommandBuffer();
@@ -719,7 +718,7 @@ public:
 			sizeof(uboVS)));
 
 		// Map persistent
-		VK_CHECK_RESULT(uniformBufferVS.map());
+		uniformBufferVS.map();
 
 		updateUniformBuffers();
 	}
@@ -744,20 +743,20 @@ public:
 
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 
 		// Submit compute commands
 		// Use a fence to ensure that compute command buffer has finished executin before using it again
 		vkWaitForFences(device, 1, &compute.fence, VK_TRUE, UINT64_MAX);
-		vkResetFences(device, 1, &compute.fence);
+		device.resetFences(compute.fence);
 
 		vk::SubmitInfo computeSubmitInfo = vks::initializers::submitInfo();
 		computeSubmitInfo.commandBufferCount = 1;
 		computeSubmitInfo.pCommandBuffers = &compute.commandBuffer;
 
-		VK_CHECK_RESULT(vkQueueSubmit(compute.queue, 1, &computeSubmitInfo, compute.fence));
+		compute.queue.submit(computeSubmitInfo, compute.fence);
 	}
 
 	void prepare()

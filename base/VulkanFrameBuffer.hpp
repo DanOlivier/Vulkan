@@ -115,13 +115,13 @@ namespace vks
 			assert(vulkanDevice);
 			for (auto attachment : attachments)
 			{
-				vkDestroyImage(vulkanDevice->logicalDevice, attachment.image, nullptr);
-				vkDestroyImageView(vulkanDevice->logicalDevice, attachment.view, nullptr);
-				vkFreeMemory(vulkanDevice->logicalDevice, attachment.memory, nullptr);
+				vulkanDevice->logicalDevice.destroyImage(attachment.image);
+				vulkanDevice->logicalDevice.destroyImageView(attachment.view);
+				vulkanDevice->logicalDevice.freeMemory(attachment.memory);
 			}
-			vkDestroySampler(vulkanDevice->logicalDevice, sampler, nullptr);
-			vkDestroyRenderPass(vulkanDevice->logicalDevice, renderPass, nullptr);
-			vkDestroyFramebuffer(vulkanDevice->logicalDevice, framebuffer, nullptr);
+			vulkanDevice->logicalDevice.destroySampler(sampler);
+			vulkanDevice->logicalDevice.destroyRenderPass(renderPass);
+			vulkanDevice->logicalDevice.destroyFramebuffer(framebuffer);
 		}
 
 		/**
@@ -178,12 +178,12 @@ namespace vks
 			vk::MemoryRequirements memReqs;
 
 			// Create image for this attachment
-			VK_CHECK_RESULT(vkCreateImage(vulkanDevice->logicalDevice, &image, nullptr, &attachment.image));
-			vkGetImageMemoryRequirements(vulkanDevice->logicalDevice, attachment.image, &memReqs);
+			attachment.image = vulkanDevice->logicalDevice.createImage(image);
+			memReqs = vulkanDevice->logicalDevice.getImageMemoryRequirements(attachment.image);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-			VK_CHECK_RESULT(vkAllocateMemory(vulkanDevice->logicalDevice, &memAlloc, nullptr, &attachment.memory));
-			VK_CHECK_RESULT(vkBindImageMemory(vulkanDevice->logicalDevice, attachment.image, attachment.memory, 0));
+			&attachment.memory = vulkanDevice->logicalDevice.allocateMemory(memAlloc);
+			vulkanDevice->logicalDevice.bindImageMemory(attachment.image, attachment.memory, 0);
 
 			attachment.subresourceRange = {};
 			attachment.subresourceRange.aspectMask = aspectMask;
@@ -197,7 +197,7 @@ namespace vks
 			//todo: workaround for depth+stencil attachments
 			imageView.subresourceRange.aspectMask = (attachment.hasDepth()) ? vk::ImageAspectFlagBits::eDepth : aspectMask;
 			imageView.image = attachment.image;
-			VK_CHECK_RESULT(vkCreateImageView(vulkanDevice->logicalDevice, &imageView, nullptr, &attachment.view));
+			attachment.view = vulkanDevice->logicalDevice.createImageView(imageView);
 
 			// Fill attachment description
 			attachment.description = {};
@@ -324,14 +324,14 @@ namespace vks
 
 			// Create render pass
 			vk::RenderPassCreateInfo renderPassInfo = {};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+
 			renderPassInfo.pAttachments = attachmentDescriptions.data();
 			renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
 			renderPassInfo.subpassCount = 1;
 			renderPassInfo.pSubpasses = &subpass;
 			renderPassInfo.dependencyCount = 2;
 			renderPassInfo.pDependencies = dependencies.data();
-			VK_CHECK_RESULT(vkCreateRenderPass(vulkanDevice->logicalDevice, &renderPassInfo, nullptr, &renderPass));
+			renderPass = vulkanDevice->logicalDevice.createRenderPass(renderPassInfo);
 
 			std::vector<vk::ImageView> attachmentViews;
 			for (auto attachment : attachments)
@@ -350,14 +350,14 @@ namespace vks
 			}
 
 			vk::FramebufferCreateInfo framebufferInfo = {};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+
 			framebufferInfo.renderPass = renderPass;
 			framebufferInfo.pAttachments = attachmentViews.data();
 			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachmentViews.size());
 			framebufferInfo.width = width;
 			framebufferInfo.height = height;
 			framebufferInfo.layers = maxLayers;
-			VK_CHECK_RESULT(vkCreateFramebuffer(vulkanDevice->logicalDevice, &framebufferInfo, nullptr, &framebuffer));
+			framebuffer = vulkanDevice->logicalDevice.createFramebuffer(framebufferInfo);
 
 			return vk::Result::eSuccess;
 		}

@@ -144,22 +144,22 @@ public:
 		textures.floor.colorMap.destroy();
 		textures.floor.normalMap.destroy();
 
-		vkDestroyPipeline(device, pipelines.particles, nullptr);
-		vkDestroyPipeline(device, pipelines.environment, nullptr);
+		device.destroyPipeline(pipelines.particles);
+		device.destroyPipeline(pipelines.environment);
 
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyPipelineLayout(pipelineLayout);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
-		vkUnmapMemory(device, particles.memory);
-		vkDestroyBuffer(device, particles.buffer, nullptr);
-		vkFreeMemory(device, particles.memory, nullptr);
+		device.unmapMemory(particles.memory);
+		device.destroyBuffer(particles.buffer);
+		device.freeMemory(particles.memory);
 
 		uniformBuffers.environment.destroy();
 		uniformBuffers.fire.destroy();
 
 		models.environment.destroy();
 
-		vkDestroySampler(device, textures.particles.sampler, nullptr);
+		device.destroySampler(textures.particles.sampler);
 	}
 
 	void buildCommandBuffers()
@@ -184,12 +184,12 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0,0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
@@ -197,21 +197,21 @@ public:
 			vk::DeviceSize offsets[1] = { 0 };
 
 			// Environment
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.environment, 0, NULL);
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.environment);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.environment.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.environment.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.environment.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.environment, nullptr);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.environment);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.environment.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.environment.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.environment.indexCount, 1, 0, 0, 0);
 
 			// Particle system (no index buffer)
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.particles, 0, NULL);
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.particles);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &particles.buffer, offsets);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.particles, nullptr);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.particles);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, particles.buffer, offsets);
 			vkCmdDraw(drawCmdBuffers[i], PARTICLE_COUNT, 1, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -291,7 +291,7 @@ public:
 			particleBuffer.data()));
 
 		// Map the memory and store the pointer for reuse
-		VK_CHECK_RESULT(vkMapMemory(device, particles.memory, 0, particles.size, 0, &particles.mappedMemory));
+		VK_CHECK_RESULT(particles.mappedMemory) = device.mapMemory(particles.memory, 0, particles.size, vk::MemoryMapFlags());
 	}
 
 	void updateParticles()
@@ -374,7 +374,7 @@ public:
 		samplerCreateInfo.anisotropyEnable = VK_TRUE;
 		// Use a different border color (than the normal texture loader) for additive blending
 		samplerCreateInfo.borderColor = vk::BorderColor::eFloatTransparentBlack;
-		VK_CHECK_RESULT(vkCreateSampler(device, &samplerCreateInfo, nullptr, &textures.particles.sampler));
+		textures.particles.sampler = device.createSampler(samplerCreateInfo);
 
 		models.environment.loadFromFile(getAssetPath() + "models/fireplace.obj", vertexLayout, 10.0f, vulkanDevice, queue);
 	}
@@ -394,7 +394,7 @@ public:
 				poolSizes.data(),
 				2);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -423,14 +423,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSets()
@@ -443,7 +443,7 @@ public:
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.particles));
+		descriptorSets.particles = device.allocateDescriptorSets(allocInfo)[0];
 
 		// Image descriptor for the color map texture
 		vk::DescriptorImageInfo texDescriptorSmoke =
@@ -481,7 +481,7 @@ public:
 		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
 
 		// Environment
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.environment));
+		descriptorSets.environment = device.allocateDescriptorSets(allocInfo)[0];
 
 		writeDescriptorSets = {
 			// Binding 0: Vertex shader uniform buffer
@@ -536,7 +536,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -615,7 +615,7 @@ public:
 			blendAttachmentState.alphaBlendOp = vk::BlendOp::eAdd;
 			blendAttachmentState.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
-			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.particles));
+			pipelines.particles = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		}
 
 		// Environment rendering pipeline (normal mapped)
@@ -648,7 +648,7 @@ public:
 			depthStencilState.depthWriteEnable = VK_TRUE;
 			inputAssemblyState.topology = vk::PrimitiveTopology::eTriangleList;
 
-			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.environment));
+			pipelines.environment = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		}
 	}
 
@@ -670,8 +670,8 @@ public:
 			sizeof(uboEnv)));
 
 		// Map persistent
-		VK_CHECK_RESULT(uniformBuffers.fire.map());
-		VK_CHECK_RESULT(uniformBuffers.environment.map());
+		uniformBuffers.fire.map();
+		uniformBuffers.environment.map();
 
 		updateUniformBuffers();
 	}
@@ -718,7 +718,7 @@ public:
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
 
 		// Submit to queue
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

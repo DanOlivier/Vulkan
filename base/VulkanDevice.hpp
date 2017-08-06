@@ -39,7 +39,7 @@ namespace vks
 		std::vector<std::string> supportedExtensions;
 
 		/** @brief Default command pool for the graphics queue family index */
-		vk::CommandPool commandPool = VK_NULL_HANDLE;
+		vk::CommandPool commandPool;
 
 		/** @brief Set to true when the debug marker extension is detected */
 		bool enableDebugMarkers = false;
@@ -67,31 +67,19 @@ namespace vks
 
 			// Store Properties features, limits and properties of the physical device for later use
 			// Device properties also contain limits and sparse properties
-			vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+			properties = physicalDevice.getProperties();
 			// Features should be checked by the examples before using them
-			vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+			features = physicalDevice.getFeatures();
 			// Memory properties are used regularly for creating all kinds of buffers
-			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+			memoryProperties = physicalDevice.getMemoryProperties();
 			// Queue family properties, used for setting up requested queues upon device creation
-			uint32_t queueFamilyCount;
-			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
-			assert(queueFamilyCount > 0);
-			queueFamilyProperties.resize(queueFamilyCount);
-			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
+			queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
 
 			// Get list of supported extensions
-			uint32_t extCount = 0;
-			vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extCount, nullptr);
-			if (extCount > 0)
+			std::vector<vk::ExtensionProperties> extensions = physicalDevice.enumerateDeviceExtensionProperties();
+			for (auto ext : extensions)
 			{
-				std::vector<vk::ExtensionProperties> extensions(extCount);
-				if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extCount, &extensions.front()) == vk::Result::eSuccess)
-				{
-					for (auto ext : extensions)
-					{
-						supportedExtensions.push_back(ext.extensionName);
-					}
-				}
+				supportedExtensions.push_back(ext.extensionName);
 			}
 		}
 
@@ -104,11 +92,11 @@ namespace vks
 		{
 			if (commandPool)
 			{
-				vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
+				logicalDevice.destroyCommandPool(commandPool);
 			}
 			if (logicalDevice)
 			{
-				vkDestroyDevice(logicalDevice, nullptr);
+				logicalDevice.destroy();
 			}
 		}
 
@@ -174,11 +162,12 @@ namespace vks
 		{
 			// Dedicated queue for compute
 			// Try to find a queue family index that supports compute but not graphics
-			if (queueFlags & vk::QueueFlagBits::eCompute)
+			if (vk::QueueFlags(queueFlags) & vk::QueueFlagBits::eCompute)
 			{
 				for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size()); i++)
 				{
-					if ((queueFamilyProperties[i].queueFlags & queueFlags) && ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) == 0))
+					if ((queueFamilyProperties[i].queueFlags & queueFlags) && 
+						~(queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics))
 					{
 						return i;
 						break;
@@ -188,11 +177,13 @@ namespace vks
 
 			// Dedicated queue for transfer
 			// Try to find a queue family index that supports transfer but not graphics and compute
-			if (queueFlags & vk::QueueFlagBits::eTransfer)
+			if (vk::QueueFlags(queueFlags) & vk::QueueFlagBits::eTransfer)
 			{
 				for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size()); i++)
 				{
-					if ((queueFamilyProperties[i].queueFlags & queueFlags) && ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) == 0) && ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eCompute) == 0))
+					if ((queueFamilyProperties[i].queueFlags & queueFlags) && 
+						~(queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) && 
+						~(queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eCompute))
 					{
 						return i;
 						break;
@@ -227,7 +218,9 @@ namespace vks
 		*
 		* @return vk::Result of the device creation call
 		*/
-		vk::Result createLogicalDevice(vk::PhysicalDeviceFeatures enabledFeatures, std::vector<const char*> enabledExtensions, bool useSwapChain = true, vk::QueueFlags requestedQueueTypes = vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)
+		vk::Result createLogicalDevice(vk::PhysicalDeviceFeatures enabledFeatures, 
+			std::vector<const char*> enabledExtensions, bool useSwapChain = true, 
+			vk::QueueFlags requestedQueueTypes = vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)
 		{			
 			// Desired queues need to be requested upon logical device creation
 			// Due to differing queue family configurations of Vulkan implementations this can be a bit tricky, especially if the application
@@ -245,7 +238,7 @@ namespace vks
 			{
 				queueFamilyIndices.graphics = getQueueFamilyIndex(vk::QueueFlagBits::eGraphics);
 				vk::DeviceQueueCreateInfo queueInfo{};
-				queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+
 				queueInfo.queueFamilyIndex = queueFamilyIndices.graphics;
 				queueInfo.queueCount = 1;
 				queueInfo.pQueuePriorities = &defaultQueuePriority;
@@ -253,7 +246,7 @@ namespace vks
 			}
 			else
 			{
-				queueFamilyIndices.graphics = VK_NULL_HANDLE;
+				queueFamilyIndices.graphics = 0;
 			}
 
 			// Dedicated compute queue
@@ -264,7 +257,7 @@ namespace vks
 				{
 					// If compute family index differs, we need an additional queue create info for the compute queue
 					vk::DeviceQueueCreateInfo queueInfo{};
-					queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+
 					queueInfo.queueFamilyIndex = queueFamilyIndices.compute;
 					queueInfo.queueCount = 1;
 					queueInfo.pQueuePriorities = &defaultQueuePriority;
@@ -281,11 +274,12 @@ namespace vks
 			if (requestedQueueTypes & vk::QueueFlagBits::eTransfer)
 			{
 				queueFamilyIndices.transfer = getQueueFamilyIndex(vk::QueueFlagBits::eTransfer);
-				if ((queueFamilyIndices.transfer != queueFamilyIndices.graphics) && (queueFamilyIndices.transfer != queueFamilyIndices.compute))
+				if ((queueFamilyIndices.transfer != queueFamilyIndices.graphics) && 
+					(queueFamilyIndices.transfer != queueFamilyIndices.compute))
 				{
 					// If compute family index differs, we need an additional queue create info for the compute queue
 					vk::DeviceQueueCreateInfo queueInfo{};
-					queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+
 					queueInfo.queueFamilyIndex = queueFamilyIndices.transfer;
 					queueInfo.queueCount = 1;
 					queueInfo.pQueuePriorities = &defaultQueuePriority;
@@ -307,7 +301,7 @@ namespace vks
 			}
 
 			vk::DeviceCreateInfo deviceCreateInfo = {};
-			deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
 			deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());;
 			deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 			deviceCreateInfo.pEnabledFeatures = &enabledFeatures;
@@ -325,17 +319,14 @@ namespace vks
 				deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 			}
 
-			vk::Result result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &logicalDevice);
+			logicalDevice = physicalDevice.createDevice(deviceCreateInfo);
 
-			if (result == vk::Result::eSuccess)
-			{
-				// Create a default command pool for graphics command buffers
-				commandPool = createCommandPool(queueFamilyIndices.graphics);
-			}
+			// Create a default command pool for graphics command buffers
+			commandPool = createCommandPool(queueFamilyIndices.graphics);
 
 			this->enabledFeatures = enabledFeatures;
 
-			return result;
+			return vk::Result::eSuccess;
 		}
 
 		/**
@@ -355,37 +346,37 @@ namespace vks
 			// Create the buffer handle
 			vk::BufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo(usageFlags, size);
 			bufferCreateInfo.sharingMode = vk::SharingMode::eExclusive;
-			VK_CHECK_RESULT(vkCreateBuffer(logicalDevice, &bufferCreateInfo, nullptr, buffer));
+			*buffer = logicalDevice.createBuffer(bufferCreateInfo);
 
 			// Create the memory backing up the buffer handle
 			vk::MemoryRequirements memReqs;
 			vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
-			vkGetBufferMemoryRequirements(logicalDevice, *buffer, &memReqs);
+			memReqs = logicalDevice.getBufferMemoryRequirements(*buffer);
 			memAlloc.allocationSize = memReqs.size;
 			// Find a memory type index that fits the properties of the buffer
 			memAlloc.memoryTypeIndex = getMemoryType(memReqs.memoryTypeBits, memoryPropertyFlags);
-			VK_CHECK_RESULT(vkAllocateMemory(logicalDevice, &memAlloc, nullptr, memory));
+			*memory = logicalDevice.allocateMemory(memAlloc);
 			
 			// If a pointer to the buffer data has been passed, map the buffer and copy over the data
 			if (data != nullptr)
 			{
 				void *mapped;
-				VK_CHECK_RESULT(vkMapMemory(logicalDevice, *memory, 0, size, 0, &mapped));
+				mapped = logicalDevice.mapMemory(*memory, 0, size, vk::MemoryMapFlags());
 				memcpy(mapped, data, size);
 				// If host coherency hasn't been requested, do a manual flush to make writes visible
-				if ((memoryPropertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) == 0)
+				if (~(memoryPropertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent))
 				{
 					vk::MappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
 					mappedRange.memory = *memory;
 					mappedRange.offset = 0;
 					mappedRange.size = size;
-					vkFlushMappedMemoryRanges(logicalDevice, 1, &mappedRange);
+					logicalDevice.flushMappedMemoryRanges(mappedRange);
 				}
-				vkUnmapMemory(logicalDevice, *memory);
+				logicalDevice.unmapMemory(*memory);
 			}
 
 			// Attach the memory to the buffer object
-			VK_CHECK_RESULT(vkBindBufferMemory(logicalDevice, *buffer, *memory, 0));
+			logicalDevice.bindBufferMemory(*buffer, *memory, 0);
 
 			return vk::Result::eSuccess;
 		}
@@ -407,16 +398,16 @@ namespace vks
 
 			// Create the buffer handle
 			vk::BufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo(usageFlags, size);
-			VK_CHECK_RESULT(vkCreateBuffer(logicalDevice, &bufferCreateInfo, nullptr, &buffer->buffer));
+			buffer->buffer = logicalDevice.createBuffer(bufferCreateInfo);
 
 			// Create the memory backing up the buffer handle
 			vk::MemoryRequirements memReqs;
 			vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
-			vkGetBufferMemoryRequirements(logicalDevice, buffer->buffer, &memReqs);
+			memReqs = logicalDevice.getBufferMemoryRequirements(buffer->buffer);
 			memAlloc.allocationSize = memReqs.size;
 			// Find a memory type index that fits the properties of the buffer
 			memAlloc.memoryTypeIndex = getMemoryType(memReqs.memoryTypeBits, memoryPropertyFlags);
-			VK_CHECK_RESULT(vkAllocateMemory(logicalDevice, &memAlloc, nullptr, &buffer->memory));
+			buffer->memory = logicalDevice.allocateMemory(memAlloc);
 
 			buffer->alignment = memReqs.alignment;
 			buffer->size = memAlloc.allocationSize;
@@ -426,7 +417,7 @@ namespace vks
 			// If a pointer to the buffer data has been passed, map the buffer and copy over the data
 			if (data != nullptr)
 			{
-				VK_CHECK_RESULT(buffer->map());
+				buffer->map();
 				memcpy(buffer->mapped, data, size);
 				buffer->unmap();
 			}
@@ -435,7 +426,7 @@ namespace vks
 			buffer->setupDescriptor();
 
 			// Attach the memory to the buffer object
-			return buffer->bind();
+			buffer->bind();
 		}
 
 		/**
@@ -463,7 +454,7 @@ namespace vks
 				bufferCopy = *copyRegion;
 			}
 
-			vkCmdCopyBuffer(copyCmd, src->buffer, dst->buffer, 1, &bufferCopy);
+			copyCmd.copyBuffer(src->buffer, dst->buffer, bufferCopy);
 
 			flushCommandBuffer(copyCmd, queue);
 		}
@@ -481,11 +472,11 @@ namespace vks
 		vk::CommandPool createCommandPool(uint32_t queueFamilyIndex, vk::CommandPoolCreateFlags createFlags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
 		{
 			vk::CommandPoolCreateInfo cmdPoolInfo = {};
-			cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+
 			cmdPoolInfo.queueFamilyIndex = queueFamilyIndex;
 			cmdPoolInfo.flags = createFlags;
 			vk::CommandPool cmdPool;
-			VK_CHECK_RESULT(vkCreateCommandPool(logicalDevice, &cmdPoolInfo, nullptr, &cmdPool));
+			cmdPool = logicalDevice.createCommandPool(cmdPoolInfo);
 			return cmdPool;
 		}
 
@@ -501,14 +492,13 @@ namespace vks
 		{
 			vk::CommandBufferAllocateInfo cmdBufAllocateInfo = vks::initializers::commandBufferAllocateInfo(commandPool, level, 1);
 
-			vk::CommandBuffer cmdBuffer;
-			VK_CHECK_RESULT(vkAllocateCommandBuffers(logicalDevice, &cmdBufAllocateInfo, &cmdBuffer));
+			vk::CommandBuffer cmdBuffer = logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 			// If requested, also start recording for the new command buffer
 			if (begin)
 			{
 				vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
-				VK_CHECK_RESULT(vkBeginCommandBuffer(cmdBuffer, &cmdBufInfo));
+				cmdBuffer.begin(cmdBufInfo);
 			}
 
 			return cmdBuffer;
@@ -526,32 +516,32 @@ namespace vks
 		*/
 		void flushCommandBuffer(vk::CommandBuffer commandBuffer, vk::Queue queue, bool free = true)
 		{
-			if (commandBuffer == VK_NULL_HANDLE)
+			if (!commandBuffer)
 			{
 				return;
 			}
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
+			commandBuffer.end();
 
 			vk::SubmitInfo submitInfo = vks::initializers::submitInfo();
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &commandBuffer;
 
 			// Create fence to ensure that the command buffer has finished executing
-			vk::FenceCreateInfo fenceInfo = vks::initializers::fenceCreateInfo(VK_FLAGS_NONE);
+			vk::FenceCreateInfo fenceInfo = vks::initializers::fenceCreateInfo();
 			vk::Fence fence;
-			VK_CHECK_RESULT(vkCreateFence(logicalDevice, &fenceInfo, nullptr, &fence));
+			fence = logicalDevice.createFence(fenceInfo);
 			
 			// Submit to the queue
-			VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, fence));
+			queue.submit(submitInfo, fence);
 			// Wait for the fence to signal that command buffer has finished executing
-			VK_CHECK_RESULT(vkWaitForFences(logicalDevice, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+			logicalDevice.waitForFences(fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT);
 
-			vkDestroyFence(logicalDevice, fence, nullptr);
+			logicalDevice.destroyFence(fence);
 
 			if (free)
 			{
-				vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
+				logicalDevice.freeCommandBuffers(commandPool, commandBuffer);
 			}
 		}
 

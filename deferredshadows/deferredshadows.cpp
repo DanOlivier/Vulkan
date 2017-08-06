@@ -162,11 +162,11 @@ public:
 	} frameBuffers;
 
 	struct {
-		vk::CommandBuffer deferred = VK_NULL_HANDLE;
+		vk::CommandBuffer deferred;
 	} commandBuffers;
 
 	// Semaphore used to synchronize between offscreen and final scene rendering
-	vk::Semaphore offscreenSemaphore = VK_NULL_HANDLE;
+	vk::Semaphore offscreenSemaphore;
 
 	VulkanExample() : VulkanExampleBase(ENABLE_VALIDATION)
 	{
@@ -198,15 +198,15 @@ public:
 			delete frameBuffers.shadow;
 		}
 
-		vkDestroyPipeline(device, pipelines.deferred, nullptr);
-		vkDestroyPipeline(device, pipelines.offscreen, nullptr);
-		vkDestroyPipeline(device, pipelines.shadowpass, nullptr);
-		vkDestroyPipeline(device, pipelines.debug, nullptr);
+		device.destroyPipeline(pipelines.deferred);
+		device.destroyPipeline(pipelines.offscreen);
+		device.destroyPipeline(pipelines.shadowpass);
+		device.destroyPipeline(pipelines.debug);
 
-		vkDestroyPipelineLayout(device, pipelineLayouts.deferred, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayouts.offscreen, nullptr);
+		device.destroyPipelineLayout(pipelineLayouts.deferred);
+		device.destroyPipelineLayout(pipelineLayouts.offscreen);
 
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 		// Meshes
 		models.model.destroy();
@@ -219,7 +219,7 @@ public:
 		uniformBuffers.fsLights.destroy();
 		uniformBuffers.uboShadowGS.destroy();
 
-		vkFreeCommandBuffers(device, cmdPool, 1, &commandBuffers.deferred);
+		device.freeCommandBuffers(cmdPool, commandBuffers.deferred);
 
 		// Textures
 		textures.model.colorMap.destroy();
@@ -227,7 +227,7 @@ public:
 		textures.background.colorMap.destroy();
 		textures.background.normalMap.destroy();
 
-		vkDestroySemaphore(device, offscreenSemaphore, nullptr);
+		device.destroySemaphore(offscreenSemaphore);
 	}
 
 	// Enable physical device features required for this example				
@@ -338,28 +338,28 @@ public:
 
 		// Background
 		vkCmdBindDescriptorSets(cmdBuffer, vk::PipelineBindPoint::eGraphics, pipelineLayouts.offscreen, 0, 1, shadow ? &descriptorSets.shadow : &descriptorSets.background, 0, NULL);
-		vkCmdBindVertexBuffers(cmdBuffer, VERTEX_BUFFER_BIND_ID, 1, &models.background.vertices.buffer, offsets);
-		vkCmdBindIndexBuffer(cmdBuffer, models.background.indices.buffer, 0, vk::IndexType::eUint32);
-		vkCmdDrawIndexed(cmdBuffer, models.background.indexCount, 1, 0, 0, 0);
+		cmdBuffer.bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.background.vertices.buffer, offsets);
+		cmdBuffer.bindIndexBuffer(models.background.indices.buffer, 0, vk::IndexType::eUint32);
+		cmdBuffer.drawIndexed(models.background.indexCount, 1, 0, 0, 0);
 
 		// Objects
 		vkCmdBindDescriptorSets(cmdBuffer, vk::PipelineBindPoint::eGraphics, pipelineLayouts.offscreen, 0, 1, shadow ? &descriptorSets.shadow : &descriptorSets.model, 0, NULL);
-		vkCmdBindVertexBuffers(cmdBuffer, VERTEX_BUFFER_BIND_ID, 1, &models.model.vertices.buffer, offsets);
-		vkCmdBindIndexBuffer(cmdBuffer, models.model.indices.buffer, 0, vk::IndexType::eUint32);
-		vkCmdDrawIndexed(cmdBuffer, models.model.indexCount, 3, 0, 0, 0);
+		cmdBuffer.bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.model.vertices.buffer, offsets);
+		cmdBuffer.bindIndexBuffer(models.model.indices.buffer, 0, vk::IndexType::eUint32);
+		cmdBuffer.drawIndexed(models.model.indexCount, 3, 0, 0, 0);
 	}
 
 	// Build a secondary command buffer for rendering the scene values to the offscreen frame buffer attachments
 	void buildDeferredCommandBuffer()
 	{
-		if (commandBuffers.deferred == VK_NULL_HANDLE)
+		if (!commandBuffers.deferred)
 		{
 			commandBuffers.deferred = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, false);
 		}
 
 		// Create a semaphore used to synchronize offscreen rendering and usage
 		vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
-		VK_CHECK_RESULT(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &offscreenSemaphore));
+		offscreenSemaphore = device.createSemaphore(semaphoreCreateInfo);
 
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
@@ -380,10 +380,10 @@ public:
 		renderPassBeginInfo.clearValueCount = 1;
 		renderPassBeginInfo.pClearValues = clearValues.data();
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffers.deferred, &cmdBufInfo));
+		commandBuffers.deferred.begin(cmdBufInfo);
 
 		viewport = vks::initializers::viewport((float)frameBuffers.shadow->width, (float)frameBuffers.shadow->height, 0.0f, 1.0f);
-		vkCmdSetViewport(commandBuffers.deferred, 0, 1, &viewport);
+		commandBuffers.deferred.setViewport(0, viewport);
 
 		scissor = vks::initializers::rect2D(frameBuffers.shadow->width, frameBuffers.shadow->height, 0, 0);
 		vkCmdSetScissor(commandBuffers.deferred, 0, 1, &scissor);
@@ -395,10 +395,10 @@ public:
 			0.0f,
 			depthBiasSlope);
 
-		vkCmdBeginRenderPass(commandBuffers.deferred, &renderPassBeginInfo, vk::SubpassContents::eInline);
-		vkCmdBindPipeline(commandBuffers.deferred, vk::PipelineBindPoint::eGraphics, pipelines.shadowpass);
+		commandBuffers.deferred.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+		commandBuffers.deferred.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.shadowpass);
 		renderScene(commandBuffers.deferred, true);
-		vkCmdEndRenderPass(commandBuffers.deferred);
+		commandBuffers.deferred.endRenderPass();
 
 		// Second pass: Deferred calculations
 		// -------------------------------------------------------------------------------------------------------
@@ -416,19 +416,19 @@ public:
 		renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassBeginInfo.pClearValues = clearValues.data();
 
-		vkCmdBeginRenderPass(commandBuffers.deferred, &renderPassBeginInfo, vk::SubpassContents::eInline);
+		commandBuffers.deferred.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 		viewport = vks::initializers::viewport((float)frameBuffers.deferred->width, (float)frameBuffers.deferred->height, 0.0f, 1.0f);
-		vkCmdSetViewport(commandBuffers.deferred, 0, 1, &viewport);
+		commandBuffers.deferred.setViewport(0, viewport);
 
 		scissor = vks::initializers::rect2D(frameBuffers.deferred->width, frameBuffers.deferred->height, 0, 0);
 		vkCmdSetScissor(commandBuffers.deferred, 0, 1, &scissor);
 
-		vkCmdBindPipeline(commandBuffers.deferred, vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
+		commandBuffers.deferred.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
 		renderScene(commandBuffers.deferred, false);
-		vkCmdEndRenderPass(commandBuffers.deferred);
+		commandBuffers.deferred.endRenderPass();
 
-		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffers.deferred));
+		commandBuffers.deferred.end();
 	}
 
 	void loadAssets()
@@ -499,35 +499,35 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = VulkanExampleBase::frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
 			vk::DeviceSize offsets[1] = { 0 };
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayouts.deferred, 0, 1, &descriptorSet, 0, NULL);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.deferred, 0, descriptorSet, nullptr);
 
 			// Final composition as full screen quad
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.deferred);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.quad.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.quad.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], 6, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.deferred);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.quad.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.quad.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(6, 1, 0, 0, 0);
 
 			if (debugDisplay)
 			{
 				// Visualize depth maps
-				vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.debug);
-				vkCmdDrawIndexed(drawCmdBuffers[i], 6, LIGHT_COUNT, 0, 0, 0);
+				drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.debug);
+				drawCmdBuffers[i].drawIndexed(6, LIGHT_COUNT, 0, 0, 0);
 			}
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -649,7 +649,7 @@ public:
 				poolSizes.data(),
 				4);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -695,17 +695,17 @@ public:
 				setLayoutBindings.data(),
 				static_cast<uint32_t>(setLayoutBindings.size()));
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayouts.deferred));
+		pipelineLayouts.deferred = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 
 		// Offscreen (scene) rendering pipeline layout
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayouts.offscreen));
+		pipelineLayouts.offscreen = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSet()
@@ -719,7 +719,7 @@ public:
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet));
+		descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		// Image descriptors for the offscreen color attachments
 		vk::DescriptorImageInfo texDescriptorPosition =
@@ -785,12 +785,12 @@ public:
 				&texDescriptorShadowMap),
 		};
 
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 
 		// Offscreen (scene)
 
 		// Model
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.model));
+		descriptorSets.model = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets =
 		{
 			// Binding 0: Vertex shader uniform buffer
@@ -812,10 +812,10 @@ public:
 				2,
 				&textures.model.normalMap.descriptor)
 		};
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 
 		// Background
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.background));
+		descriptorSets.background = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets =
 		{
 			// Binding 0: Vertex shader uniform buffer
@@ -837,10 +837,10 @@ public:
 				2,
 				&textures.background.normalMap.descriptor)
 		};
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 
 		// Shadow mapping
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.shadow));
+		descriptorSets.shadow = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets =
 		{
 			// Binding 0: Vertex shader uniform buffer
@@ -850,7 +850,7 @@ public:
 				0,
 				&uniformBuffers.uboShadowGS.descriptor),
 		};
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 	}
 
 	void preparePipelines()
@@ -882,7 +882,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -925,12 +925,12 @@ public:
 		pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
 		pipelineCreateInfo.pStages = shaderStages.data();
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.deferred));
+		pipelines.deferred = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Debug display pipeline
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredshadows/debug.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferredshadows/debug.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.debug));
+		pipelines.debug = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Offscreen pipeline
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredshadows/mrt.vert.spv", vk::ShaderStageFlagBits::eVertex);
@@ -955,7 +955,7 @@ public:
 		colorBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());
 		colorBlendState.pAttachments = blendAttachmentStates.data();
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.offscreen));
+		pipelines.offscreen = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Shadow mapping pipeline
 		// The shadow mapping pipeline uses geometry shader instancing (invocations layout modifier) to output 
@@ -973,7 +973,7 @@ public:
 		colorBlendState.pAttachments = nullptr;
 		// Cull front faces
 		rasterizationState.cullMode = vk::CullModeFlagBits::eFront;
-		depthStencilState.depthCompareOp = vk::CompareOp::eLess_OR_EQUAL;
+		depthStencilState.depthCompareOp = vk::CompareOp::eLessOrEqual;
 		// Enable depth bias
 		rasterizationState.depthBiasEnable = VK_TRUE;
 		// Add depth bias to dynamic state, so we can change it at runtime
@@ -985,7 +985,7 @@ public:
 				0);
 		// Reset blend attachment state
 		pipelineCreateInfo.renderPass = frameBuffers.shadow->renderPass;
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.shadowpass));
+		pipelines.shadowpass = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	// Prepare and initialize uniform buffer containing shader uniforms
@@ -1020,10 +1020,10 @@ public:
 			sizeof(uboShadowGS)));
 
 		// Map persistent
-		VK_CHECK_RESULT(uniformBuffers.vsFullScreen.map());
-		VK_CHECK_RESULT(uniformBuffers.vsOffscreen.map());
-		VK_CHECK_RESULT(uniformBuffers.fsLights.map());
-		VK_CHECK_RESULT(uniformBuffers.uboShadowGS.map());
+		uniformBuffers.vsFullScreen.map();
+		uniformBuffers.vsOffscreen.map();
+		uniformBuffers.fsLights.map();
+		uniformBuffers.uboShadowGS.map();
 
 		// Init some values
 		uboOffscreenVS.instancePos[0] = glm::vec4(0.0f);
@@ -1122,7 +1122,7 @@ public:
 		// Shadow map pass
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffers.deferred;
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		// Scene rendering
 
@@ -1133,7 +1133,7 @@ public:
 
 		// Submit work
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

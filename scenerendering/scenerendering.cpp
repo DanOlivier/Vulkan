@@ -205,7 +205,7 @@ private:
 				poolSizes.data(),
 				static_cast<uint32_t>(materials.size()) + 1);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(vulkanDevice->logicalDevice, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = vulkanDevice->logicalDevice.createDescriptorPool(descriptorPoolInfo);
 
 		// Descriptor set and pipeline layouts
 		std::vector<vk::DescriptorSetLayoutBinding> setLayoutBindings;
@@ -219,7 +219,7 @@ private:
 		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(
 				setLayoutBindings.data(),
 				static_cast<uint32_t>(setLayoutBindings.size()));
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(vulkanDevice->logicalDevice, &descriptorLayout, nullptr, &descriptorSetLayouts.scene));
+		descriptorSetLayouts.scene = vulkanDevice->logicalDevice.createDescriptorSetLayout(descriptorLayout);
 
 		// Set 1: Material data
 		setLayoutBindings.clear();
@@ -227,7 +227,7 @@ private:
 			vk::DescriptorType::eCombinedImageSampler,
 			vk::ShaderStageFlagBits::eFragment,
 			0));
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(vulkanDevice->logicalDevice, &descriptorLayout, nullptr, &descriptorSetLayouts.material));
+		descriptorSetLayouts.material = vulkanDevice->logicalDevice.createDescriptorSetLayout(descriptorLayout);
 
 		// Setup pipeline layout
 		std::array<vk::DescriptorSetLayout, 2> setLayouts = { descriptorSetLayouts.scene, descriptorSetLayouts.material };
@@ -241,7 +241,7 @@ private:
 		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 		pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(vulkanDevice->logicalDevice, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = vulkanDevice->logicalDevice.createPipelineLayout(pipelineLayoutCreateInfo);
 
 		// Material descriptor sets
 		for (size_t i = 0; i < materials.size(); i++)
@@ -253,7 +253,7 @@ private:
 					&descriptorSetLayouts.material,
 					1);
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(vulkanDevice->logicalDevice, &allocInfo, &materials[i].descriptorSet));
+			materials[i].descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo);
 
 			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 
@@ -266,7 +266,7 @@ private:
 				0,
 				&materials[i].diffuse.descriptor));
 
-			vkUpdateDescriptorSets(vulkanDevice->logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+			vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets);
 		}
 
 		// Scene descriptor set
@@ -275,7 +275,7 @@ private:
 				descriptorPool,
 				&descriptorSetLayouts.scene,
 				1);
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(vulkanDevice->logicalDevice, &allocInfo, &descriptorSetScene));
+		descriptorSetScene = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		// Binding 0 : Vertex shader uniform buffer
@@ -285,7 +285,7 @@ private:
 			0,
 			&uniformBuffer.descriptor));
 
-		vkUpdateDescriptorSets(vulkanDevice->logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets);
 	}
 
 	// Load all meshes from the scene and generate the buffers for rendering them
@@ -375,35 +375,31 @@ private:
 
 		// Copy
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
-		VK_CHECK_RESULT(vkBeginCommandBuffer(copyCmd, &cmdBufInfo));
+		copyCmd.begin(cmdBufInfo);
 
 		vk::BufferCopy copyRegion = {};
 
 		copyRegion.size = vertexDataSize;
-		vkCmdCopyBuffer(
-			copyCmd,
+		copyCmd.copyBuffer(
 			vertexStaging.buffer,
 			vertexBuffer.buffer,
-			1,
-			&copyRegion);
+			copyRegion);
 
 		copyRegion.size = indexDataSize;
-		vkCmdCopyBuffer(
-			copyCmd,
+		copyCmd.copyBuffer(
 			indexStaging.buffer,
 			indexBuffer.buffer,
-			1,
-			&copyRegion);
+			copyRegion);
 
-		VK_CHECK_RESULT(vkEndCommandBuffer(copyCmd));
+		copyCmd.end();
 
 		vk::SubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &copyCmd;
 
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
-		VK_CHECK_RESULT(vkQueueWaitIdle(queue));
+		queue.submit(submitInfo, vk::Fence(nullptr));
+		queue.waitIdle();
 
 		//todo: fence
 		vertexStaging.destroy();
@@ -454,13 +450,13 @@ public:
 		vk::MemoryRequirements memReqs;
 		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
 		vk::BufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(uniformData));
-		VK_CHECK_RESULT(vkCreateBuffer(vulkanDevice->logicalDevice, &bufferCreateInfo, nullptr, &uniformBuffer.buffer));
-		vkGetBufferMemoryRequirements(vulkanDevice->logicalDevice, uniformBuffer.buffer, &memReqs);
+		uniformBuffer.buffer = vulkanDevice->logicalDevice.createBuffer(bufferCreateInfo);
+		memReqs = vulkanDevice->logicalDevice.getBufferMemoryRequirements(uniformBuffer.buffer);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-		VK_CHECK_RESULT(vkAllocateMemory(vulkanDevice->logicalDevice, &memAlloc, nullptr, &uniformBuffer.memory));
-		VK_CHECK_RESULT(vkBindBufferMemory(vulkanDevice->logicalDevice, uniformBuffer.buffer, uniformBuffer.memory, 0));
-		VK_CHECK_RESULT(vkMapMemory(vulkanDevice->logicalDevice, uniformBuffer.memory, 0, sizeof(uniformData), 0, (void **)&uniformBuffer.mapped));
+		&uniformBuffer.memory = vulkanDevice->logicalDevice.allocateMemory(memAlloc);
+		vulkanDevice->logicalDevice.bindBufferMemory(uniformBuffer.buffer, uniformBuffer.memory, 0);
+		uniformBuffer.mapped = vulkanDevice->logicalDevice.mapMemory(uniformBuffer.memory, 0, sizeof(uniformData), 0);
 		uniformBuffer.descriptor.offset = 0;
 		uniformBuffer.descriptor.buffer = uniformBuffer.buffer;
 		uniformBuffer.descriptor.range = sizeof(uniformData);
@@ -476,13 +472,13 @@ public:
 		{
 			material.diffuse.destroy();
 		}
-		vkDestroyPipelineLayout(vulkanDevice->logicalDevice, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(vulkanDevice->logicalDevice, descriptorSetLayouts.material, nullptr);
-		vkDestroyDescriptorSetLayout(vulkanDevice->logicalDevice, descriptorSetLayouts.scene, nullptr);
-		vkDestroyDescriptorPool(vulkanDevice->logicalDevice, descriptorPool, nullptr);
-		vkDestroyPipeline(vulkanDevice->logicalDevice, pipelines.solid, nullptr);
-		vkDestroyPipeline(vulkanDevice->logicalDevice, pipelines.blending, nullptr);
-		vkDestroyPipeline(vulkanDevice->logicalDevice, pipelines.wireframe, nullptr);
+		vulkanDevice->logicalDevice.destroyPipelineLayout(pipelineLayout);
+		vulkanDevice->logicalDevice.destroyDescriptorSetLayout(descriptorSetLayouts.material);
+		vulkanDevice->logicalDevice.destroyDescriptorSetLayout(descriptorSetLayouts.scene);
+		vulkanDevice->logicalDevice.destroyDescriptorPool(descriptorPool);
+		vulkanDevice->logicalDevice.destroyPipeline(pipelines.solid);
+		vulkanDevice->logicalDevice.destroyPipeline(pipelines.blending);
+		vulkanDevice->logicalDevice.destroyPipeline(pipelines.wireframe);
 		uniformBuffer.destroy();
 	}
 
@@ -527,8 +523,8 @@ public:
 		vk::DeviceSize offsets[1] = { 0 };
 
 		// Bind scene vertex and index buffers
-		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBuffer.buffer, offsets);
-		vkCmdBindIndexBuffer(cmdBuffer, indexBuffer.buffer, 0, vk::IndexType::eUint32);
+		cmdBuffer.bindVertexBuffers(0, 1, vertexBuffer.buffer, offsets);
+		cmdBuffer.bindIndexBuffer(indexBuffer.buffer, 0, vk::IndexType::eUint32);
 
 		for (size_t i = 0; i < meshes.size(); i++)
 		{
@@ -536,7 +532,7 @@ public:
 				continue;
 
 			// todo : per material pipelines
-			// vkCmdBindPipeline(cmdBuffer, vk::PipelineBindPoint::eGraphics, *mesh.material->pipeline);
+			// cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *mesh.material->pipeline);
 
 			// We will be using multiple descriptor sets for rendering
 			// In GLSL the selection is done via the set and binding keywords
@@ -549,8 +545,8 @@ public:
 			// Set 1: Per-Material descriptor set containing bound images
 			descriptorSets[1] = meshes[i].material->descriptorSet;
 
-			vkCmdBindPipeline(cmdBuffer, vk::PipelineBindPoint::eGraphics, wireframe ? pipelines.wireframe : *meshes[i].material->pipeline);
-			vkCmdBindDescriptorSets(cmdBuffer, vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, NULL);
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, wireframe ? pipelines.wireframe : *meshes[i].material->pipeline);
+			cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, nullptr);
 
 			// Pass material properies via push constants
 			vkCmdPushConstants(
@@ -562,7 +558,7 @@ public:
 				&meshes[i].material->properties);
 
 			// Render from the global scene vertex buffer using the mesh index offset
-			vkCmdDrawIndexed(cmdBuffer, meshes[i].indexCount, 1, 0, meshes[i].indexBase, 0);
+			cmdBuffer.drawIndexed(meshes[i].indexCount, 1, 0, meshes[i].indexBase, 0);
 		}
 	}
 };
@@ -639,21 +635,21 @@ public:
 		{
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
 			scene->render(drawCmdBuffers[i], wireframe);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -735,7 +731,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -778,7 +774,7 @@ public:
 		pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
 		pipelineCreateInfo.pStages = shaderStages.data();
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &scene->pipelines.solid));
+		scene->pipelines.solid = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Alpha blended pipeline
 		rasterizationState.cullMode = vk::CullModeFlagBits::eNone;
@@ -787,7 +783,7 @@ public:
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcColor;
 		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOne_MINUS_SRC_COLOR;
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &scene->pipelines.blending));
+		scene->pipelines.blending = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Wire frame rendering pipeline
 		if (deviceFeatures.fillModeNonSolid) {
@@ -795,7 +791,7 @@ public:
 			blendAttachmentState.blendEnable = VK_FALSE;
 			rasterizationState.polygonMode = vk::PolygonMode::eLine;
 			rasterizationState.lineWidth = 1.0f;
-			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &scene->pipelines.wireframe));
+			scene->pipelines.wireframe = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		}
 	}
 
@@ -822,7 +818,7 @@ public:
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
 
 		// Submit to queue
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}
@@ -837,7 +833,7 @@ public:
 #endif
 		scene->assetPath = getAssetPath() + "models/sibenik/";
 		scene->load(getAssetPath() + "models/sibenik/sibenik.dae", copyCmd);
-		vkFreeCommandBuffers(device, cmdPool, 1, &copyCmd);
+		device.freeCommandBuffers(cmdPool, copyCmd);
 		updateUniformBuffers();
 	}
 

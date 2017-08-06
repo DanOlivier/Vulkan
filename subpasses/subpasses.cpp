@@ -130,29 +130,29 @@ public:
 		// Clean up used Vulkan resources 
 		// Note : Inherited destructor cleans up resources stored in base class
 
-		vkDestroyImageView(device, attachments.position.view, nullptr);
-		vkDestroyImage(device, attachments.position.image, nullptr);
-		vkFreeMemory(device, attachments.position.mem, nullptr);
+		device.destroyImageView(attachments.position.view);
+		device.destroyImage(attachments.position.image);
+		device.freeMemory(attachments.position.mem);
 
-		vkDestroyImageView(device, attachments.normal.view, nullptr);
-		vkDestroyImage(device, attachments.normal.image, nullptr);
-		vkFreeMemory(device, attachments.normal.mem, nullptr);
+		device.destroyImageView(attachments.normal.view);
+		device.destroyImage(attachments.normal.image);
+		device.freeMemory(attachments.normal.mem);
 
-		vkDestroyImageView(device, attachments.albedo.view, nullptr);
-		vkDestroyImage(device, attachments.albedo.image, nullptr);
-		vkFreeMemory(device, attachments.albedo.mem, nullptr);
+		device.destroyImageView(attachments.albedo.view);
+		device.destroyImage(attachments.albedo.image);
+		device.freeMemory(attachments.albedo.mem);
 
-		vkDestroyPipeline(device, pipelines.offscreen, nullptr);
-		vkDestroyPipeline(device, pipelines.composition, nullptr);
-		vkDestroyPipeline(device, pipelines.transparent, nullptr);
+		device.destroyPipeline(pipelines.offscreen);
+		device.destroyPipeline(pipelines.composition);
+		device.destroyPipeline(pipelines.transparent);
 
-		vkDestroyPipelineLayout(device, pipelineLayouts.offscreen, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayouts.composition, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayouts.transparent, nullptr);
+		device.destroyPipelineLayout(pipelineLayouts.offscreen);
+		device.destroyPipelineLayout(pipelineLayouts.composition);
+		device.destroyPipelineLayout(pipelineLayouts.transparent);
 
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayouts.scene, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayouts.composition, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayouts.transparent, nullptr);
+		device.destroyDescriptorSetLayout(descriptorSetLayouts.scene);
+		device.destroyDescriptorSetLayout(descriptorSetLayouts.composition);
+		device.destroyDescriptorSetLayout(descriptorSetLayouts.transparent);
 
 		textures.glass.destroy();
 		models.scene.destroy();
@@ -217,12 +217,12 @@ public:
 		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
 		vk::MemoryRequirements memReqs;
 
-		VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &attachment->image));
-		vkGetImageMemoryRequirements(device, attachment->image, &memReqs);
+		attachment->image = device.createImage(image);
+		memReqs = device.getImageMemoryRequirements(attachment->image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &attachment->mem));
-		VK_CHECK_RESULT(vkBindImageMemory(device, attachment->image, attachment->mem, 0));
+		attachment->mem = device.allocateMemory(memAlloc);
+		device.bindImageMemory(attachment->image, attachment->mem, 0);
 
 		vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
 		imageView.viewType = vk::ImageViewType::e2D;
@@ -234,7 +234,7 @@ public:
 		imageView.subresourceRange.baseArrayLayer = 0;
 		imageView.subresourceRange.layerCount = 1;
 		imageView.image = attachment->image;
-		VK_CHECK_RESULT(vkCreateImageView(device, &imageView, nullptr, &attachment->view));
+		attachment->view = device.createImageView(imageView);
 	}
 
 	// Create color attachments for the G-Buffer components
@@ -252,7 +252,7 @@ public:
 		vk::ImageView attachments[5];
 
 		vk::FramebufferCreateInfo frameBufferCreateInfo = {};
-		frameBufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+
 		frameBufferCreateInfo.pNext = NULL;
 		frameBufferCreateInfo.renderPass = renderPass;
 		frameBufferCreateInfo.attachmentCount = 5;
@@ -270,7 +270,7 @@ public:
 			attachments[2] = this->attachments.normal.view;
 			attachments[3] = this->attachments.albedo.view;
 			attachments[4] = depthStencil.view;
-			VK_CHECK_RESULT(vkCreateFramebuffer(device, &frameBufferCreateInfo, nullptr, &frameBuffers[i]));
+			frameBuffers[i] = device.createFramebuffer(frameBufferCreateInfo);
 		}
 	}
 
@@ -417,7 +417,7 @@ public:
 		dependencies[3].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 		vk::RenderPassCreateInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+
 		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		renderPassInfo.pAttachments = attachments.data();
 		renderPassInfo.subpassCount = static_cast<uint32_t>(subpassDescriptions.size());
@@ -425,7 +425,7 @@ public:
 		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
 
-		VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass));
+		renderPass = device.createRenderPass(renderPassInfo);
 	}
 
 	void buildCommandBuffers()
@@ -453,50 +453,50 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
 			// First sub pass
 			// Renders the components of the scene to the G-Buffer atttachments
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
 			vk::DeviceSize offsets[1] = { 0 };
 
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
 
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayouts.offscreen, 0, 1, &descriptorSets.scene, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.scene.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.scene.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.scene.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.offscreen, 0, descriptorSets.scene, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.scene.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.scene.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.scene.indexCount, 1, 0, 0, 0);
 
 			// Second sub pass
 			// This subpass will use the G-Buffer components that have been filled in the first subpass as input attachment for the final compositing
 
 			vkCmdNextSubpass(drawCmdBuffers[i], vk::SubpassContents::eInline);
 
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.composition);
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayouts.composition, 0, 1, &descriptorSets.composition, 0, NULL);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.composition);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.composition, 0, descriptorSets.composition, nullptr);
 			vkCmdDraw(drawCmdBuffers[i], 3, 1, 0, 0);
 
 			// Third subpass
 			// Render transparent geometry using a forward pass that compares against depth generted during G-Buffer fill
 			vkCmdNextSubpass(drawCmdBuffers[i], vk::SubpassContents::eInline);
 
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.transparent);
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayouts.transparent, 0, 1, &descriptorSets.transparent, 0, NULL);
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &models.transparent.vertices.buffer, offsets);
-			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.transparent.indices.buffer, 0, vk::IndexType::eUint32);
-			vkCmdDrawIndexed(drawCmdBuffers[i], models.transparent.indexCount, 1, 0, 0, 0);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.transparent);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.transparent, 0, descriptorSets.transparent, nullptr);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.transparent.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindIndexBuffer(models.transparent.indices.buffer, 0, vk::IndexType::eUint32);
+			drawCmdBuffers[i].drawIndexed(models.transparent.indexCount, 1, 0, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -579,7 +579,7 @@ public:
 				poolSizes.data(),
 				4);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -599,7 +599,7 @@ public:
 				setLayoutBindings.data(),
 				static_cast<uint32_t>(setLayoutBindings.size()));
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayouts.scene));
+		descriptorSetLayouts.scene = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
@@ -607,7 +607,7 @@ public:
 				1);
 
 		// Offscreen (scene) rendering pipeline layout
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayouts.offscreen));
+		pipelineLayouts.offscreen = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSet()
@@ -620,7 +620,7 @@ public:
 				&descriptorSetLayouts.scene,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.scene));
+		descriptorSets.scene = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets =
 		{
 			// Binding 0: Vertex shader uniform buffer
@@ -630,7 +630,7 @@ public:
 				0,
 				&uniformBuffers.GBuffer.descriptor)
 		};
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 	}
 
 	void preparePipelines()
@@ -662,7 +662,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE, 
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -717,7 +717,7 @@ public:
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/subpasses/gbuffer.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/subpasses/gbuffer.frag.spv", vk::ShaderStageFlagBits::eFragment);
 	
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.offscreen));
+		pipelines.offscreen = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	// Create the Vulkan objects used in the composition pass (descriptor sets, pipelines, etc.)
@@ -753,19 +753,19 @@ public:
 				setLayoutBindings.data(),
 				static_cast<uint32_t>(setLayoutBindings.size()));
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayouts.composition));
+		descriptorSetLayouts.composition = device.createDescriptorSetLayout(descriptorLayout);
 
 		// Pipeline layout
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo = 
 			vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.composition, 1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayouts.composition));
+		pipelineLayouts.composition = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 
 		// Descriptor sets
 		vk::DescriptorSetAllocateInfo allocInfo =
 			vks::initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayouts.composition, 1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.composition));
+		descriptorSets.composition = device.allocateDescriptorSets(allocInfo)[0];
 
 		// Image descriptors for the offscreen color attachments
 		vk::DescriptorImageInfo texDescriptorPosition =
@@ -813,7 +813,7 @@ public:
 				&uniformBuffers.lights.descriptor),
 		};
 
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 
 		// Pipeline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
@@ -829,7 +829,7 @@ public:
 			vks::initializers::pipelineColorBlendStateCreateInfo(1,	&blendAttachmentState);
 
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState =
-			vks::initializers::pipelineDepthStencilStateCreateInfo(VK_TRUE, VK_TRUE, vk::CompareOp::eLess_OR_EQUAL);
+			vks::initializers::pipelineDepthStencilStateCreateInfo(VK_TRUE, VK_TRUE, vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -866,7 +866,7 @@ public:
 			vks::initializers::pipelineCreateInfo(pipelineLayouts.composition, renderPass, 0);
 
 		vk::PipelineVertexInputStateCreateInfo emptyInputState{};
-		emptyInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
 
 		pipelineCreateInfo.pVertexInputState = &emptyInputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -883,7 +883,7 @@ public:
 
 		depthStencilState.depthWriteEnable = VK_FALSE;
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.composition));
+		pipelines.composition = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Transparent (forward) pipeline
 
@@ -895,22 +895,22 @@ public:
 		};
 
 		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayouts.transparent));
+		descriptorSetLayouts.transparent = device.createDescriptorSetLayout(descriptorLayout);
 
 		// Pipeline layout
 		pPipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.transparent, 1);
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayouts.transparent));
+		pipelineLayouts.transparent = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 
 		// Descriptor sets
 		allocInfo = vks::initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayouts.transparent, 1);
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.transparent));
+		descriptorSets.transparent = device.allocateDescriptorSets(allocInfo)[0];
 
 		writeDescriptorSets = {
 			vks::initializers::writeDescriptorSet(descriptorSets.transparent, vk::DescriptorType::eUniformBuffer, 0, &uniformBuffers.GBuffer.descriptor),
 			vks::initializers::writeDescriptorSet(descriptorSets.transparent, vk::DescriptorType::eInputAttachment, 1, &texDescriptorPosition),
 			vks::initializers::writeDescriptorSet(descriptorSets.transparent, vk::DescriptorType::eCombinedImageSampler, 2, &textures.glass.descriptor),
 		};
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 
 		// Enable blending
 		blendAttachmentState.blendEnable = VK_TRUE;
@@ -929,7 +929,7 @@ public:
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/subpasses/transparent.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/subpasses/transparent.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.transparent));
+		pipelines.transparent = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	// Prepare and initialize uniform buffer containing shader uniforms
@@ -960,7 +960,7 @@ public:
 		uboGBuffer.view = camera.matrices.view;
 		uboGBuffer.model = glm::mat4();
 
-		VK_CHECK_RESULT(uniformBuffers.GBuffer.map());
+		uniformBuffers.GBuffer.map();
 		memcpy(uniformBuffers.GBuffer.mapped, &uboGBuffer, sizeof(uboGBuffer));
 		uniformBuffers.GBuffer.unmap();
 	}
@@ -994,7 +994,7 @@ public:
 		// Current view position
 		uboLights.viewPos = glm::vec4(camera.position, 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
 
-		VK_CHECK_RESULT(uniformBuffers.lights.map());
+		uniformBuffers.lights.map();
 		memcpy(uniformBuffers.lights.mapped, &uboLights, sizeof(uboLights));
 		uniformBuffers.lights.unmap();
 	}
@@ -1008,7 +1008,7 @@ public:
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
 
 		// Submit to queue
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

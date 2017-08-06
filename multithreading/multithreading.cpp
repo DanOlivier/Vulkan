@@ -145,24 +145,24 @@ public:
 	{
 		// Clean up used Vulkan resources 
 		// Note : Inherited destructor cleans up resources stored in base class
-		vkDestroyPipeline(device, pipelines.phong, nullptr);
-		vkDestroyPipeline(device, pipelines.starsphere, nullptr);
+		device.destroyPipeline(pipelines.phong);
+		device.destroyPipeline(pipelines.starsphere);
 
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+		device.destroyPipelineLayout(pipelineLayout);
 
-		vkFreeCommandBuffers(device, cmdPool, 1, &primaryCommandBuffer);
-		vkFreeCommandBuffers(device, cmdPool, 1, &secondaryCommandBuffer);
+		device.freeCommandBuffers(cmdPool, primaryCommandBuffer);
+		device.freeCommandBuffers(cmdPool, secondaryCommandBuffer);
 
 		models.ufo.destroy();
 		models.skysphere.destroy();
 
 		for (auto& thread : threadData)
 		{
-			vkFreeCommandBuffers(device, thread.commandPool, thread.commandBuffer.size(), thread.commandBuffer.data());
-			vkDestroyCommandPool(device, thread.commandPool, nullptr);
+			device.freeCommandBuffers(thread.commandPool, thread.commandBuffer);
+			device.destroyCommandPool(thread.commandPool);
 		}
 
-		vkDestroyFence(device, renderFence, nullptr);
+		device.destroyFence(renderFence);
 	}
 
 	float rnd(float range)
@@ -181,11 +181,11 @@ public:
 				cmdPool,
 				vk::CommandBufferLevel::ePrimary,
 				1);
-		VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &cmdBufAllocateInfo, &primaryCommandBuffer));
+		primaryCommandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
 
 		// Create a secondary command buffer for rendering the star sphere
 		cmdBufAllocateInfo.level = vk::CommandBufferLevel::eSecondary;
-		VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &cmdBufAllocateInfo, &secondaryCommandBuffer));
+		secondaryCommandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
 		
 		threadData.resize(numThreads);
 
@@ -204,7 +204,7 @@ public:
 			vk::CommandPoolCreateInfo cmdPoolInfo = vks::initializers::commandPoolCreateInfo();
 			cmdPoolInfo.queueFamilyIndex = swapChain.queueNodeIndex;
 			cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-			VK_CHECK_RESULT(vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &thread->commandPool));
+			thread->commandPool = device.createCommandPool(cmdPoolInfo);
 
 			// One secondary command buffer per object that is updated by this thread
 			thread->commandBuffer.resize(numObjectsPerThread);
@@ -214,7 +214,7 @@ public:
 					thread->commandPool,
 					vk::CommandBufferLevel::eSecondary,
 					thread->commandBuffer.size());
-			VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &secondaryCmdBufAllocateInfo, thread->commandBuffer.data()));
+			thread->commandBuffer = device.allocateCommandBuffers(secondaryCmdBufAllocateInfo);
 
 			thread->pushConstBlock.resize(numObjectsPerThread);
 			thread->objectData.resize(numObjectsPerThread);
@@ -257,15 +257,15 @@ public:
 
 		vk::CommandBuffer cmdBuffer = thread->commandBuffer[cmdBufferIndex];
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(cmdBuffer, &commandBufferBeginInfo));
+		cmdBuffer.begin(commandBufferBeginInfo);
 
 		vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+		cmdBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 
-		vkCmdBindPipeline(cmdBuffer, vk::PipelineBindPoint::eGraphics, pipelines.phong);
+		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.phong);
 
 		// Update
 		objectData->rotation.y += 2.5f * objectData->rotationSpeed * frameTimer;
@@ -297,11 +297,11 @@ public:
 			&thread->pushConstBlock[cmdBufferIndex]);
 
 		vk::DeviceSize offsets[1] = { 0 };
-		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &models.ufo.vertices.buffer, offsets);
-		vkCmdBindIndexBuffer(cmdBuffer, models.ufo.indices.buffer, 0, vk::IndexType::eUint32);
-		vkCmdDrawIndexed(cmdBuffer, models.ufo.indexCount, 1, 0, 0, 0);
+		cmdBuffer.bindVertexBuffers(0, 1, models.ufo.vertices.buffer, offsets);
+		cmdBuffer.bindIndexBuffer(models.ufo.indices.buffer, 0, vk::IndexType::eUint32);
+		cmdBuffer.drawIndexed(models.ufo.indexCount, 1, 0, 0, 0);
 
-		VK_CHECK_RESULT(vkEndCommandBuffer(cmdBuffer));
+		cmdBuffer.end();
 	}
 
 	void updateSecondaryCommandBuffer(vk::CommandBufferInheritanceInfo inheritanceInfo)
@@ -311,15 +311,15 @@ public:
 		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
 		commandBufferBeginInfo.pInheritanceInfo = &inheritanceInfo;
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(secondaryCommandBuffer, &commandBufferBeginInfo));
+		secondaryCommandBuffer.begin(commandBufferBeginInfo);
 
 		vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-		vkCmdSetViewport(secondaryCommandBuffer, 0, 1, &viewport);
+		secondaryCommandBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(secondaryCommandBuffer, 0, 1, &scissor);
 
-		vkCmdBindPipeline(secondaryCommandBuffer, vk::PipelineBindPoint::eGraphics, pipelines.starsphere);
+		secondaryCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.starsphere);
 
 		glm::mat4 view = glm::mat4();
 		view = glm::rotate(view, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -337,11 +337,11 @@ public:
 			&mvp);
 
 		vk::DeviceSize offsets[1] = { 0 };
-		vkCmdBindVertexBuffers(secondaryCommandBuffer, 0, 1, &models.skysphere.vertices.buffer, offsets);
-		vkCmdBindIndexBuffer(secondaryCommandBuffer, models.skysphere.indices.buffer, 0, vk::IndexType::eUint32);
-		vkCmdDrawIndexed(secondaryCommandBuffer, models.skysphere.indexCount, 1, 0, 0, 0);
+		secondaryCommandBuffer.bindVertexBuffers(0, 1, models.skysphere.vertices.buffer, offsets);
+		secondaryCommandBuffer.bindIndexBuffer(models.skysphere.indices.buffer, 0, vk::IndexType::eUint32);
+		secondaryCommandBuffer.drawIndexed(models.skysphere.indexCount, 1, 0, 0, 0);
 
-		VK_CHECK_RESULT(vkEndCommandBuffer(secondaryCommandBuffer));
+		secondaryCommandBuffer.end();
 	}
 
 	// Updates the secondary command buffers using a thread pool 
@@ -368,11 +368,11 @@ public:
 
 		// Set target frame buffer
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(primaryCommandBuffer, &cmdBufInfo));
+		primaryCommandBuffer.begin(cmdBufInfo);
 
 		// The primary command buffer does not contain any rendering commands
 		// These are stored (and retrieved) from the secondary command buffers
-		vkCmdBeginRenderPass(primaryCommandBuffer, &renderPassBeginInfo, vk::SubpassContents::eSecondaryCommandBuffers);
+		primaryCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eSecondaryCommandBuffers);
 
 		// Inheritance info for the secondary command buffers
 		vk::CommandBufferInheritanceInfo inheritanceInfo = vks::initializers::commandBufferInheritanceInfo();
@@ -413,9 +413,9 @@ public:
 		// Execute render commands from the secondary command buffer
 		vkCmdExecuteCommands(primaryCommandBuffer, commandBuffers.size(), commandBuffers.data());
 
-		vkCmdEndRenderPass(primaryCommandBuffer);
+		primaryCommandBuffer.endRenderPass();
 
-		VK_CHECK_RESULT(vkEndCommandBuffer(primaryCommandBuffer));
+		primaryCommandBuffer.end();
 	}
 
 	void loadMeshes()
@@ -483,7 +483,7 @@ public:
 		pPipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 		pPipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 	}
 
 	void preparePipelines()
@@ -515,7 +515,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -559,14 +559,14 @@ public:
 		pipelineCreateInfo.stageCount = shaderStages.size();
 		pipelineCreateInfo.pStages = shaderStages.data();
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.phong));
+		pipelines.phong = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Star sphere rendering pipeline
 		rasterizationState.cullMode = vk::CullModeFlagBits::eFront;
 		depthStencilState.depthWriteEnable = VK_FALSE;
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/multithreading/starsphere.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/multithreading/starsphere.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.starsphere));
+		pipelines.starsphere = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	void updateMatrices()
@@ -589,7 +589,7 @@ public:
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &primaryCommandBuffer;
 
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, renderFence));
+		queue.submit(submitInfo, renderFence);
 
 		// Wait for fence to signal that all command buffers are ready
 		vk::Result fenceRes;
@@ -598,7 +598,7 @@ public:
 			fenceRes = vkWaitForFences(device, 1, &renderFence, VK_TRUE, 100000000);
 		} while (fenceRes == vk::Result::eTimeout);
 		VK_CHECK_RESULT(fenceRes);
-		vkResetFences(device, 1, &renderFence);
+		device.resetFences(renderFence);
 
 		VulkanExampleBase::submitFrame();
 	}

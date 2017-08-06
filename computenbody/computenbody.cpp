@@ -108,19 +108,19 @@ public:
 	{
 		// Graphics
 		graphics.uniformBuffer.destroy();
-		vkDestroyPipeline(device, graphics.pipeline, nullptr);
-		vkDestroyPipelineLayout(device, graphics.pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, graphics.descriptorSetLayout, nullptr);
+		device.destroyPipeline(graphics.pipeline);
+		device.destroyPipelineLayout(graphics.pipelineLayout);
+		device.destroyDescriptorSetLayout(graphics.descriptorSetLayout);
 
 		// Compute
 		compute.storageBuffer.destroy();
 		compute.uniformBuffer.destroy();
-		vkDestroyPipelineLayout(device, compute.pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, compute.descriptorSetLayout, nullptr);
-		vkDestroyPipeline(device, compute.pipelineCalculate, nullptr);
-		vkDestroyPipeline(device, compute.pipelineIntegrate, nullptr);
-		vkDestroyFence(device, compute.fence, nullptr);
-		vkDestroyCommandPool(device, compute.commandPool, nullptr);
+		device.destroyPipelineLayout(compute.pipelineLayout);
+		device.destroyDescriptorSetLayout(compute.descriptorSetLayout);
+		device.destroyPipeline(compute.pipelineCalculate);
+		device.destroyPipeline(compute.pipelineIntegrate);
+		device.destroyFence(compute.fence);
+		device.destroyCommandPool(compute.commandPool);
 
 		textures.particle.destroy();
 		textures.gradient.destroy();
@@ -161,28 +161,28 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
 			// Draw the particle system using the update vertex buffer
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, graphics.pipeline);
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, 0, 1, &graphics.descriptorSet, 0, NULL);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphics.pipeline);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, 0, graphics.descriptorSet, nullptr);
 
 			vk::DeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &compute.storageBuffer.buffer, offsets);
+			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, compute.storageBuffer.buffer, offsets);
 			vkCmdDraw(drawCmdBuffers[i], numParticles, 1, 0, 0);
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 
 	}
@@ -191,7 +191,7 @@ public:
 	{
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(compute.commandBuffer, &cmdBufInfo));
+		compute.commandBuffer.begin(cmdBufInfo);
 
 		// Compute particle movement
 
@@ -214,8 +214,8 @@ public:
 			1, &bufferBarrier,
 			0, nullptr);
 
-		vkCmdBindPipeline(compute.commandBuffer, vk::PipelineBindPoint::eCompute, compute.pipelineCalculate);
-		vkCmdBindDescriptorSets(compute.commandBuffer, vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0, 1, &compute.descriptorSet, 0, 0);
+		compute.commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, compute.pipelineCalculate);
+		compute.commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0, compute.descriptorSet, nullptr);
 
 		// First pass: Calculate particle movement
 		// -------------------------------------------------------------------------------------------------------
@@ -241,7 +241,7 @@ public:
 
 		// Second pass: Integrate particles
 		// -------------------------------------------------------------------------------------------------------
-		vkCmdBindPipeline(compute.commandBuffer, vk::PipelineBindPoint::eCompute, compute.pipelineIntegrate);
+		compute.commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, compute.pipelineIntegrate);
 		vkCmdDispatch(compute.commandBuffer, numParticles / 256, 1, 1);
 
 		// Add memory barrier to ensure that compute shader has finished writing to the buffer
@@ -353,7 +353,7 @@ public:
 		vk::CommandBuffer copyCmd = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
 		vk::BufferCopy copyRegion = {};
 		copyRegion.size = storageBufferSize;
-		vkCmdCopyBuffer(copyCmd, stagingBuffer.buffer, compute.storageBuffer.buffer, 1, &copyRegion);
+		copyCmd.copyBuffer(stagingBuffer.buffer, compute.storageBuffer.buffer, copyRegion);
 		VulkanExampleBase::flushCommandBuffer(copyCmd, queue, true);
 
 		stagingBuffer.destroy();
@@ -407,7 +407,7 @@ public:
 				poolSizes.data(),
 				2);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -424,14 +424,14 @@ public:
 				setLayoutBindings.data(),
 				static_cast<uint32_t>(setLayoutBindings.size()));
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &graphics.descriptorSetLayout));
+		graphics.descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&graphics.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &graphics.pipelineLayout));
+		graphics.pipelineLayout = device.createPipelineLayout(pipelineLayoutCreateInfo);
 	}
 
 	void setupDescriptorSet()
@@ -442,7 +442,7 @@ public:
 				&graphics.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &graphics.descriptorSet));
+		graphics.descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets = {
@@ -450,7 +450,7 @@ public:
 			vks::initializers::writeDescriptorSet(graphics.descriptorSet, vk::DescriptorType::eCombinedImageSampler, 1, &textures.gradient.descriptor),
 			vks::initializers::writeDescriptorSet(graphics.descriptorSet, vk::DescriptorType::eUniformBuffer, 2, &graphics.uniformBuffer.descriptor),
 		};
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets);
 	}
 
 	void preparePipelines()
@@ -537,7 +537,7 @@ public:
 		blendAttachmentState.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
 		blendAttachmentState.dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha;
 
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &graphics.pipeline));
+		graphics.pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
 	void prepareCompute()
@@ -547,11 +547,11 @@ public:
 		// Depending on the implementation this may result in different queue family indices for graphics and computes,
 		// requiring proper synchronization (see the memory barriers in buildComputeCommandBuffer)
 		//vk::DeviceQueueCreateInfo queueCreateInfo = {};
-		//queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+
 		//queueCreateInfo.pNext = NULL;
 		//queueCreateInfo.queueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;
 		//queueCreateInfo.queueCount = 1;
-		vkGetDeviceQueue(device, vulkanDevice->queueFamilyIndices.compute, 0, &compute.queue);
+		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute);
 
 		// Create compute pipeline
 		// Compute pipelines are created separate from graphics pipelines even if they use the same queue (family index)
@@ -589,7 +589,7 @@ public:
 				&compute.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &compute.descriptorSet));
+		compute.descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> computeWriteDescriptorSets =
 		{
@@ -607,7 +607,7 @@ public:
 				&compute.uniformBuffer.descriptor)
 		};
 
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(computeWriteDescriptorSets.size()), computeWriteDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(computeWriteDescriptorSets);
 
 		// Create pipelines
 		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout, 0);
@@ -639,18 +639,18 @@ public:
 			vks::initializers::specializationInfo(static_cast<uint32_t>(specializationMapEntries.size()), specializationMapEntries.data(), sizeof(specializationData), &specializationData);
 		computePipelineCreateInfo.stage.pSpecializationInfo = &specializationInfo;
 
-		VK_CHECK_RESULT(vkCreateComputePipelines(device, pipelineCache, 1, &computePipelineCreateInfo, nullptr, &compute.pipelineCalculate));
+		compute.pipelineCalculate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo);
 
 		// 2nd pass
 		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computenbody/particle_integrate.comp.spv", vk::ShaderStageFlagBits::eCompute);
-		VK_CHECK_RESULT(vkCreateComputePipelines(device, pipelineCache, 1, &computePipelineCreateInfo, nullptr, &compute.pipelineIntegrate));
+		compute.pipelineIntegrate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo);
 
 		// Separate command pool as queue family for compute may be different than graphics
 		vk::CommandPoolCreateInfo cmdPoolInfo = {};
-		cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+
 		cmdPoolInfo.queueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;
 		cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-		VK_CHECK_RESULT(vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &compute.commandPool));
+		compute.commandPool = device.createCommandPool(cmdPoolInfo);
 
 		// Create a command buffer for compute operations
 		vk::CommandBufferAllocateInfo cmdBufAllocateInfo =
@@ -659,11 +659,11 @@ public:
 				vk::CommandBufferLevel::ePrimary,
 				1);	
 
-		VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &cmdBufAllocateInfo, &compute.commandBuffer));
+		compute.commandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
 
 		// Fence for compute CB sync
 		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-		VK_CHECK_RESULT(vkCreateFence(device, &fenceCreateInfo, nullptr, &compute.fence));
+		compute.fence = device.createFence(fenceCreateInfo);
 
 		// Build a single command buffer containing the compute dispatch commands
 		buildComputeCommandBuffer();
@@ -680,7 +680,7 @@ public:
 			sizeof(compute.ubo));
 
 		// Map for host access
-		VK_CHECK_RESULT(compute.uniformBuffer.map());
+		compute.uniformBuffer.map();
 
 		// Vertex shader uniform buffer block
 		vulkanDevice->createBuffer(
@@ -690,7 +690,7 @@ public:
 			sizeof(graphics.ubo));
 
 		// Map for host access
-		VK_CHECK_RESULT(graphics.uniformBuffer.map());
+		graphics.uniformBuffer.map();
 
 		updateGraphicsUniformBuffers();
 	}
@@ -718,19 +718,19 @@ public:
 
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 
 		// Submit compute commands
 		vkWaitForFences(device, 1, &compute.fence, VK_TRUE, UINT64_MAX);
-		vkResetFences(device, 1, &compute.fence);
+		device.resetFences(compute.fence);
 
 		vk::SubmitInfo computeSubmitInfo = vks::initializers::submitInfo();
 		computeSubmitInfo.commandBufferCount = 1;
 		computeSubmitInfo.pCommandBuffers = &compute.commandBuffer;
 
-		VK_CHECK_RESULT(vkQueueSubmit(compute.queue, 1, &computeSubmitInfo, compute.fence));
+		compute.queue.submit(computeSubmitInfo, compute.fence);
 	}
 
 	void prepare()

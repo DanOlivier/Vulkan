@@ -38,20 +38,17 @@ namespace DebugMarker
 	bool active = false;
 	bool extensionPresent = false;
 
-	PFN_vkDebugMarkerSetObjectTagEXT vkDebugMarkerSetObjectTag = VK_NULL_HANDLE;
-	PFN_vkDebugMarkerSetObjectNameEXT vkDebugMarkerSetObjectName = VK_NULL_HANDLE;
-	PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBegin = VK_NULL_HANDLE;
-	PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEnd = VK_NULL_HANDLE;
-	PFN_vkCmdDebugMarkerInsertEXT vkCmdDebugMarkerInsert = VK_NULL_HANDLE;
+	PFN_vkDebugMarkerSetObjectTagEXT vkDebugMarkerSetObjectTag = nullptr;
+	PFN_vkDebugMarkerSetObjectNameEXT vkDebugMarkerSetObjectName = nullptr;
+	PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBegin = nullptr;
+	PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEnd = nullptr;
+	PFN_vkCmdDebugMarkerInsertEXT vkCmdDebugMarkerInsert = nullptr;
 
 	// Get function pointers for the debug report extensions from the device
 	void setup(vk::Device device, vk::PhysicalDevice physicalDevice)
 	{
 		// Check if the debug marker extension is present (which is the case if run from a graphics debugger)
-		uint32_t extensionCount;
-		vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
-		std::vector<vk::ExtensionProperties> extensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, extensions.data());
+		std::vector<vk::ExtensionProperties> extensions = physicalDevice.enumerateDeviceExtensionProperties();
 		for (auto extension : extensions) {
 			if (strcmp(extension.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0) {
 				extensionPresent = true;
@@ -67,7 +64,7 @@ namespace DebugMarker
 			vkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerEndEXT");
 			vkCmdDebugMarkerInsert = (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT");
 			// Set flag if at least one function pointer is present
-			active = (vkDebugMarkerSetObjectName != VK_NULL_HANDLE);
+			active = (vkDebugMarkerSetObjectName);
 		}
 		else {
 			std::cout << "Warning: " << VK_EXT_DEBUG_MARKER_EXTENSION_NAME << " not present, debug markers are disabled.";
@@ -84,7 +81,7 @@ namespace DebugMarker
 		if (active)
 		{
 			vk::DebugMarkerObjectNameInfoEXT nameInfo = {};
-			nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+
 			nameInfo.objectType = objectType;
 			nameInfo.object = object;
 			nameInfo.pObjectName = name;
@@ -99,7 +96,7 @@ namespace DebugMarker
 		if (active)
 		{
 			vk::DebugMarkerObjectTagInfoEXT tagInfo = {};
-			tagInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
+
 			tagInfo.objectType = objectType;
 			tagInfo.object = object;
 			tagInfo.tagName = name;
@@ -116,7 +113,7 @@ namespace DebugMarker
 		if (active)
 		{
 			vk::DebugMarkerMarkerInfoEXT markerInfo = {};
-			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+
 			memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
 			markerInfo.pMarkerName = pMarkerName;
 			vkCmdDebugMarkerBegin(cmdbuffer, &markerInfo);
@@ -130,7 +127,7 @@ namespace DebugMarker
 		if (active)
 		{
 			vk::DebugMarkerMarkerInfoEXT markerInfo = {};
-			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+
 			memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
 			markerInfo.pMarkerName = markerName.c_str();
 			vkCmdDebugMarkerInsert(cmdbuffer, &markerInfo);
@@ -164,13 +161,13 @@ struct Scene {
 	void draw(vk::CommandBuffer cmdBuffer)
 	{
 		vk::DeviceSize offsets[1] = { 0 };
-		vkCmdBindVertexBuffers(cmdBuffer, VERTEX_BUFFER_BIND_ID, 1, &model.vertices.buffer, offsets);
-		vkCmdBindIndexBuffer(cmdBuffer, model.indices.buffer, 0, vk::IndexType::eUint32);
+		cmdBuffer.bindVertexBuffers(VERTEX_BUFFER_BIND_ID, model.vertices.buffer, offsets);
+		cmdBuffer.bindIndexBuffer(model.indices.buffer, 0, vk::IndexType::eUint32);
 		for (uint32_t i = 0; i < model.parts.size(); i++)
 		{
 			// Add debug marker for mesh name
 			DebugMarker::insert(cmdBuffer, "Draw \"" + modelPartNames[i] + "\"", glm::vec4(0.0f));
-			vkCmdDrawIndexed(cmdBuffer, model.parts[i].indexCount, 1, model.parts[i].indexBase, 0, 0);
+			cmdBuffer.drawIndexed(model.parts[i].indexCount, 1, model.parts[i].indexBase, 0, 0);
 		}
 	}
 
@@ -199,7 +196,7 @@ public:
 	struct Pipelines {
 		vk::Pipeline toonshading;
 		vk::Pipeline color;
-		vk::Pipeline wireframe = VK_NULL_HANDLE;
+		vk::Pipeline wireframe;
 		vk::Pipeline postprocess;
 	} pipelines;
 
@@ -224,9 +221,9 @@ public:
 		vk::RenderPass renderPass;
 		vk::Sampler sampler;
 		vk::DescriptorImageInfo descriptor;
-		vk::CommandBuffer commandBuffer = VK_NULL_HANDLE;
+		vk::CommandBuffer commandBuffer;
 		// Semaphore used to synchronize between offscreen and final scene render pass
-		vk::Semaphore semaphore = VK_NULL_HANDLE;
+		vk::Semaphore semaphore;
 	} offscreenPass;
 
 	// Random tag data
@@ -259,15 +256,15 @@ public:
 	{
 		// Clean up used Vulkan resources 
 		// Note : Inherited destructor cleans up resources stored in base class
-		vkDestroyPipeline(device, pipelines.toonshading, nullptr);
-		vkDestroyPipeline(device, pipelines.color, nullptr);
-		vkDestroyPipeline(device, pipelines.postprocess, nullptr);
-		if (pipelines.wireframe != VK_NULL_HANDLE) {
-			vkDestroyPipeline(device, pipelines.wireframe, nullptr);
+		device.destroyPipeline(pipelines.toonshading);
+		device.destroyPipeline(pipelines.color);
+		device.destroyPipeline(pipelines.postprocess);
+		if (pipelines.wireframe) {
+			device.destroyPipeline(pipelines.wireframe);
 		}
 
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		device.destroyPipelineLayout(pipelineLayout);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 		// Destroy and free mesh resources 
 		scene.model.destroy();
@@ -277,21 +274,21 @@ public:
 
 		// Offscreen
 		// Color attachment
-		vkDestroyImageView(device, offscreenPass.color.view, nullptr);
-		vkDestroyImage(device, offscreenPass.color.image, nullptr);
-		vkFreeMemory(device, offscreenPass.color.mem, nullptr);
+		device.destroyImageView(offscreenPass.color.view);
+		device.destroyImage(offscreenPass.color.image);
+		device.freeMemory(offscreenPass.color.mem);
 
 		// Depth attachment
-		vkDestroyImageView(device, offscreenPass.depth.view, nullptr);
-		vkDestroyImage(device, offscreenPass.depth.image, nullptr);
-		vkFreeMemory(device, offscreenPass.depth.mem, nullptr);
+		device.destroyImageView(offscreenPass.depth.view);
+		device.destroyImage(offscreenPass.depth.image);
+		device.freeMemory(offscreenPass.depth.mem);
 
-		vkDestroyRenderPass(device, offscreenPass.renderPass, nullptr);
-		vkDestroySampler(device, offscreenPass.sampler, nullptr);
-		vkDestroyFramebuffer(device, offscreenPass.frameBuffer, nullptr);
+		device.destroyRenderPass(offscreenPass.renderPass);
+		device.destroySampler(offscreenPass.sampler);
+		device.destroyFramebuffer(offscreenPass.frameBuffer);
 
-		vkFreeCommandBuffers(device, cmdPool, 1, &offscreenPass.commandBuffer);
-		vkDestroySemaphore(device, offscreenPass.semaphore, nullptr);
+		device.freeCommandBuffers(cmdPool, offscreenPass.commandBuffer);
+		device.destroySemaphore(offscreenPass.semaphore);
 	}
 
 	// Prepare a texture target and framebuffer for offscreen rendering
@@ -322,12 +319,12 @@ public:
 		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
 		vk::MemoryRequirements memReqs;
 
-		VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.color.image));
-		vkGetImageMemoryRequirements(device, offscreenPass.color.image, &memReqs);
+		offscreenPass.color.image = device.createImage(image);
+		memReqs = device.getImageMemoryRequirements(offscreenPass.color.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.color.mem));
-		VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.color.image, offscreenPass.color.mem, 0));
+		&offscreenPass.color.mem = device.allocateMemory(memAlloc);
+		device.bindImageMemory(offscreenPass.color.image, offscreenPass.color.mem, 0);
 
 		vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 		colorImageView.viewType = vk::ImageViewType::e2D;
@@ -339,7 +336,7 @@ public:
 		colorImageView.subresourceRange.baseArrayLayer = 0;
 		colorImageView.subresourceRange.layerCount = 1;
 		colorImageView.image = offscreenPass.color.image;
-		VK_CHECK_RESULT(vkCreateImageView(device, &colorImageView, nullptr, &offscreenPass.color.view));
+		offscreenPass.color.view = device.createImageView(colorImageView);
 
 		// Create sampler to sample from the attachment in the fragment shader
 		vk::SamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
@@ -354,18 +351,18 @@ public:
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = 1.0f;
 		samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-		VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenPass.sampler));
+		offscreenPass.sampler = device.createSampler(samplerInfo);
 
 		// Depth stencil attachment
 		image.format = fbDepthFormat;
 		image.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
-		VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
-		vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
+		offscreenPass.depth.image = device.createImage(image);
+		memReqs = device.getImageMemoryRequirements(offscreenPass.depth.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
-		VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.depth.image, offscreenPass.depth.mem, 0));
+		&offscreenPass.depth.mem = device.allocateMemory(memAlloc);
+		device.bindImageMemory(offscreenPass.depth.image, offscreenPass.depth.mem, 0);
 
 		vk::ImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
 		depthStencilView.viewType = vk::ImageViewType::e2D;
@@ -378,7 +375,7 @@ public:
 		depthStencilView.subresourceRange.baseArrayLayer = 0;
 		depthStencilView.subresourceRange.layerCount = 1;
 		depthStencilView.image = offscreenPass.depth.image;
-		VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &offscreenPass.depth.view));
+		offscreenPass.depth.view = device.createImageView(depthStencilView);
 
 		// Create a separate render pass for the offscreen rendering as it may differ from the one used for scene rendering
 
@@ -432,7 +429,7 @@ public:
 
 		// Create the actual renderpass
 		vk::RenderPassCreateInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+
 		renderPassInfo.attachmentCount = static_cast<uint32_t>(attchmentDescriptions.size());
 		renderPassInfo.pAttachments = attchmentDescriptions.data();
 		renderPassInfo.subpassCount = 1;
@@ -440,7 +437,7 @@ public:
 		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
 
-		VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, &offscreenPass.renderPass));
+		offscreenPass.renderPass = device.createRenderPass(renderPassInfo);
 
 		vk::ImageView attachments[2];
 		attachments[0] = offscreenPass.color.view;
@@ -454,7 +451,7 @@ public:
 		fbufCreateInfo.height = offscreenPass.height;
 		fbufCreateInfo.layers = 1;
 
-		VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffer));
+		offscreenPass.frameBuffer = device.createFramebuffer(fbufCreateInfo);
 
 		// Fill a descriptor for later use in a descriptor set 
 		offscreenPass.descriptor.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
@@ -470,15 +467,15 @@ public:
 	// Command buffer for rendering color only scene for glow
 	void buildOffscreenCommandBuffer()
 	{
-		if (offscreenPass.commandBuffer == VK_NULL_HANDLE)
+		if (!offscreenPass.commandBuffer)
 		{
 			offscreenPass.commandBuffer = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, false);
 		}
-		if (offscreenPass.semaphore == VK_NULL_HANDLE)
+		if (!offscreenPass.semaphore)
 		{
 			// Create a semaphore used to synchronize offscreen rendering and usage
 			vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
-			VK_CHECK_RESULT(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &offscreenPass.semaphore));
+			offscreenPass.semaphore = device.createSemaphore(semaphoreCreateInfo);
 		}
 
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
@@ -495,30 +492,30 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(offscreenPass.commandBuffer, &cmdBufInfo));
+		offscreenPass.commandBuffer.begin(cmdBufInfo);
 
 		// Start a new debug marker region
 		DebugMarker::beginRegion(offscreenPass.commandBuffer, "Off-screen scene rendering", glm::vec4(1.0f, 0.78f, 0.05f, 1.0f));
 
 		vk::Viewport viewport = vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
-		vkCmdSetViewport(offscreenPass.commandBuffer, 0, 1, &viewport);
+		offscreenPass.commandBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
 		vkCmdSetScissor(offscreenPass.commandBuffer, 0, 1, &scissor);
 
-		vkCmdBeginRenderPass(offscreenPass.commandBuffer, &renderPassBeginInfo, vk::SubpassContents::eInline);
+		offscreenPass.commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-		vkCmdBindDescriptorSets(offscreenPass.commandBuffer, vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.scene, 0, NULL);
-		vkCmdBindPipeline(offscreenPass.commandBuffer, vk::PipelineBindPoint::eGraphics, pipelines.color);
+		offscreenPass.commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.scene, nullptr);
+		offscreenPass.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.color);
 
 		// Draw glow scene
 		sceneGlow.draw(offscreenPass.commandBuffer);
 
-		vkCmdEndRenderPass(offscreenPass.commandBuffer);
+		offscreenPass.commandBuffer.endRenderPass();
 
 		DebugMarker::endRegion(offscreenPass.commandBuffer);
 
-		VK_CHECK_RESULT(vkEndCommandBuffer(offscreenPass.commandBuffer));
+		offscreenPass.commandBuffer.end();
 	}
 
 	void loadScene()
@@ -576,27 +573,27 @@ public:
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
-			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+			drawCmdBuffers[i].begin(cmdBufInfo);
 
 			// Start a new debug marker region
 			DebugMarker::beginRegion(drawCmdBuffers[i], "Render scene", glm::vec4(0.5f, 0.76f, 0.34f, 1.0f));
 
-			vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, vk::SubpassContents::eInline);
+			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
-			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
+			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(wireframe ? width / 2 : width, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets.scene, 0, NULL);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.scene, nullptr);
 
 			// Solid rendering
 
 			// Start a new debug marker region
 			DebugMarker::beginRegion(drawCmdBuffers[i], "Toon shading draw", glm::vec4(0.78f, 0.74f, 0.9f, 1.0f));
 
-			vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.toonshading);
+			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.toonshading);
 			scene.draw(drawCmdBuffers[i]);
 
 			DebugMarker::endRegion(drawCmdBuffers[i]);
@@ -610,7 +607,7 @@ public:
 				scissor.offset.x = width / 2;
 				vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
-				vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.wireframe);
+				drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.wireframe);
 				scene.draw(drawCmdBuffers[i]);
 
 				DebugMarker::endRegion(drawCmdBuffers[i]);
@@ -625,7 +622,7 @@ public:
 			{
 				DebugMarker::beginRegion(drawCmdBuffers[i], "Apply post processing", glm::vec4(0.93f, 0.89f, 0.69f, 1.0f));
 
-				vkCmdBindPipeline(drawCmdBuffers[i], vk::PipelineBindPoint::eGraphics, pipelines.postprocess);
+				drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.postprocess);
 				// Full screen quad is generated by the vertex shaders, so we reuse four vertices (for four invocations) from current vertex buffer
 				vkCmdDraw(drawCmdBuffers[i], 4, 1, 0, 0);
 
@@ -633,12 +630,12 @@ public:
 			}
 
 
-			vkCmdEndRenderPass(drawCmdBuffers[i]);
+			drawCmdBuffers[i].endRenderPass();
 
 			// End current debug marker region
 			DebugMarker::endRegion(drawCmdBuffers[i]);
 
-			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+			drawCmdBuffers[i].end();
 		}
 	}
 
@@ -658,7 +655,7 @@ public:
 				poolSizes.data(),
 				1);
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+		descriptorPool = device.createDescriptorPool(descriptorPoolInfo);
 	}
 
 	void setupDescriptorSetLayout()
@@ -682,14 +679,14 @@ public:
 				setLayoutBindings.data(),
 				setLayoutBindings.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
+		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+		pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 
 		// Name for debugging
 		DebugMarker::setObjectName(device, (uint64_t)pipelineLayout, vk::DebugReportObjectTypeEXT::ePipelineLayout, "Shared pipeline layout");
@@ -704,7 +701,7 @@ public:
 				&descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.scene));
+		descriptorSets.scene = device.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets =
 		{
@@ -754,7 +751,7 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(
 				VK_TRUE,
 				VK_TRUE,
-				vk::CompareOp::eLess_OR_EQUAL);
+				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
 			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
@@ -818,20 +815,20 @@ public:
 		// Toon shading pipeline
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/debugmarker/toon.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/debugmarker/toon.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.toonshading));
+		pipelines.toonshading = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Color only pipeline
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/debugmarker/colorpass.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/debugmarker/colorpass.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelineCreateInfo.renderPass = offscreenPass.renderPass;
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.color));
+		pipelines.color = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Wire frame rendering pipeline
 		if (deviceFeatures.fillModeNonSolid)
 		{
 			rasterizationState.polygonMode = vk::PolygonMode::eLine;
 			pipelineCreateInfo.renderPass = renderPass;
-			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.wireframe));
+			pipelines.wireframe = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		}
 
 		// Post processing effect
@@ -849,7 +846,7 @@ public:
 		blendAttachmentState.alphaBlendOp = vk::BlendOp::eAdd;
 		blendAttachmentState.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
 		blendAttachmentState.dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha;
-		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.postprocess));
+		pipelines.postprocess = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Name shader moduels for debugging
 		// Shader module count starts at 2 when text overlay in base class is enabled
@@ -879,7 +876,7 @@ public:
 			sizeof(uboVS)));
 
 		// Map persistent
-		VK_CHECK_RESULT(uniformBuffer.map());
+		uniformBuffer.map();
 
 
 		// Name uniform buffer for debugging
@@ -918,7 +915,7 @@ public:
 			// Submit work
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &offscreenPass.commandBuffer;
-			VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+			queue.submit(submitInfo, vk::Fence(nullptr));
 		}
 
 		// Scene rendering
@@ -929,7 +926,7 @@ public:
 
 		// Submit work
 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		queue.submit(submitInfo, vk::Fence(nullptr));
 
 		VulkanExampleBase::submitFrame();
 	}

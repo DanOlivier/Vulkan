@@ -211,27 +211,23 @@ void VulkanGear::generate(GearInfo *gearinfo, vk::Queue queue)
 		vk::BufferCopy copyRegion = {};
 
 		copyRegion.size = vertexBufferSize;
-		vkCmdCopyBuffer(
-			copyCmd,
+		copyCmd.copyBuffer(
 			vertexStaging.buffer,
 			vertexBuffer.buffer,
-			1,
-			&copyRegion);
+			copyRegion);
 
 		copyRegion.size = indexBufferSize;
-		vkCmdCopyBuffer(
-			copyCmd,
+		copyCmd.copyBuffer(
 			indexStaging.buffer,
 			indexBuffer.buffer,
-			1,
-			&copyRegion);
+			copyRegion);
 
 		vulkanDevice->flushCommandBuffer(copyCmd, queue, true);
 
-		vkDestroyBuffer(vulkanDevice->logicalDevice, vertexStaging.buffer, nullptr);
-		vkFreeMemory(vulkanDevice->logicalDevice, vertexStaging.memory, nullptr);
-		vkDestroyBuffer(vulkanDevice->logicalDevice, indexStaging.buffer, nullptr);
-		vkFreeMemory(vulkanDevice->logicalDevice, indexStaging.memory, nullptr);
+		vulkanDevice->logicalDevice.destroyBuffer(vertexStaging.buffer);
+		vulkanDevice->logicalDevice.freeMemory(vertexStaging.memory);
+		vulkanDevice->logicalDevice.destroyBuffer(indexStaging.buffer);
+		vulkanDevice->logicalDevice.freeMemory(indexStaging.memory);
 	}
 	else
 	{
@@ -259,10 +255,10 @@ void VulkanGear::generate(GearInfo *gearinfo, vk::Queue queue)
 void VulkanGear::draw(vk::CommandBuffer cmdbuffer, vk::PipelineLayout pipelineLayout)
 {
 	vk::DeviceSize offsets[1] = { 0 };
-	vkCmdBindDescriptorSets(cmdbuffer, vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
-	vkCmdBindVertexBuffers(cmdbuffer, 0, 1, &vertexBuffer.buffer, offsets);
-	vkCmdBindIndexBuffer(cmdbuffer, indexBuffer.buffer, 0, vk::IndexType::eUint32);
-	vkCmdDrawIndexed(cmdbuffer, indexCount, 1, 0, 0, 1);
+	cmdbuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
+	cmdbuffer.bindVertexBuffers(0, 1, vertexBuffer.buffer, offsets);
+	cmdbuffer.bindIndexBuffer(indexBuffer.buffer, 0, vk::IndexType::eUint32);
+	cmdbuffer.drawIndexed(indexCount, 1, 0, 0, 1);
 }
 
 void VulkanGear::updateUniformBuffer(glm::mat4 perspective, glm::vec3 rotation, float zoom, float timer)
@@ -299,7 +295,7 @@ void VulkanGear::setupDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLa
 			&descriptorSetLayout,
 			1);
 
-	VK_CHECK_RESULT(vkAllocateDescriptorSets(vulkanDevice->logicalDevice, &allocInfo, &descriptorSet));
+	descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo);
 
 	// Binding 0 : Vertex shader uniform buffer
 	vk::WriteDescriptorSet writeDescriptorSet =
@@ -320,5 +316,5 @@ void VulkanGear::prepareUniformBuffer()
 		&uniformBuffer,
 		sizeof(ubo)));
 	// Map persistent
-	VK_CHECK_RESULT(uniformBuffer.map());
+	uniformBuffer.map();
 }
