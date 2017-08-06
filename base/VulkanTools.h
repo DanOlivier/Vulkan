@@ -43,7 +43,7 @@
 	vk::Result res = (f);																					\
 	if (res != vk::Result::eSuccess)																				\
 	{																									\
-		LOGE("Fatal : vk::Result is \" %s \" in %s at line %d", vks::tools::errorString(res).c_str(), __FILE__, __LINE__); \
+		LOGE("Fatal : vk::Result is \" %s \" in %s at line %d", vk::to_string(res).c_str(), __FILE__, __LINE__); \
 		assert(res == vk::Result::eSuccess);																		\
 	}																									\
 }
@@ -53,7 +53,7 @@
 	vk::Result res = (f);																					\
 	if (res != vk::Result::eSuccess)																				\
 	{																									\
-		std::cout << "Fatal : vk::Result is \"" << vks::tools::errorString(res) << "\" in " << __FILE__ << " at line " << __LINE__ << std::endl; \
+		std::cout << "Fatal : vk::Result is \"" << vk::to_string(res) << "\" in " << __FILE__ << " at line " << __LINE__ << std::endl; \
 		assert(res == vk::Result::eSuccess);																		\
 	}																									\
 }
@@ -69,12 +69,6 @@ namespace vks
 {
 	namespace tools
 	{
-		/** @brief Returns an error code as a string */
-		std::string errorString(vk::Result errorCode);
-
-		/** @brief Returns the device type as a string */
-		std::string physicalDeviceTypeString(vk::PhysicalDeviceType type);
-
 		// Selected a suitable supported depth format starting with 32 bit down to 16 bit
 		// Returns false if none of the depth formats in the list is supported by the device
 		vk::Bool32 getSupportedDepthFormat(vk::PhysicalDevice physicalDevice, vk::Format *depthFormat);

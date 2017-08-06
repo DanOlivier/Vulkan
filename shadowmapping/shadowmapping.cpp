@@ -270,13 +270,13 @@ public:
 		memReqs = device.getImageMemoryRequirements(offscreenPass.depth.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&offscreenPass.depth.mem = device.allocateMemory(memAlloc);
+		offscreenPass.depth.mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(offscreenPass.depth.image, offscreenPass.depth.mem, 0);
 
 		vk::ImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
 		depthStencilView.viewType = vk::ImageViewType::e2D;
 		depthStencilView.format = DEPTH_FORMAT;
-		depthStencilView.subresourceRange = {};
+		//depthStencilView.subresourceRange = {};
 		depthStencilView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
 		depthStencilView.subresourceRange.baseMipLevel = 0;
 		depthStencilView.subresourceRange.levelCount = 1;
@@ -331,7 +331,7 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[1];
-		clearValues[0].depthStencil = { 1.0f, 0 };
+		clearValues[0].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = offscreenPass.renderPass;
@@ -349,7 +349,7 @@ public:
 		offscreenPass.commandBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
-		vkCmdSetScissor(offscreenPass.commandBuffer, 0, 1, &scissor);
+		offscreenPass.commandBuffer.setScissor(0, scissor);
 
 		// Set depth bias (aka "Polygon offset")
 		// Required to avoid shadow mapping artefacts
@@ -364,7 +364,7 @@ public:
 		offscreenPass.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
 		offscreenPass.commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.offscreen, 0, descriptorSets.offscreen, nullptr);
 
-		vk::DeviceSize offsets[1] = { 0 };
+		std::vector<vk::DeviceSize> offsets = { 0 };
 		offscreenPass.commandBuffer.bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.scene.vertices.buffer, offsets);
 		offscreenPass.commandBuffer.bindIndexBuffer(models.scene.indices.buffer, 0, vk::IndexType::eUint32);
 		offscreenPass.commandBuffer.drawIndexed(models.scene.indexCount, 1, 0, 0, 0);
@@ -380,7 +380,7 @@ public:
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -404,9 +404,9 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.quad, 0, descriptorSet, nullptr);
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.quad);
@@ -458,25 +458,25 @@ public:
 		};
 #undef QUAD_COLOR_NORMAL
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eVertexBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			vertexBuffer.size() * sizeof(Vertex),
 			&models.quad.vertices.buffer,
 			&models.quad.vertices.memory,
-			vertexBuffer.data()));
+			vertexBuffer.data());
 
 		// Setup indices
 		std::vector<uint32_t> indexBuffer = { 0,1,2, 2,3,0 };
 		models.quad.indexCount = indexBuffer.size();
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eIndexBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			indexBuffer.size() * sizeof(uint32_t),
 			&models.quad.indices.buffer,
 			&models.quad.indices.memory,
-			indexBuffer.data()));
+			indexBuffer.data());
 
 		models.quad.device = device;
 	}
@@ -617,7 +617,7 @@ public:
 				&texDescriptor)
 		};
 
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Offscreen
 		descriptorSets.offscreen = device.allocateDescriptorSets(allocInfo)[0];
@@ -630,7 +630,7 @@ public:
 				0,
 				&uniformBuffers.offscreen.descriptor),
 		};
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// 3D scene
 		descriptorSets.scene = device.allocateDescriptorSets(allocInfo)[0];
@@ -653,7 +653,7 @@ public:
 				1,
 				&texDescriptor)
 		};
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 	}
 
@@ -662,19 +662,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -689,12 +688,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -702,9 +699,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				dynamicStateEnables.size(),
-				0);
+				dynamicStateEnables);
 
 		// Solid rendering pipeline
 		// Load shaders
@@ -716,8 +711,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayouts.quad,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -759,9 +753,7 @@ public:
 		dynamicStateEnables.push_back(vk::DynamicState::eDepthBias);
 		dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				dynamicStateEnables.size(),
-				0);
+				dynamicStateEnables);
 
 		pipelineCreateInfo.layout = pipelineLayouts.offscreen;
 		pipelineCreateInfo.renderPass = offscreenPass.renderPass;
@@ -772,25 +764,25 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Debug quad vertex shader uniform buffer block
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.debug,
-			sizeof(uboVSscene)));
+			sizeof(uboVSscene));
 
 		// Offscreen vertex shader uniform buffer block
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.offscreen,
-			sizeof(uboOffscreenVS)));
+			sizeof(uboOffscreenVS));
 
 		// Scene vertex shader uniform buffer block 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.scene,
-			sizeof(uboVSscene)));
+			sizeof(uboVSscene));
 
 		// Map persistent
 		uniformBuffers.debug.map();

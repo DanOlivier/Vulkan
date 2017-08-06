@@ -83,6 +83,12 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-std=c++11)
 
 file(GLOB SOURCE *.cpp base/*.cpp)
+set(SOURCE
+	#base/VulkanAndroid.cpp
+	#base/VulkanDebug.cpp
+	base/vulkanexamplebase.cpp
+	base/VulkanTools.cpp
+)
 
 # Function for building single example
 function(buildExample EXAMPLE_NAME)
@@ -106,16 +112,9 @@ function(buildExample EXAMPLE_NAME)
 		target_link_libraries(${EXAMPLE_NAME} ${Vulkan_LIBRARY} ${ASSIMP_LIBRARIES} ${WINLIBS})
 	else(WIN32)
 		add_executable(${EXAMPLE_NAME} ${MAIN_CPP} ${SOURCE} ${SHADERS})
-		target_link_libraries(${EXAMPLE_NAME} ${Vulkan_LIBRARY} ${ASSIMP_LIBRARIES} ${WAYLAND_CLIENT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+		target_link_libraries(${EXAMPLE_NAME} ${Vulkan_LIBRARY} VkLayer_api_dump ${ASSIMP_LIBRARIES} ${WAYLAND_CLIENT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 	endif(WIN32)
 endfunction(buildExample)
-
-# Build all examples
-function(buildExamples)
-	foreach(EXAMPLE ${EXAMPLES})
-		buildExample(${EXAMPLE})
-	endforeach(EXAMPLE)
-endfunction(buildExamples)
 
 # Compiler specific stuff
 IF(MSVC)
@@ -136,7 +135,7 @@ set(EXAMPLES
 	computenbody
 	computeparticles
 	computeshader
-	debugmarker
+	#debugmarker
 	deferred
 	deferredmultisampling
 	deferredshadows
@@ -186,4 +185,6 @@ set(EXAMPLES
 	vulkanscene
 )
 
-buildExamples()
+foreach(EXAMPLE ${EXAMPLES})
+	buildExample(${EXAMPLE})
+endforeach()

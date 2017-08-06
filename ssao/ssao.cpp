@@ -268,7 +268,7 @@ public:
 		vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
 		imageView.viewType = vk::ImageViewType::e2D;
 		imageView.format = format;
-		imageView.subresourceRange = {};
+		//imageView.subresourceRange = {};
 		imageView.subresourceRange.aspectMask = aspectMask;
 		imageView.subresourceRange.baseMipLevel = 0;
 		imageView.subresourceRange.levelCount = 1;
@@ -530,7 +530,7 @@ public:
 	// Build command buffer for rendering the scene to the offscreen frame buffer attachments
 	void buildDeferredCommandBuffer()
 	{
-		vk::DeviceSize offsets[1] = { 0 };
+		std::vector<vk::DeviceSize> offsets = { 0 };
 
 		if (!offScreenCmdBuffer)
 		{
@@ -545,10 +545,10 @@ public:
 
 		// Clear values for all attachments written in the fragment sahder
 		std::vector<vk::ClearValue> clearValues(4);
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
 		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 		clearValues[2].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[3].depthStencil = { 1.0f, 0 };
+		clearValues[3].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass =  frameBuffers.offscreen.renderPass;
@@ -569,7 +569,7 @@ public:
 		offScreenCmdBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(frameBuffers.offscreen.width, frameBuffers.offscreen.height, 0, 0);
-		vkCmdSetScissor(offScreenCmdBuffer, 0, 1, &scissor);
+		offScreenCmdBuffer.setScissor(0, scissor);
 
 		offScreenCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
 
@@ -583,8 +583,8 @@ public:
 		// Second pass: SSAO generation
 		// -------------------------------------------------------------------------------------------------------
 
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		renderPassBeginInfo.framebuffer = frameBuffers.ssao.frameBuffer;
 		renderPassBeginInfo.renderPass = frameBuffers.ssao.renderPass;
@@ -598,7 +598,7 @@ public:
 		viewport = vks::initializers::viewport((float)frameBuffers.ssao.width, (float)frameBuffers.ssao.height, 0.0f, 1.0f);
 		offScreenCmdBuffer.setViewport(0, viewport);
 		scissor = vks::initializers::rect2D(frameBuffers.ssao.width, frameBuffers.ssao.height, 0, 0);
-		vkCmdSetScissor(offScreenCmdBuffer, 0, 1, &scissor);
+		offScreenCmdBuffer.setScissor(0, scissor);
 
 		offScreenCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.ssao, 0, descriptorSets.ssao, nullptr);
 		offScreenCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.ssao);
@@ -619,7 +619,7 @@ public:
 		viewport = vks::initializers::viewport((float)frameBuffers.ssaoBlur.width, (float)frameBuffers.ssaoBlur.height, 0.0f, 1.0f);
 		offScreenCmdBuffer.setViewport(0, viewport);
 		scissor = vks::initializers::rect2D(frameBuffers.ssaoBlur.width, frameBuffers.ssaoBlur.height, 0, 0);
-		vkCmdSetScissor(offScreenCmdBuffer, 0, 1, &scissor);
+		offScreenCmdBuffer.setScissor(0, scissor);
 
 		offScreenCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.ssaoBlur, 0, descriptorSets.ssaoBlur, nullptr);
 		offScreenCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.ssaoBlur);
@@ -644,8 +644,8 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[2];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -669,9 +669,9 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
-			//vk::DeviceSize offsets[1] = { 0 };
+			//std::vector<vk::DeviceSize> offsets = { 0 };
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.composition, 0, descriptorSets.composition, nullptr);
 
 			// Final composition pass
@@ -768,11 +768,11 @@ public:
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.gBuffer;
 		pipelineLayouts.gBuffer = device.createPipelineLayout(pipelineLayoutCreateInfo);
 		descriptorAllocInfo.pSetLayouts = &descriptorSetLayouts.gBuffer;
-		descriptorSets.floor = device.allocateDescriptorSets(descriptorAllocInfo);
+		descriptorSets.floor = device.allocateDescriptorSets(descriptorAllocInfo)[0];
 		writeDescriptorSets = {
 			vks::initializers::writeDescriptorSet(descriptorSets.floor, vk::DescriptorType::eUniformBuffer, 0, &uniformBuffers.sceneMatrices.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// SSAO Generation
 		setLayoutBindings = {
@@ -787,7 +787,7 @@ public:
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.ssao;
 		pipelineLayouts.ssao = device.createPipelineLayout(pipelineLayoutCreateInfo);
 		descriptorAllocInfo.pSetLayouts = &descriptorSetLayouts.ssao;
-		descriptorSets.ssao = device.allocateDescriptorSets(descriptorAllocInfo);
+		descriptorSets.ssao = device.allocateDescriptorSets(descriptorAllocInfo)[0];
 		imageDescriptors = {
 			vks::initializers::descriptorImageInfo(colorSampler, frameBuffers.offscreen.position.view, vk::ImageLayout::eShaderReadOnlyOptimal),
 			vks::initializers::descriptorImageInfo(colorSampler, frameBuffers.offscreen.normal.view, vk::ImageLayout::eShaderReadOnlyOptimal),
@@ -799,7 +799,7 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.ssao, vk::DescriptorType::eUniformBuffer, 3, &uniformBuffers.ssaoKernel.descriptor),		// FS SSAO Kernel UBO
 			vks::initializers::writeDescriptorSet(descriptorSets.ssao, vk::DescriptorType::eUniformBuffer, 4, &uniformBuffers.ssaoParams.descriptor),		// FS SSAO Params UBO
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// SSAO Blur
 		setLayoutBindings = {
@@ -810,14 +810,14 @@ public:
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.ssaoBlur;
 		pipelineLayouts.ssaoBlur = device.createPipelineLayout(pipelineLayoutCreateInfo);
 		descriptorAllocInfo.pSetLayouts = &descriptorSetLayouts.ssaoBlur;
-		descriptorSets.ssaoBlur = device.allocateDescriptorSets(descriptorAllocInfo);
+		descriptorSets.ssaoBlur = device.allocateDescriptorSets(descriptorAllocInfo)[0];
 		imageDescriptors = {
 			vks::initializers::descriptorImageInfo(colorSampler, frameBuffers.ssao.color.view, vk::ImageLayout::eShaderReadOnlyOptimal),
 		};
 		writeDescriptorSets = {
 			vks::initializers::writeDescriptorSet(descriptorSets.ssaoBlur, vk::DescriptorType::eCombinedImageSampler, 0, &imageDescriptors[0]),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Composition
 		setLayoutBindings = {
@@ -833,7 +833,7 @@ public:
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.composition;
 		pipelineLayouts.composition = device.createPipelineLayout(pipelineLayoutCreateInfo);
 		descriptorAllocInfo.pSetLayouts = &descriptorSetLayouts.composition;
-		descriptorSets.composition = device.allocateDescriptorSets(descriptorAllocInfo);
+		descriptorSets.composition = device.allocateDescriptorSets(descriptorAllocInfo)[0];
 		imageDescriptors = {
 			vks::initializers::descriptorImageInfo(colorSampler, frameBuffers.offscreen.position.view, vk::ImageLayout::eShaderReadOnlyOptimal),
 			vks::initializers::descriptorImageInfo(colorSampler, frameBuffers.offscreen.normal.view, vk::ImageLayout::eShaderReadOnlyOptimal),
@@ -849,7 +849,7 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.composition, vk::DescriptorType::eCombinedImageSampler, 4, &imageDescriptors[4]),			// FS Sampler SSAO blurred
 			vks::initializers::writeDescriptorSet(descriptorSets.composition, vk::DescriptorType::eUniformBuffer, 5, &uniformBuffers.ssaoParams.descriptor),	// FS SSAO Params UBO
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -857,19 +857,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -884,12 +883,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -897,9 +894,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		// Final composition pass pipeline
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
@@ -910,8 +905,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayouts.composition,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;

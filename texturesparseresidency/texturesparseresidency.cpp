@@ -71,12 +71,12 @@ struct VirtualTexturePage
 			return;
 		};
 
-		imageMemoryBind = {};
+		imageMemoryBind = vk::SparseImageMemoryBind();
 
 		vk::MemoryAllocateInfo allocInfo = vks::initializers::memoryAllocateInfo();
 		allocInfo.allocationSize = size;
 		allocInfo.memoryTypeIndex = memoryTypeIndex;
-		&imageMemoryBind.memory = device.allocateMemory(allocInfo);
+		imageMemoryBind.memory = device.allocateMemory(allocInfo);
 
 		vk::ImageSubresource subResource{};
 		subResource.aspectMask = vk::ImageAspectFlagBits::eColor;
@@ -302,35 +302,20 @@ public:
 
 		// Get sparse image properties
 		std::vector<vk::SparseImageFormatProperties> sparseProperties;
-		// Sparse properties count for the desired format
-		uint32_t sparsePropertiesCount;
-		vkGetPhysicalDeviceSparseImageFormatProperties(
-			physicalDevice,
+		// Get actual image format properties
+		sparseProperties = physicalDevice.getSparseImageFormatProperties(
 			format,
 			vk::ImageType::e2D,
 			vk::SampleCountFlagBits::e1,
 			vk::ImageUsageFlagBits::eSampled,
-			vk::ImageTiling::eOptimal,
-			&sparsePropertiesCount,
-			nullptr);
+			vk::ImageTiling::eOptimal);
 		// Check if sparse is supported for this format
+		uint32_t sparsePropertiesCount = sparseProperties.size();
 		if (sparsePropertiesCount == 0)
 		{
 			std::cout << "Error: Requested format does not support sparse features!" << std::endl;
 			return;
 		}
-
-		// Get actual image format properties
-		sparseProperties.resize(sparsePropertiesCount);
-		vkGetPhysicalDeviceSparseImageFormatProperties(
-			physicalDevice,
-			format,
-			vk::ImageType::e2D,
-			vk::SampleCountFlagBits::e1,
-			vk::ImageUsageFlagBits::eSampled,
-			vk::ImageTiling::eOptimal,
-			&sparsePropertiesCount,
-			sparseProperties.data());
 
 		std::cout << "Sparse image format properties: " << sparsePropertiesCount << std::endl;
 		for (auto props : sparseProperties)
@@ -351,7 +336,7 @@ public:
 		sparseImageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled;
 		sparseImageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 		sparseImageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
-		sparseImageCreateInfo.extent = { texture.width, texture.height, 1 };
+		sparseImageCreateInfo.extent = vk::Extent3D{ texture.width, texture.height, 1 };
 		sparseImageCreateInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
 		sparseImageCreateInfo.flags = vk::ImageCreateFlagBits::eSparseBinding | vk::ImageCreateFlagBits::eSparseResidency;
 		texture.image = device.createImage(sparseImageCreateInfo);
@@ -425,7 +410,7 @@ public:
 
 		// Check if the format has a single mip tail for all layers or one mip tail for each layer
 		// The mip tail contains all mip levels > sparseMemoryReq.imageMipTailFirstLod
-		bool singleMipTail = sparseMemoryReq.formatProperties.flags & vk::SparseImageFormatFlagBits::eSingleMiptail;
+		bool singleMipTail = !!(sparseMemoryReq.formatProperties.flags & vk::SparseImageFormatFlagBits::eSingleMiptail);
 
 		// Sparse bindings for each mip level of all layers outside of the mip tail
 		for (uint32_t layer = 0; layer < texture.layerCount; layer++)
@@ -623,12 +608,12 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.solid);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, heightMap->vertexBuffer.buffer, offsets);
 			drawCmdBuffers[i].bindIndexBuffer(heightMap->indexBuffer.buffer, 0, vk::IndexType::eUint32);
 			drawCmdBuffers[i].drawIndexed(heightMap->indexCount, 1, 0, 0, 0);
@@ -799,7 +784,7 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
@@ -810,7 +795,7 @@ public:
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -867,12 +852,12 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Vertex shader uniform buffer block
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBufferVS,
 			sizeof(uboVS),
-			&uboVS));
+			&uboVS);
 
 		updateUniformBuffers();
 	}

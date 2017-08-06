@@ -39,9 +39,9 @@ namespace vks
 				vk::Format::eD16Unorm,
 				vk::Format::eX8D24UnormPack32,
 				vk::Format::eD32Sfloat,
-				vk::Format::eD16Unorm_S8_UINT,
+				vk::Format::eD16UnormS8Uint,
 				vk::Format::eD24UnormS8Uint,
-				vk::Format::eD32Sfloat_S8_UINT,
+				vk::Format::eD32SfloatS8Uint,
 			};
 			return std::find(formats.begin(), formats.end(), format) != std::end(formats);
 		}
@@ -54,9 +54,9 @@ namespace vks
 			std::vector<vk::Format> formats = 
 			{
 				vk::Format::eS8Uint,
-				vk::Format::eD16Unorm_S8_UINT,
+				vk::Format::eD16UnormS8Uint,
 				vk::Format::eD24UnormS8Uint,
-				vk::Format::eD32Sfloat_S8_UINT,
+				vk::Format::eD32SfloatS8Uint,
 			};
 			return std::find(formats.begin(), formats.end(), format) != std::end(formats);
 		}
@@ -182,16 +182,16 @@ namespace vks
 			memReqs = vulkanDevice->logicalDevice.getImageMemoryRequirements(attachment.image);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-			&attachment.memory = vulkanDevice->logicalDevice.allocateMemory(memAlloc);
+			attachment.memory = vulkanDevice->logicalDevice.allocateMemory(memAlloc);
 			vulkanDevice->logicalDevice.bindImageMemory(attachment.image, attachment.memory, 0);
 
-			attachment.subresourceRange = {};
+			//attachment.subresourceRange = {};
 			attachment.subresourceRange.aspectMask = aspectMask;
 			attachment.subresourceRange.levelCount = 1;
 			attachment.subresourceRange.layerCount = createinfo.layerCount;
 
 			vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
-			imageView.viewType = (createinfo.layerCount == 1) ? vk::ImageViewType::e2D : vk::ImageViewType::e2D_ARRAY;
+			imageView.viewType = (createinfo.layerCount == 1) ? vk::ImageViewType::e2D : vk::ImageViewType::e2DArray;
 			imageView.format = createinfo.format;
 			imageView.subresourceRange = attachment.subresourceRange;
 			//todo: workaround for depth+stencil attachments

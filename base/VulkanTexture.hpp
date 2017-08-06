@@ -154,12 +154,11 @@ namespace vks
 				// Get memory type index for a host visible buffer
 				memAllocInfo.memoryTypeIndex = device->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-				&stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
+				stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 				device->logicalDevice.bindBufferMemory(stagingBuffer, stagingMemory, 0);
 
 				// Copy texture data into staging buffer
-				uint8_t *data;
-				data = device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, 0);
+				uint8_t *data = (uint8_t*)device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, vk::MemoryMapFlags());
 				memcpy(data, tex2D.data(), tex2D.size());
 				device->logicalDevice.unmapMemory(stagingMemory);
 
@@ -194,7 +193,7 @@ namespace vks
 				imageCreateInfo.tiling = vk::ImageTiling::eOptimal;
 				imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 				imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
-				imageCreateInfo.extent = { width, height, 1 };
+				imageCreateInfo.extent = vk::Extent3D{ width, height, 1 };
 				imageCreateInfo.usage = imageUsageFlags;
 				// Ensure that the TRANSFER_DST bit is set for staging
 				if (!(imageCreateInfo.usage & vk::ImageUsageFlagBits::eTransferDst))
@@ -211,7 +210,7 @@ namespace vks
 				deviceMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 				device->logicalDevice.bindImageMemory(image, deviceMemory, 0);
 
-				vk::ImageSubresourceRange subresourceRange = {};
+				vk::ImageSubresourceRange subresourceRange;
 				subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 				subresourceRange.baseMipLevel = 0;
 				subresourceRange.levelCount = mipLevels;
@@ -264,7 +263,7 @@ namespace vks
 				vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
 				imageCreateInfo.imageType = vk::ImageType::e2D;
 				imageCreateInfo.format = format;
-				imageCreateInfo.extent = { width, height, 1 };
+				imageCreateInfo.extent = vk::Extent3D{ width, height, 1 };
 				imageCreateInfo.mipLevels = 1;
 				imageCreateInfo.arrayLayers = 1;
 				imageCreateInfo.samples = vk::SampleCountFlagBits::e1;
@@ -286,7 +285,7 @@ namespace vks
 				memAllocInfo.memoryTypeIndex = device->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
 				// Allocate host memory
-				&mappableMemory = device->logicalDevice.allocateMemory(memAllocInfo);
+				mappableMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 
 				// Bind allocated image for use
 				device->logicalDevice.bindImageMemory(mappableImage, mappableMemory, 0);
@@ -302,10 +301,10 @@ namespace vks
 
 				// Get sub resources layout 
 				// Includes row pitch, size offsets, etc.
-				vkGetImageSubresourceLayout(device->logicalDevice, mappableImage, &subRes, &subResLayout);
+				subResLayout = device->logicalDevice.getImageSubresourceLayout(mappableImage, subRes);
 
 				// Map image memory
-				VK_CHECK_RESULT(data) = device->logicalDevice.mapMemory(mappableMemory, 0, memReqs.size, vk::MemoryMapFlags());
+				data = device->logicalDevice.mapMemory(mappableMemory, 0, memReqs.size, vk::MemoryMapFlags());
 
 				// Copy image data into memory
 				memcpy(data, tex2D[subRes.mipLevel].data(), tex2D[subRes.mipLevel].size());
@@ -422,12 +421,11 @@ namespace vks
 			// Get memory type index for a host visible buffer
 			memAllocInfo.memoryTypeIndex = device->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-			&stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
+			stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 			device->logicalDevice.bindBufferMemory(stagingBuffer, stagingMemory, 0);
 
 			// Copy texture data into staging buffer
-			uint8_t *data;
-			data = device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, 0);
+			uint8_t *data = (uint8_t*)device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, vk::MemoryMapFlags());
 			memcpy(data, buffer, bufferSize);
 			device->logicalDevice.unmapMemory(stagingMemory);
 
@@ -451,7 +449,7 @@ namespace vks
 			imageCreateInfo.tiling = vk::ImageTiling::eOptimal;
 			imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 			imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
-			imageCreateInfo.extent = { width, height, 1 };
+			imageCreateInfo.extent = vk::Extent3D{ width, height, 1 };
 			imageCreateInfo.usage = imageUsageFlags;
 			// Ensure that the TRANSFER_DST bit is set for staging
 			if (!(imageCreateInfo.usage & vk::ImageUsageFlagBits::eTransferDst))
@@ -468,7 +466,7 @@ namespace vks
 			deviceMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 			device->logicalDevice.bindImageMemory(image, deviceMemory, 0);
 
-			vk::ImageSubresourceRange subresourceRange = {};
+			vk::ImageSubresourceRange subresourceRange;
 			subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			subresourceRange.baseMipLevel = 0;
 			subresourceRange.levelCount = mipLevels;
@@ -524,8 +522,6 @@ namespace vks
 
 			// Create image view
 			vk::ImageViewCreateInfo viewCreateInfo = {};
-
-			viewCreateInfo.pNext = NULL;
 			viewCreateInfo.viewType = vk::ImageViewType::e2D;
 			viewCreateInfo.format = format;
 			viewCreateInfo.components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA };
@@ -613,12 +609,11 @@ namespace vks
 			// Get memory type index for a host visible buffer
 			memAllocInfo.memoryTypeIndex = device->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-			&stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
+			stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 			device->logicalDevice.bindBufferMemory(stagingBuffer, stagingMemory, 0);
 
 			// Copy texture data into staging buffer
-			uint8_t *data;
-			data = device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, 0);
+			uint8_t *data = (uint8_t*)device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, vk::MemoryMapFlags());
 			memcpy(data, tex2DArray.data(), static_cast<size_t>(tex2DArray.size()));
 			device->logicalDevice.unmapMemory(stagingMemory);
 
@@ -655,7 +650,7 @@ namespace vks
 			imageCreateInfo.tiling = vk::ImageTiling::eOptimal;
 			imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 			imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
-			imageCreateInfo.extent = { width, height, 1 };
+			imageCreateInfo.extent = vk::Extent3D{ width, height, 1 };
 			imageCreateInfo.usage = imageUsageFlags;
 			// Ensure that the TRANSFER_DST bit is set for staging
 			if (!(imageCreateInfo.usage & vk::ImageUsageFlagBits::eTransferDst))
@@ -680,7 +675,7 @@ namespace vks
 
 			// Image barrier for optimal image (target)
 			// Set initial layout for all array layers (faces) of the optimal (target) tiled texture
-			vk::ImageSubresourceRange subresourceRange = {};
+			vk::ImageSubresourceRange subresourceRange;
 			subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			subresourceRange.baseMipLevel = 0;
 			subresourceRange.levelCount = mipLevels;
@@ -729,7 +724,7 @@ namespace vks
 
 			// Create image view
 			vk::ImageViewCreateInfo viewCreateInfo = vks::initializers::imageViewCreateInfo();
-			viewCreateInfo.viewType = vk::ImageViewType::e2D_ARRAY;
+			viewCreateInfo.viewType = vk::ImageViewType::e2DArray;
 			viewCreateInfo.format = format;
 			viewCreateInfo.components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA };
 			viewCreateInfo.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
@@ -819,12 +814,11 @@ namespace vks
 			// Get memory type index for a host visible buffer
 			memAllocInfo.memoryTypeIndex = device->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-			&stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
+			stagingMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 			device->logicalDevice.bindBufferMemory(stagingBuffer, stagingMemory, 0);
 
 			// Copy texture data into staging buffer
-			uint8_t *data;
-			data = device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, 0);
+			uint8_t *data = (uint8_t*)device->logicalDevice.mapMemory(stagingMemory, 0, memReqs.size, vk::MemoryMapFlags());
 			memcpy(data, texCube.data(), texCube.size());
 			device->logicalDevice.unmapMemory(stagingMemory);
 
@@ -862,10 +856,10 @@ namespace vks
 			imageCreateInfo.tiling = vk::ImageTiling::eOptimal;
 			imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 			imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
-			imageCreateInfo.extent = { width, height, 1 };
+			imageCreateInfo.extent = vk::Extent3D{ width, height, 1 };
 			imageCreateInfo.usage = imageUsageFlags;
 			// Ensure that the TRANSFER_DST bit is set for staging
-			if (!(imageCreateInfo.usage & vk::ImageUsageFlagBits::eTransferDst))
+			if (~(imageCreateInfo.usage & vk::ImageUsageFlagBits::eTransferDst))
 			{
 				imageCreateInfo.usage |= vk::ImageUsageFlagBits::eTransferDst;
 			}
@@ -890,7 +884,7 @@ namespace vks
 
 			// Image barrier for optimal image (target)
 			// Set initial layout for all array layers (faces) of the optimal (target) tiled texture
-			vk::ImageSubresourceRange subresourceRange = {};
+			vk::ImageSubresourceRange subresourceRange;
 			subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			subresourceRange.baseMipLevel = 0;
 			subresourceRange.levelCount = mipLevels;

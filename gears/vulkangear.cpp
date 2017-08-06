@@ -254,9 +254,9 @@ void VulkanGear::generate(GearInfo *gearinfo, vk::Queue queue)
 
 void VulkanGear::draw(vk::CommandBuffer cmdbuffer, vk::PipelineLayout pipelineLayout)
 {
-	vk::DeviceSize offsets[1] = { 0 };
+	std::vector<vk::DeviceSize> offsets = { 0 };
 	cmdbuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
-	cmdbuffer.bindVertexBuffers(0, 1, vertexBuffer.buffer, offsets);
+	cmdbuffer.bindVertexBuffers(0, vertexBuffer.buffer, offsets);
 	cmdbuffer.bindIndexBuffer(indexBuffer.buffer, 0, vk::IndexType::eUint32);
 	cmdbuffer.drawIndexed(indexCount, 1, 0, 0, 1);
 }
@@ -295,7 +295,7 @@ void VulkanGear::setupDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLa
 			&descriptorSetLayout,
 			1);
 
-	descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo);
+	descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo)[0];
 
 	// Binding 0 : Vertex shader uniform buffer
 	vk::WriteDescriptorSet writeDescriptorSet =
@@ -305,16 +305,16 @@ void VulkanGear::setupDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLa
 			0,
 			&uniformBuffer.descriptor);
 
-	vkUpdateDescriptorSets(vulkanDevice->logicalDevice, 1, &writeDescriptorSet, 0, NULL);
+	vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSet, nullptr);
 }
 
 void VulkanGear::prepareUniformBuffer()
 {
-	VK_CHECK_RESULT(vulkanDevice->createBuffer(
+	vulkanDevice->createBuffer(
 		vk::BufferUsageFlagBits::eUniformBuffer,
 		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 		&uniformBuffer,
-		sizeof(ubo)));
+		sizeof(ubo));
 	// Map persistent
 	uniformBuffer.map();
 }

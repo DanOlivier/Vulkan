@@ -159,7 +159,7 @@ public:
 		vulkanDevice->logicalDevice.destroyPipelineCache(pipelineCache);
 		vulkanDevice->logicalDevice.destroyPipeline(pipeline);
 		vulkanDevice->logicalDevice.destroyRenderPass(renderPass);
-		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool);
+		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool, nullptr);
 		vulkanDevice->logicalDevice.destroyCommandPool(commandPool);
 		vulkanDevice->logicalDevice.destroyFence(fence);
 	}
@@ -191,11 +191,11 @@ public:
 		cmdBuffers = vulkanDevice->logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo);
 
 		// Vertex buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eVertexBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&vertexBuffer,
-			MAX_CHAR_COUNT * sizeof(glm::vec4)));
+			MAX_CHAR_COUNT * sizeof(glm::vec4));
 
 		// Map persistent
 		vertexBuffer.map();
@@ -221,17 +221,17 @@ public:
 		memReqs = vulkanDevice->logicalDevice.getImageMemoryRequirements(image);
 		allocInfo.allocationSize = memReqs.size;
 		allocInfo.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&imageMemory = vulkanDevice->logicalDevice.allocateMemory(allocInfo);
+		imageMemory = vulkanDevice->logicalDevice.allocateMemory(allocInfo);
 		vulkanDevice->logicalDevice.bindImageMemory(image, imageMemory, 0);
 
 		// Staging
 		vks::Buffer stagingBuffer;
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&stagingBuffer,
-			allocInfo.allocationSize));
+			allocInfo.allocationSize);
 
 		stagingBuffer.map();
 		memcpy(stagingBuffer.mapped, &font24pixels[0][0], STB_FONT_WIDTH * STB_FONT_HEIGHT);	// Only one channel, so data size = W * H (*R8)
@@ -240,7 +240,7 @@ public:
 		// Copy to image
 		vk::CommandBuffer copyCmd;
 		cmdBufAllocateInfo.commandBufferCount = 1;
-		copyCmd) = vulkanDevice->logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo);
+		copyCmd = vulkanDevice->logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 		copyCmd.begin(cmdBufInfo);
@@ -352,7 +352,7 @@ public:
 				&descriptorSetLayout,
 				1);
 
-		descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(descriptorSetAllocInfo);
+		descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(descriptorSetAllocInfo)[0];
 
 		vk::DescriptorImageInfo texDescriptor =
 			vks::initializers::descriptorImageInfo(
@@ -360,14 +360,14 @@ public:
 				view,
 				vk::ImageLayout::eGeneral);
 
-		std::array<vk::WriteDescriptorSet, 1> writeDescriptorSets;
+		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets[0] = vks::initializers::writeDescriptorSet(descriptorSet, vk::DescriptorType::eCombinedImageSampler, 0, &texDescriptor);
-		vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets);
+		vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Pipeline cache
 		vk::PipelineCacheCreateInfo pipelineCacheCreateInfo = {};
 
-		vulkanDevice->logicalDevice.createPipelineCache(pipelineCacheCreateInfo, pipelineCache);
+		pipelineCache = vulkanDevice->logicalDevice.createPipelineCache(pipelineCacheCreateInfo);
 
 		// Command buffer execution fence
 		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo();
@@ -382,19 +382,20 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleStrip,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		// Enable blending
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_TRUE);
+			vks::initializers::pipelineColorBlendAttachmentState(
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+				VK_TRUE);
 
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eOne;
 		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOne;
@@ -416,12 +417,11 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
 			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+				vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -430,9 +430,7 @@ public:
 
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		std::array<vk::VertexInputBindingDescription, 2> vertexBindings = {};
 		vertexBindings[0] = vks::initializers::vertexInputBindingDescription(0, sizeof(glm::vec4), vk::VertexInputRate::eVertex);
@@ -527,7 +525,6 @@ public:
 
 		vk::SubpassDescription subpassDescription = {};
 		subpassDescription.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-		subpassDescription.flags = 0;
 		subpassDescription.inputAttachmentCount = 0;
 		subpassDescription.pInputAttachments = NULL;
 		subpassDescription.colorAttachmentCount = 1;
@@ -538,8 +535,6 @@ public:
 		subpassDescription.pPreserveAttachments = NULL;
 
 		vk::RenderPassCreateInfo renderPassInfo = {};
-
-		renderPassInfo.pNext = NULL;
 		renderPassInfo.attachmentCount = 2;
 		renderPassInfo.pAttachments = attachments;
 		renderPassInfo.subpassCount = 1;
@@ -680,14 +675,14 @@ public:
 			cmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(*frameBufferWidth, *frameBufferHeight, 0, 0);
-			vkCmdSetScissor(cmdBuffers[i], 0, 1, &scissor);
+			cmdBuffers[i].setScissor(0, scissor);
 			
 			cmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			cmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 
 			vk::DeviceSize offsets = 0;
-			cmdBuffers[i].bindVertexBuffers(0, 1, vertexBuffer.buffer, &offsets);
-			cmdBuffers[i].bindVertexBuffers(1, 1, vertexBuffer.buffer, &offsets);
+			cmdBuffers[i].bindVertexBuffers(0, vertexBuffer.buffer, offsets);
+			cmdBuffers[i].bindVertexBuffers(1, vertexBuffer.buffer, offsets);
 			for (uint32_t j = 0; j < numLetters; j++)
 			{
 				vkCmdDraw(cmdBuffers[i], 4, 1, j * 4, 0);
@@ -720,7 +715,7 @@ public:
 		queue.submit(submitInfo, fence);
 
 		vulkanDevice->logicalDevice.waitForFences(fence, VK_TRUE, UINT64_MAX);
-		VK_CHECK_RESULT(vulkanDevice->logicalDevice.resetFences(fence));
+		vulkanDevice->logicalDevice.resetFences(fence);
 	}
 
 	/**
@@ -729,7 +724,7 @@ public:
 	*/
 	void reallocateCommandBuffers()
 	{
-		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool);
+		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool, nullptr);
 
 		vk::CommandBufferAllocateInfo cmdBufAllocateInfo =
 			vks::initializers::commandBufferAllocateInfo(

@@ -123,7 +123,8 @@ public:
 	void setupMultisampleTarget()
 	{
 		// Check if device supports requested sample count for color and depth frame buffer
-		assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) && (deviceProperties.limits.framebufferDepthSampleCounts >= sampleCount));
+		assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) && 
+			(deviceProperties.limits.framebufferDepthSampleCounts >= sampleCount));
 
 		// Color target
 		vk::ImageCreateInfo info = vks::initializers::imageCreateInfo();
@@ -156,7 +157,7 @@ public:
 			// If this is not available, fall back to device local memory
 			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 		}
-		&multisampleTarget.color.memory = device.allocateMemory(memAlloc);
+		multisampleTarget.color.memory = device.allocateMemory(memAlloc);
 		vkBindImageMemory(device, multisampleTarget.color.image, multisampleTarget.color.memory, 0);
 
 		// Create image view for the MSAA target
@@ -201,7 +202,7 @@ public:
 			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 		}
 		
-		&multisampleTarget.depth.memory = device.allocateMemory(memAlloc);
+		multisampleTarget.depth.memory = device.allocateMemory(memAlloc);
 		vkBindImageMemory(device, multisampleTarget.depth.image, multisampleTarget.depth.memory, 0);
 
 		// Create image view for the MSAA target
@@ -337,8 +338,6 @@ public:
 		attachments[3] = depthStencil.view;
 
 		vk::FramebufferCreateInfo frameBufferCreateInfo = {};
-
-		frameBufferCreateInfo.pNext = NULL;
 		frameBufferCreateInfo.renderPass = renderPass;
 		frameBufferCreateInfo.attachmentCount = attachments.size();
 		frameBufferCreateInfo.pAttachments = attachments.data();
@@ -371,9 +370,9 @@ public:
 
 		vk::ClearValue clearValues[3];
 		// Clear to a white background for higher contrast
-		clearValues[0].color = { { 1.0f, 1.0f, 1.0f, 1.0f } };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f } };
 		clearValues[1].color = { { 1.0f, 1.0f, 1.0f, 1.0f } };
-		clearValues[2].depthStencil = { 1.0f, 0 };
+		clearValues[2].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -395,12 +394,12 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, useSampleShading ? pipelines.MSAASampleShading : pipelines.MSAA);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.example.vertices.buffer, offsets);
 			drawCmdBuffers[i].bindIndexBuffer(models.example.indices.buffer, 0, vk::IndexType::eUint32);
 			drawCmdBuffers[i].drawIndexed(models.example.indexCount, 1, 0, 0, 0);
@@ -557,7 +556,7 @@ public:
 				&texDescriptor)
 		};
 
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -565,19 +564,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -592,7 +590,7 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -600,15 +598,12 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				dynamicStateEnables.size(),
-				0);
+				dynamicStateEnables);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState{};
 
@@ -647,11 +642,11 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Vertex shader uniform buffer block
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffer,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 
 		// Map persistent
 		uniformBuffer.map();

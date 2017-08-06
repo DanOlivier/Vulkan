@@ -141,7 +141,7 @@ public:
 		memReqs = device.getBufferMemoryRequirements(queryResult.buffer);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-		&queryResult.memory = device.allocateMemory(memAlloc);
+		queryResult.memory = device.allocateMemory(memAlloc);
 		device.bindBufferMemory(queryResult.buffer, queryResult.memory, 0);
 
 		// Create query pool
@@ -151,20 +151,19 @@ public:
 		queryPoolInfo.queryType = vk::QueryType::eOcclusion;
 		queryPoolInfo.queryCount = 2;
 
-		VK_CHECK_RESULT(vkCreateQueryPool(device, &queryPoolInfo, NULL, &queryPool));
+		queryPool = device.createQueryPool(queryPoolInfo);
 	}
 
 	// Retrieves the results of the occlusion queries submitted to the command buffer
 	void getQueryResults()
 	{
 		// We use vkGetQueryResults to copy the results into a host visible buffer
-		vkGetQueryPoolResults(
-			device, 
+		device.getQueryPoolResults(
 			queryPool,
 			0,
 			2,
-			sizeof(passedSamples),
-			passedSamples,
+			2,
+			&passedSamples,
 			sizeof(uint64_t),
 			// Store results a 64 bit values and wait until the results have been finished
 			// If you don't want to wait, you can use vk::QueryResultFlagBits::eWithAvailability
@@ -178,7 +177,7 @@ public:
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -214,9 +213,9 @@ public:
 				height,
 				0,
 				0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 
 			//glm::mat4 modelMatrix = glm::mat4();
 
@@ -251,26 +250,23 @@ public:
 
 			// Visible pass
 			// Clear color and depth attachments
-			vk::ClearAttachment clearAttachments[2] = {};
+			std::vector<vk::ClearAttachment> clearAttachments = {};
 
 			clearAttachments[0].aspectMask = vk::ImageAspectFlagBits::eColor;
 			clearAttachments[0].clearValue.color = defaultClearColor;
 			clearAttachments[0].colorAttachment = 0;
 
 			clearAttachments[1].aspectMask = vk::ImageAspectFlagBits::eDepth;
-			clearAttachments[1].clearValue.depthStencil = { 1.0f, 0 };
+			clearAttachments[1].clearValue.depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 			vk::ClearRect clearRect = {};
 			clearRect.layerCount = 1;
-			clearRect.rect.offset = { 0, 0 };
-			clearRect.rect.extent = { width, height };
+			clearRect.rect.offset = vk::Offset2D{ 0, 0 };
+			clearRect.rect.extent = vk::Extent2D{ width, height };
 
-			vkCmdClearAttachments(
-				drawCmdBuffers[i],
-				2,
+			drawCmdBuffers[i].clearAttachments(
 				clearAttachments,
-				1,
-				&clearRect);
+				clearRect);
 
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.solid);
 
@@ -426,19 +422,19 @@ public:
 				&uniformBuffers.occluder.descriptor)
 		};
 
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Teapot
 		descriptorSets.teapot = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets[0].dstSet = descriptorSets.teapot;
 		writeDescriptorSets[0].pBufferInfo = &uniformBuffers.teapot.descriptor;
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Sphere
 		descriptorSets.sphere = device.allocateDescriptorSets(allocInfo)[0];
 		writeDescriptorSets[0].dstSet = descriptorSets.sphere;
 		writeDescriptorSets[0].pBufferInfo = &uniformBuffers.sphere.descriptor;
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -446,19 +442,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -473,12 +468,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -486,9 +479,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				dynamicStateEnables.size(),
-				0);
+				dynamicStateEnables);
 
 		// Solid rendering pipeline
 		// Load shaders
@@ -500,8 +491,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -531,7 +521,7 @@ public:
 		blendAttachmentState.blendEnable = VK_TRUE;
 		blendAttachmentState.colorBlendOp = vk::BlendOp::eAdd;
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcColor;
-		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOne_MINUS_SRC_COLOR;
+		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcColor;
 
 		pipelines.occluder = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
@@ -540,25 +530,25 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Vertex shader uniform buffer block
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.occluder,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 
 		// Teapot
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.teapot,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 
 		// Sphere
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.sphere,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 
 		// Map persistent
 		uniformBuffers.occluder.map();

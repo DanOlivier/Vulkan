@@ -187,7 +187,7 @@ public:
 		vk::FenceCreateInfo fenceCreateInfo = {};
 
 		// Create in signaled state so we don't wait on first render of each command buffer
-		fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		fenceCreateInfo.flags = vk::FenceCreateFlagBits::eSignaled;
 		waitFences.resize(drawCmdBuffers.size());
 		for (auto& fence : waitFences)
 		{
@@ -207,7 +207,7 @@ public:
 		cmdBufAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
 		cmdBufAllocateInfo.commandBufferCount = 1;
 	
-		cmdBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo);
+		cmdBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 		// If requested, also start the new command buffer
 		if (begin)
@@ -234,10 +234,7 @@ public:
 
 		// Create fence to ensure that the command buffer has finished executing
 		vk::FenceCreateInfo fenceCreateInfo = {};
-
-		fenceCreateInfo.flags = 0;
-		vk::Fence fence;
-		fence = device.createFence(fenceCreateInfo);
+		vk::Fence fence = device.createFence(fenceCreateInfo);
 
 		// Submit to the queue
 		queue.submit(submitInfo, fence);
@@ -260,8 +257,8 @@ public:
 		// Set clear values for all framebuffer attachments with loadOp set to clear
 		// We use two attachments (color and depth) that are cleared at the start of the subpass and as such we need to set clear values for both
 		vk::ClearValue clearValues[2];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.2f, 1.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 1.0f } };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = {};
 
@@ -299,7 +296,7 @@ public:
 			scissor.extent.height = height;
 			scissor.offset.x = 0;
 			scissor.offset.y = 0;
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			// Bind descriptor sets describing shader binding points
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
@@ -309,8 +306,8 @@ public:
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
 			// Bind triangle vertex buffer (contains position and colors)
-			vk::DeviceSize offsets[1] = { 0 };
-			drawCmdBuffers[i].bindVertexBuffers(0, 1, vertices.buffer, offsets);
+			std::vector<vk::DeviceSize> offsets = { 0 };
+			drawCmdBuffers[i].bindVertexBuffers(0, vertices.buffer, offsets);
 
 			// Bind triangle index buffer
 			drawCmdBuffers[i].bindIndexBuffer(indices.buffer, 0, vk::IndexType::eUint32);
@@ -330,11 +327,11 @@ public:
 	void draw()
 	{
 		// Get next image in the swap chain (back/front buffer)
-		VK_CHECK_RESULT(swapChain.acquireNextImage(presentCompleteSemaphore, &currentBuffer));
+		currentBuffer = swapChain.acquireNextImage(presentCompleteSemaphore);
 
 		// Use a fence to wait until the command buffer has finished execution before using it again
 		device.waitForFences(waitFences[currentBuffer], VK_TRUE, UINT64_MAX);
-		VK_CHECK_RESULT(device.resetFences(waitFences[currentBuffer]));
+		device.resetFences(waitFences[currentBuffer]);
 
 		// Pipeline stage at which the queue submission will wait (via pWaitSemaphores)
 		vk::PipelineStageFlags waitStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
@@ -422,9 +419,9 @@ public:
 			// Request a host visible memory type that can be used to copy our data do
 			// Also request it to be coherent, so that writes are visible to the GPU right after unmapping the buffer
 			memAlloc.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-			&stagingBuffers.vertices.memory = device.allocateMemory(memAlloc);
+			stagingBuffers.vertices.memory = device.allocateMemory(memAlloc);
 			// Map and copy
-			VK_CHECK_RESULT(data) = device.mapMemory(stagingBuffers.vertices.memory, 0, memAlloc.allocationSize, vk::MemoryMapFlags());
+			data = device.mapMemory(stagingBuffers.vertices.memory, 0, memAlloc.allocationSize, vk::MemoryMapFlags());
 			memcpy(data, vertexBuffer.data(), vertexBufferSize);
 			device.unmapMemory(stagingBuffers.vertices.memory);
 			device.bindBufferMemory(stagingBuffers.vertices.buffer, stagingBuffers.vertices.memory, 0);
@@ -435,7 +432,7 @@ public:
 			memReqs = device.getBufferMemoryRequirements(vertices.buffer);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-			&vertices.memory = device.allocateMemory(memAlloc);
+			vertices.memory = device.allocateMemory(memAlloc);
 			device.bindBufferMemory(vertices.buffer, vertices.memory, 0);
 
 			// Index buffer
@@ -448,8 +445,8 @@ public:
 			memReqs = device.getBufferMemoryRequirements(stagingBuffers.indices.buffer);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-			&stagingBuffers.indices.memory = device.allocateMemory(memAlloc);
-			VK_CHECK_RESULT(data) = device.mapMemory(stagingBuffers.indices.memory, 0, indexBufferSize, vk::MemoryMapFlags());
+			stagingBuffers.indices.memory = device.allocateMemory(memAlloc);
+			data = device.mapMemory(stagingBuffers.indices.memory, 0, indexBufferSize, vk::MemoryMapFlags());
 			memcpy(data, indexBuffer.data(), indexBufferSize);
 			device.unmapMemory(stagingBuffers.indices.memory);
 			device.bindBufferMemory(stagingBuffers.indices.buffer, stagingBuffers.indices.memory, 0);
@@ -460,7 +457,7 @@ public:
 			memReqs = device.getBufferMemoryRequirements(indices.buffer);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-			&indices.memory = device.allocateMemory(memAlloc);
+			indices.memory = device.allocateMemory(memAlloc);
 			device.bindBufferMemory(indices.buffer, indices.memory, 0);
 
 			//vk::CommandBufferBeginInfo cmdBufferBeginInfo = {};
@@ -508,8 +505,8 @@ public:
 			memAlloc.allocationSize = memReqs.size;
 			// vk::MemoryPropertyFlagBits::eHostVisible is host visible memory, and vk::MemoryPropertyFlagBits::eHostCoherent makes sure writes are directly visible
 			memAlloc.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-			&vertices.memory = device.allocateMemory(memAlloc);
-			VK_CHECK_RESULT(data) = device.mapMemory(vertices.memory, 0, memAlloc.allocationSize, vk::MemoryMapFlags());
+			vertices.memory = device.allocateMemory(memAlloc);
+			data = device.mapMemory(vertices.memory, 0, memAlloc.allocationSize, vk::MemoryMapFlags());
 			memcpy(data, vertexBuffer.data(), vertexBufferSize);
 			device.unmapMemory(vertices.memory);
 			device.bindBufferMemory(vertices.buffer, vertices.memory, 0);
@@ -525,8 +522,8 @@ public:
 			memReqs = device.getBufferMemoryRequirements(indices.buffer);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-			&indices.memory = device.allocateMemory(memAlloc);
-			VK_CHECK_RESULT(data) = device.mapMemory(indices.memory, 0, indexBufferSize, vk::MemoryMapFlags());
+			indices.memory = device.allocateMemory(memAlloc);
+			data = device.mapMemory(indices.memory, 0, indexBufferSize, vk::MemoryMapFlags());
 			memcpy(data, indexBuffer.data(), indexBufferSize);
 			device.unmapMemory(indices.memory);
 			device.bindBufferMemory(indices.buffer, indices.memory, 0);
@@ -616,7 +613,7 @@ public:
 		// Binds this uniform buffer to binding point 0
 		writeDescriptorSet.dstBinding = 0;
 
-		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+		device.updateDescriptorSets(writeDescriptorSet, nullptr);
 	}
 
 	// Create the depth (and stencil) buffer attachments used by our framebuffers
@@ -629,7 +626,7 @@ public:
 		image.imageType = vk::ImageType::e2D;
 		image.format = depthFormat;
 		// Use example's height and width
-		image.extent = { width, height, 1 };
+		image.extent = vk::Extent3D{ width, height, 1 };
 		image.mipLevels = 1;
 		image.arrayLayers = 1;
 		image.samples = vk::SampleCountFlagBits::e1;
@@ -645,7 +642,7 @@ public:
 		memReqs = device.getImageMemoryRequirements(depthStencil.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&depthStencil.mem = device.allocateMemory(memAlloc);
+		depthStencil.mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(depthStencil.image, depthStencil.mem, 0);
 
 		// Create a view for the depth stencil image
@@ -655,7 +652,7 @@ public:
 
 		depthStencilView.viewType = vk::ImageViewType::e2D;
 		depthStencilView.format = depthFormat;
-		depthStencilView.subresourceRange = {};
+		//depthStencilView.subresourceRange = {};
 		depthStencilView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 		depthStencilView.subresourceRange.baseMipLevel = 0;
 		depthStencilView.subresourceRange.levelCount = 1;
@@ -826,7 +823,7 @@ public:
 			moduleCreateInfo.pCode = (uint32_t*)shaderCode;
 
 			vk::ShaderModule shaderModule;
-			VK_CHECK_RESULT(vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule));
+			shaderModule = device.createShaderModule(moduleCreateInfo);
 
 			delete[] shaderCode;
 
@@ -835,7 +832,7 @@ public:
 		else
 		{
 			std::cerr << "Error: Could not open shader file \"" << filename << "\"" << std::endl;
-			return VK_NULL_HANDLE;
+			return vk::ShaderModule(nullptr);
 		}
 	}
 
@@ -875,7 +872,7 @@ public:
 		// Color blend state describes how blend factors are calculated (if used)
 		// We need one blend attachment state per color attachment (even if blending is not used
 		vk::PipelineColorBlendAttachmentState blendAttachmentState[1] = {};
-		blendAttachmentState[0].colorWriteMask = 0xf;
+		blendAttachmentState[0].colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 		blendAttachmentState[0].blendEnable = VK_FALSE;
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = {};
 
@@ -1034,7 +1031,7 @@ public:
 		// Note: This may affect performance so you might not want to do this in a real world application that updates buffers on a regular base
 		allocInfo.memoryTypeIndex = getMemoryTypeIndex(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 		// Allocate memory for the uniform buffer
-		&(uniformBufferVS.memory) = device.allocateMemory(allocInfo);
+		(uniformBufferVS.memory) = device.allocateMemory(allocInfo);
 		// Bind memory to buffer
 		device.bindBufferMemory(uniformBufferVS.buffer, uniformBufferVS.memory, 0);
 		
@@ -1059,8 +1056,7 @@ public:
 		uboVS.modelMatrix = glm::rotate(uboVS.modelMatrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
 		// Map uniform buffer and update it
-		uint8_t *pData;
-		pData = device.mapMemory(uniformBufferVS.memory, 0, sizeof(uboVS), 0);
+		uint8_t *pData = (uint8_t*)device.mapMemory(uniformBufferVS.memory, 0, sizeof(uboVS), vk::MemoryMapFlags());
 		memcpy(pData, &uboVS, sizeof(uboVS));
 		// Unmap after data has been copied
 		// Note: Since we requested a host coherent memory type for the uniform buffer, the write is instantly visible to the GPU

@@ -107,15 +107,11 @@ public:
 		surface = instancecreateAndroidSurfaceKHR(surfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_IOS_MVK)
 		vk::IOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-
-		surfaceCreateInfo.pNext = NULL;
 		surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
 		surface = instance.createIOSSurfaceMVK(instancesurfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_MACOS_MVK)
 		vk::MacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-
-		surfaceCreateInfo.pNext = NULL;
 		surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
 		surface = instance.createMacOSSurfaceMVK(surfaceCreateInfo);
@@ -158,7 +154,7 @@ public:
 		uint32_t presentQueueNodeIndex = UINT32_MAX;
 		for (uint32_t i = 0; i < queueCount; i++) 
 		{
-			if ((queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) != 0) 
+			if (queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) 
 			{
 				if (graphicsQueueNodeIndex == UINT32_MAX) 
 				{
@@ -202,12 +198,9 @@ public:
 		queueNodeIndex = graphicsQueueNodeIndex;
 
 		// Get list of supported surface formats
-		uint32_t formatCount;
-		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, NULL));
+		std::vector<vk::SurfaceFormatKHR> surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surface);
+		uint32_t formatCount = surfaceFormats.size();
 		assert(formatCount > 0);
-
-		std::vector<vk::SurfaceFormatKHR> surfaceFormats(formatCount);
-		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, surfaceFormats.data()));
 
 		// If the surface format list only includes one entry with vk::Format::eUndefined,
 		// there is no preferered format, so we assume vk::Format::eB8G8R8A8Unorm
@@ -279,16 +272,12 @@ public:
 		vk::SwapchainKHR oldSwapchain = swapChain;
 
 		// Get physical device surface properties and formats
-		vk::SurfaceCapabilitiesKHR surfCaps;
-		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfCaps));
+		vk::SurfaceCapabilitiesKHR surfCaps = physicalDevice.getSurfaceCapabilitiesKHR(surface);
 
 		// Get available present modes
-		uint32_t presentModeCount;
-		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, NULL));
+		std::vector<vk::PresentModeKHR> presentModes = physicalDevice.getSurfacePresentModesKHR(surface);
+		uint32_t presentModeCount = presentModes.size();
 		assert(presentModeCount > 0);
-
-		std::vector<vk::PresentModeKHR> presentModes(presentModeCount);
-		VK_CHECK_RESULT(fpGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data()));
 
 		vk::Extent2D swapchainExtent = {};
 		// If width (and height) equals the special value 0xFFFFFFFF, the size of the surface will be set by the swapchain
@@ -340,7 +329,7 @@ public:
 		}
 
 		// Find the transformation of the surface
-		vk::SurfaceTransformFlagsKHR preTransform;
+		vk::SurfaceTransformFlagBitsKHR preTransform;
 		if (surfCaps.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity)
 		{
 			// We prefer a non-rotated transform
@@ -368,8 +357,6 @@ public:
 		}
 
 		vk::SwapchainCreateInfoKHR swapchainCI = {};
-
-		swapchainCI.pNext = NULL;
 		swapchainCI.surface = surface;
 		swapchainCI.minImageCount = desiredNumberOfSwapchainImages;
 		swapchainCI.imageFormat = colorFormat;
@@ -394,7 +381,7 @@ public:
 			swapchainCI.imageUsage |= vk::ImageUsageFlagBits::eTransferSrc;
 		}
 
-		swapChain = device.createSwapchainKHR(swapchainCI));
+		swapChain = device.createSwapchainKHR(swapchainCI);
 
 		// If an existing swap chain is re-created, destroy the old swap chain
 		// This also cleans up all the presentable images
@@ -415,8 +402,6 @@ public:
 		for (uint32_t i = 0; i < imageCount; i++)
 		{
 			vk::ImageViewCreateInfo colorAttachmentView = {};
-
-			colorAttachmentView.pNext = NULL;
 			colorAttachmentView.format = colorFormat;
 			colorAttachmentView.components = {
 				vk::ComponentSwizzle::eR,
@@ -430,7 +415,7 @@ public:
 			colorAttachmentView.subresourceRange.baseArrayLayer = 0;
 			colorAttachmentView.subresourceRange.layerCount = 1;
 			colorAttachmentView.viewType = vk::ImageViewType::e2D;
-			colorAttachmentView.flags = 0;
+			colorAttachmentView.flags = vk::ImageViewCreateFlags();
 
 			buffers[i].image = images[i];
 
@@ -450,11 +435,11 @@ public:
 	*
 	* @return vk::Result of the image acquisition
 	*/
-	vk::Result acquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32_t *imageIndex)
+	uint32_t acquireNextImage(vk::Semaphore presentCompleteSemaphore)
 	{
 		// By setting timeout to UINT64_MAX we will always wait until the next image has been acquired or an actual error is thrown
 		// With that we don't have to handle vk::Result::eNotReady
-		return fpAcquireNextImageKHR(device, swapChain, UINT64_MAX, presentCompleteSemaphore, (vk::Fence)nullptr, imageIndex);
+		return device.acquireNextImageKHR(swapChain, UINT64_MAX, presentCompleteSemaphore, (vk::Fence)nullptr).value;
 	}
 
 	/**
@@ -469,8 +454,6 @@ public:
 	vk::Result queuePresent(vk::Queue queue, uint32_t imageIndex, vk::Semaphore waitSemaphore)
 	{
 		vk::PresentInfoKHR presentInfo = {};
-
-		presentInfo.pNext = NULL;
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &swapChain;
 		presentInfo.pImageIndices = &imageIndex;
@@ -480,7 +463,7 @@ public:
 			presentInfo.pWaitSemaphores = &waitSemaphore;
 			presentInfo.waitSemaphoreCount = 1;
 		}
-		return fpQueuePresentKHR(queue, &presentInfo);
+		return queue.presentKHR(presentInfo);
 	}
 
 
@@ -498,11 +481,11 @@ public:
 		}
 		if (surface)
 		{
-			fpDestroySwapchainKHR(device, swapChain, nullptr);
-			vkDestroySurfaceKHR(instance, surface, nullptr);
+			device.destroySwapchainKHR(swapChain);
+			instance.destroySurfaceKHR(surface);
 		}
-		surface;
-		swapChain;
+		surface = nullptr;
+		swapChain = nullptr;
 	}
 
 #if defined(_DIRECT2DISPLAY)
@@ -617,8 +600,6 @@ public:
 		}
 
 		vk::DisplaySurfaceCreateInfoKHR surfaceInfo{};
-
-		surfaceInfo.pNext = NULL;
 		surfaceInfo.flags = 0;
 		surfaceInfo.displayMode = displayMode;
 		surfaceInfo.planeIndex = bestPlaneIndex;

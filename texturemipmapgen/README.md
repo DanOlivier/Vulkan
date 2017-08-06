@@ -63,7 +63,7 @@ copyCmd.copyBufferToImage(stagingBuffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER
 As we are going to blit ***from*** the base mip-level just uploaded we also need to set insert an image memory barrier that sets the image layout to ```TRANSFER_SRC``` for the base mip level:
 
 ```cpp
-vk::ImageSubresourceRange subresourceRange = {};
+vk::ImageSubresourceRange subresourceRange;
 subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 subresourceRange.levelCount = 1;
 subresourceRange.layerCount = 1;

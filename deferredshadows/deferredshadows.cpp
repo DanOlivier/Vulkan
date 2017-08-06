@@ -35,7 +35,7 @@
 #define SHADOWMAP_DIM 2048
 #endif
 // 16 bits of depth is enough for such a small scene
-#define SHADOWMAP_FORMAT vk::Format::eD32Sfloat_S8_UINT
+#define SHADOWMAP_FORMAT vk::Format::eD32SfloatS8Uint
 
 #if defined(__ANDROID__)
 // Use max. screen dimension as deferred framebuffer size
@@ -334,7 +334,7 @@ public:
 	// Put render commands for the scene into the given command buffer
 	void renderScene(vk::CommandBuffer cmdBuffer, bool shadow)
 	{
-		vk::DeviceSize offsets[1] = { 0 };
+		std::vector<vk::DeviceSize> offsets = { 0 };
 
 		// Background
 		vkCmdBindDescriptorSets(cmdBuffer, vk::PipelineBindPoint::eGraphics, pipelineLayouts.offscreen, 0, 1, shadow ? &descriptorSets.shadow : &descriptorSets.background, 0, NULL);
@@ -371,7 +371,7 @@ public:
 		// First pass: Shadow map generation
 		// -------------------------------------------------------------------------------------------------------
 	
-		clearValues[0].depthStencil = { 1.0f, 0 };
+		clearValues[0].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		renderPassBeginInfo.renderPass = frameBuffers.shadow->renderPass;
 		renderPassBeginInfo.framebuffer = frameBuffers.shadow->framebuffer;
@@ -386,7 +386,7 @@ public:
 		commandBuffers.deferred.setViewport(0, viewport);
 
 		scissor = vks::initializers::rect2D(frameBuffers.shadow->width, frameBuffers.shadow->height, 0, 0);
-		vkCmdSetScissor(commandBuffers.deferred, 0, 1, &scissor);
+		commandBuffers.deferred.setScissor(0, scissor);
 
 		// Set depth bias (aka "Polygon offset")
 		vkCmdSetDepthBias(
@@ -404,10 +404,10 @@ public:
 		// -------------------------------------------------------------------------------------------------------
 
 		// Clear values for all attachments written in the fragment sahder
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[3].depthStencil = { 1.0f, 0 };
+		clearValues[3].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		renderPassBeginInfo.renderPass = frameBuffers.deferred->renderPass;
 		renderPassBeginInfo.framebuffer = frameBuffers.deferred->framebuffer;
@@ -422,7 +422,7 @@ public:
 		commandBuffers.deferred.setViewport(0, viewport);
 
 		scissor = vks::initializers::rect2D(frameBuffers.deferred->width, frameBuffers.deferred->height, 0, 0);
-		vkCmdSetScissor(commandBuffers.deferred, 0, 1, &scissor);
+		commandBuffers.deferred.setScissor(0, scissor);
 
 		commandBuffers.deferred.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
 		renderScene(commandBuffers.deferred, false);
@@ -482,8 +482,8 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[2];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.2f, 0.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 0.0f } };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -507,9 +507,9 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.deferred, 0, descriptorSet, nullptr);
 
 			// Final composition as full screen quad
@@ -549,13 +549,13 @@ public:
 		vertexBuffer.push_back({ { 0.0f, 0.0f, 0.0f },{ 0.0f, 0.0f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f, 0.0f } });
 		vertexBuffer.push_back({ { 1.0f, 0.0f, 0.0f },{ 1.0f, 0.0f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f, 0.0f } });
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eVertexBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			vertexBuffer.size() * sizeof(Vertex),
 			&models.quad.vertices.buffer,
 			&models.quad.vertices.memory,
-			vertexBuffer.data()));
+			vertexBuffer.data());
 
 		// Setup indices
 		std::vector<uint32_t> indexBuffer = { 0,1,2, 2,3,0 };
@@ -569,13 +569,13 @@ public:
 		}
 		models.quad.indexCount = static_cast<uint32_t>(indexBuffer.size());
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eIndexBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			indexBuffer.size() * sizeof(uint32_t),
 			&models.quad.indices.buffer,
 			&models.quad.indices.memory,
-			indexBuffer.data()));
+			indexBuffer.data());
 
 		models.quad.device = device;
 	}
@@ -785,7 +785,7 @@ public:
 				&texDescriptorShadowMap),
 		};
 
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Offscreen (scene)
 
@@ -812,7 +812,7 @@ public:
 				2,
 				&textures.model.normalMap.descriptor)
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Background
 		descriptorSets.background = device.allocateDescriptorSets(allocInfo)[0];
@@ -837,7 +837,7 @@ public:
 				2,
 				&textures.background.normalMap.descriptor)
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Shadow mapping
 		descriptorSets.shadow = device.allocateDescriptorSets(allocInfo)[0];
@@ -850,7 +850,7 @@ public:
 				0,
 				&uniformBuffers.uboShadowGS.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -858,19 +858,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -885,12 +884,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -898,9 +895,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		// Final fullscreen pass pipeline
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
@@ -911,8 +906,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayouts.deferred,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -980,9 +974,7 @@ public:
 		dynamicStateEnables.push_back(vk::DynamicState::eDepthBias);
 		dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 		// Reset blend attachment state
 		pipelineCreateInfo.renderPass = frameBuffers.shadow->renderPass;
 		pipelines.shadowpass = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
@@ -992,32 +984,32 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Fullscreen vertex shader
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.vsFullScreen,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 
 		// Deferred vertex shader
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.vsOffscreen,
-			sizeof(uboOffscreenVS)));
+			sizeof(uboOffscreenVS));
 
 		// Deferred fragment shader
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.fsLights,
-			sizeof(uboFragmentLights)));
+			sizeof(uboFragmentLights));
 
 		// Shadow map vertex shader (matrices from shadow's pov)
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.uboShadowGS,
-			sizeof(uboShadowGS)));
+			sizeof(uboShadowGS));
 
 		// Map persistent
 		uniformBuffers.vsFullScreen.map();

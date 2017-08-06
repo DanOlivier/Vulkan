@@ -148,7 +148,7 @@ public:
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -172,12 +172,12 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, wireframe ? pipelines.wireframe : pipelines.solid);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 			// Bind mesh vertex buffer
 			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, model.vertices.buffer, offsets);
 			// Bind mesh index buffer
@@ -280,37 +280,37 @@ public:
 
 			// Create staging buffers
 			// Vertex data
-			VK_CHECK_RESULT(vulkanDevice->createBuffer(
+			vulkanDevice->createBuffer(
 				vk::BufferUsageFlagBits::eTransferSrc,
 				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 				vertexBufferSize,
 				&vertexStaging.buffer,
 				&vertexStaging.memory,
-				vertexBuffer.data()));
+				vertexBuffer.data());
 			// Index data
-			VK_CHECK_RESULT(vulkanDevice->createBuffer(
+			vulkanDevice->createBuffer(
 				vk::BufferUsageFlagBits::eTransferSrc,
 				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 				indexBufferSize,
 				&indexStaging.buffer,
 				&indexStaging.memory,
-				indexBuffer.data()));
+				indexBuffer.data());
 
 			// Create device local buffers
 			// Vertex buffer
-			VK_CHECK_RESULT(vulkanDevice->createBuffer(
+			vulkanDevice->createBuffer(
 				vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 				vk::MemoryPropertyFlagBits::eDeviceLocal,
 				vertexBufferSize,
 				&model.vertices.buffer,
-				&model.vertices.memory));
+				&model.vertices.memory);
 			// Index buffer
-			VK_CHECK_RESULT(vulkanDevice->createBuffer(
+			vulkanDevice->createBuffer(
 				vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 				vk::MemoryPropertyFlagBits::eDeviceLocal,
 				indexBufferSize,
 				&model.indices.buffer,
-				&model.indices.memory));
+				&model.indices.memory);
 
 			// Copy from staging buffers
 			vk::CommandBuffer copyCmd = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
@@ -325,7 +325,6 @@ public:
 
 			copyRegion.size = indexBufferSize;
 			copyCmd.copyBuffer(
-				copyCmd,
 				indexStaging.buffer,
 				model.indices.buffer,
 				copyRegion);
@@ -340,21 +339,21 @@ public:
 		else
 		{
 			// Vertex buffer
-			VK_CHECK_RESULT(vulkanDevice->createBuffer(
+			vulkanDevice->createBuffer(
 				vk::BufferUsageFlagBits::eVertexBuffer,
 				vk::MemoryPropertyFlagBits::eHostVisible,
 				vertexBufferSize,
 				&model.vertices.buffer,
 				&model.vertices.memory,
-				vertexBuffer.data()));
+				vertexBuffer.data());
 			// Index buffer
-			VK_CHECK_RESULT(vulkanDevice->createBuffer(
+			vulkanDevice->createBuffer(
 				vk::BufferUsageFlagBits::eIndexBuffer,
 				vk::MemoryPropertyFlagBits::eHostVisible,
 				indexBufferSize,
 				&model.indices.buffer,
 				&model.indices.memory,
-				indexBuffer.data()));
+				indexBuffer.data());
 		}
 	}
 
@@ -505,7 +504,7 @@ public:
 				&texDescriptor)
 		};
 
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -513,19 +512,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -540,12 +538,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -553,9 +549,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		// Solid rendering pipeline
 		// Load shaders
@@ -567,8 +561,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -595,11 +588,11 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Vertex shader uniform buffer block
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.scene,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 		
 		// Map persistent
 		uniformBuffers.scene.map();

@@ -45,8 +45,6 @@ vk::Result VulkanExampleBase::createInstance(bool enableValidation)
 #endif
 
 	vk::InstanceCreateInfo instanceCreateInfo = {};
-
-	instanceCreateInfo.pNext = NULL;
 	instanceCreateInfo.pApplicationInfo = &appInfo;
 	if (instanceExtensions.size() > 0)
 	{
@@ -62,7 +60,8 @@ vk::Result VulkanExampleBase::createInstance(bool enableValidation)
 		instanceCreateInfo.enabledLayerCount = vks::debug::validationLayerCount;
 		instanceCreateInfo.ppEnabledLayerNames = vks::debug::validationLayerNames;
 	}
-	return vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+	instance = vk::createInstance(instanceCreateInfo);
+	return vk::Result::eSuccess;
 }
 
 std::string VulkanExampleBase::getWindowTitle()
@@ -117,7 +116,7 @@ void VulkanExampleBase::createCommandBuffers()
 
 void VulkanExampleBase::destroyCommandBuffers()
 {
-	device.freeCommandBuffers(cmdPool);
+	device.freeCommandBuffers(cmdPool, nullptr);
 }
 
 vk::CommandBuffer VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel level, bool begin)
@@ -130,7 +129,7 @@ vk::CommandBuffer VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel 
 			level,
 			1);
 
-	cmdBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo);
+	cmdBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 	// If requested, also start the new command buffer
 	if (begin)
@@ -169,7 +168,7 @@ void VulkanExampleBase::createPipelineCache()
 {
 	vk::PipelineCacheCreateInfo pipelineCacheCreateInfo = {};
 
-	device.createPipelineCache(pipelineCacheCreateInfo, pipelineCache);
+	pipelineCache = device.createPipelineCache(pipelineCacheCreateInfo);
 }
 
 void VulkanExampleBase::prepare()
@@ -603,13 +602,15 @@ void VulkanExampleBase::getOverlayText(VulkanTextOverlay*) {}
 void VulkanExampleBase::prepareFrame()
 {
 	// Acquire the next image from the swap chain
-	vk::Result err = swapChain.acquireNextImage(semaphores.presentComplete, &currentBuffer);
-	// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
-	if ((err == vk::Result::eErrorOutOfDateKHR) || (err == vk::Result::eSuboptimalKHR)) {
-		windowResize();
+	try
+	{
+		currentBuffer = swapChain.acquireNextImage(semaphores.presentComplete);
 	}
-	else {
-		VK_CHECK_RESULT(err);
+	// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
+	catch(const vk::OutOfDateKHRError& err)
+	//catch(const vk::SuboptimalKHRError& err)
+	{
+		windowResize();
 	}
 }
 
@@ -793,13 +794,14 @@ VulkanExampleBase::~VulkanExampleBase()
 
 void VulkanExampleBase::initVulkan()
 {
-	vk::Result err;
-
 	// Vulkan instance
-	err = createInstance(settings.validation);
-	if (err)
+	try
 	{
-		vks::tools::exitFatal("Could not create Vulkan instance : \n" + vks::tools::errorString(err), "Fatal error");
+		createInstance(settings.validation);
+	}
+ 	catch(const vk::SystemError& err) 
+ 	{
+		vks::tools::exitFatal("Could not create Vulkan instance : \n" + std::string(err.what()), "Fatal error");
 	}
 
 #if defined(__ANDROID__)
@@ -813,21 +815,12 @@ void VulkanExampleBase::initVulkan()
 		// For validating (debugging) an appplication the error and warning bits should suffice
 		vk::DebugReportFlagsEXT debugReportFlags = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning;
 		// Additional flags include performance info, loader and layer debug messages, etc.
-		vks::debug::setupDebugging(instance, debugReportFlags, VK_NULL_HANDLE);
+		vks::debug::setupDebugging(instance, debugReportFlags, nullptr);
 	}
 
 	// Physical device
-	uint32_t gpuCount = 0;
-	// Get number of available physical devices
-	VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
-	assert(gpuCount > 0);
-	// Enumerate devices
-	std::vector<vk::PhysicalDevice> physicalDevices(gpuCount);
-	err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
-	if (err)
-	{
-		vks::tools::exitFatal("Could not enumerate physical devices : \n" + vks::tools::errorString(err), "Fatal error");
-	}
+	std::vector<vk::PhysicalDevice> physicalDevices = instance.enumeratePhysicalDevices();
+	uint32_t gpuCount = physicalDevices.size();
 
 	// GPU selection
 
@@ -861,31 +854,19 @@ void VulkanExampleBase::initVulkan()
 		// List available GPUs
 		if (args[i] == std::string("-listgpus"))
 		{
-			uint32_t gpuCount = 0;
-			VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
-			if (gpuCount == 0) 
-			{
-				std::cerr << "No Vulkan devices found!" << std::endl;
-			}
-			else 
-			{
-				// Enumerate devices
-				std::cout << "Available Vulkan devices" << std::endl;
-				std::vector<vk::PhysicalDevice> devices(gpuCount);
-				VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, devices.data()));
-				for (uint32_t i = 0; i < gpuCount; i++) {
-					vk::PhysicalDeviceProperties deviceProperties;
-					deviceProperties = devices[i].getProperties();
-					std::cout << "Device [" << i << "] : " << deviceProperties.deviceName << std::endl;
-					std::cout << " Type: " << vks::tools::physicalDeviceTypeString(deviceProperties.deviceType) << std::endl;
-					std::cout << " API: " << (deviceProperties.apiVersion >> 22) << "." << ((deviceProperties.apiVersion >> 12) & 0x3ff) << "." << (deviceProperties.apiVersion & 0xfff) << std::endl;
-				}
+			// Enumerate devices
+			std::cout << "Available Vulkan devices" << std::endl;
+			for (uint32_t i = 0; i < gpuCount; i++) {
+				vk::PhysicalDeviceProperties deviceProperties = physicalDevices[i].getProperties();
+				std::cout << "Device [" << i << "] : " << deviceProperties.deviceName << std::endl;
+				std::cout << " Type: " << vk::to_string(deviceProperties.deviceType) << std::endl;
+				std::cout << " API: " << (deviceProperties.apiVersion >> 22) << "." << ((deviceProperties.apiVersion >> 12) & 0x3ff) << "." << (deviceProperties.apiVersion & 0xfff) << std::endl;
 			}
 		}
 	}
 #endif
 
-	physicalDevice = physicalDevices[selectedDevice];
+	vk::PhysicalDevice physicalDevice = physicalDevices[selectedDevice];
 
 	// Store properties (including limits), features and memory properties of the phyiscal device (so that examples can check against them)
 	deviceProperties = physicalDevice.getProperties();
@@ -901,12 +882,12 @@ void VulkanExampleBase::initVulkan()
 	vulkanDevice = new vks::VulkanDevice(physicalDevice);
 	vk::Result res = vulkanDevice->createLogicalDevice(enabledFeatures, enabledExtensions);
 	if (res != vk::Result::eSuccess) {
-		vks::tools::exitFatal("Could not create Vulkan device: \n" + vks::tools::errorString(res), "Fatal error");
+		vks::tools::exitFatal("Could not create Vulkan device: \n" + vk::to_string(res), "Fatal error");
 	}
 	device = vulkanDevice->logicalDevice;
 
 	// Get a graphics queue from the device
-	queue = device.getQueue(vulkanDevice->queueFamilyIndices.graphics);
+	queue = device.getQueue(vulkanDevice->queueFamilyIndices.graphics, 0);
 
 	// Find a suitable depth format
 	vk::Bool32 validDepthFormat = vks::tools::getSupportedDepthFormat(physicalDevice, &depthFormat);
@@ -1938,31 +1919,25 @@ void VulkanExampleBase::createCommandPool()
 void VulkanExampleBase::setupDepthStencil()
 {
 	vk::ImageCreateInfo image = {};
-
-	image.pNext = NULL;
 	image.imageType = vk::ImageType::e2D;
 	image.format = depthFormat;
-	image.extent = { width, height, 1 };
+	image.extent = vk::Extent3D{ width, height, 1 };
 	image.mipLevels = 1;
 	image.arrayLayers = 1;
 	image.samples = vk::SampleCountFlagBits::e1;
 	image.tiling = vk::ImageTiling::eOptimal;
 	image.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc;
-	image.flags = 0;
+	//image.flags = 0;
 
 	vk::MemoryAllocateInfo mem_alloc = {};
-
-	mem_alloc.pNext = NULL;
 	mem_alloc.allocationSize = 0;
 	mem_alloc.memoryTypeIndex = 0;
 
 	vk::ImageViewCreateInfo depthStencilView = {};
-
-	depthStencilView.pNext = NULL;
 	depthStencilView.viewType = vk::ImageViewType::e2D;
 	depthStencilView.format = depthFormat;
-	depthStencilView.flags = 0;
-	depthStencilView.subresourceRange = {};
+	//depthStencilView.flags = 0;
+	//depthStencilView.subresourceRange = {};
 	depthStencilView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 	depthStencilView.subresourceRange.baseMipLevel = 0;
 	depthStencilView.subresourceRange.levelCount = 1;
@@ -1975,7 +1950,7 @@ void VulkanExampleBase::setupDepthStencil()
 	memReqs = device.getImageMemoryRequirements(depthStencil.image);
 	mem_alloc.allocationSize = memReqs.size;
 	mem_alloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-	&depthStencil.mem = device.allocateMemory(mem_alloc);
+	depthStencil.mem = device.allocateMemory(mem_alloc);
 	device.bindImageMemory(depthStencil.image, depthStencil.mem, 0);
 
 	depthStencilView.image = depthStencil.image;
@@ -1990,8 +1965,6 @@ void VulkanExampleBase::setupFrameBuffer()
 	attachments[1] = depthStencil.view;
 
 	vk::FramebufferCreateInfo frameBufferCreateInfo = {};
-
-	frameBufferCreateInfo.pNext = NULL;
 	frameBufferCreateInfo.renderPass = renderPass;
 	frameBufferCreateInfo.attachmentCount = 2;
 	frameBufferCreateInfo.pAttachments = attachments;

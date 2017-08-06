@@ -81,11 +81,10 @@ namespace DebugMarker
 		if (active)
 		{
 			vk::DebugMarkerObjectNameInfoEXT nameInfo = {};
-
-			nameInfo.objectType = objectType;
+			/*nameInfo.objectType = objectType;
 			nameInfo.object = object;
-			nameInfo.pObjectName = name;
-			vkDebugMarkerSetObjectName(device, &nameInfo);
+			nameInfo.pObjectName = name;*/
+			nameInfo = device.debugMarkerSetObjectNameEXT();
 		}
 	}
 
@@ -96,13 +95,12 @@ namespace DebugMarker
 		if (active)
 		{
 			vk::DebugMarkerObjectTagInfoEXT tagInfo = {};
-
-			tagInfo.objectType = objectType;
+			/*tagInfo.objectType = objectType;
 			tagInfo.object = object;
 			tagInfo.tagName = name;
 			tagInfo.tagSize = tagSize;
-			tagInfo.pTag = tag;
-			vkDebugMarkerSetObjectTag(device, &tagInfo);
+			tagInfo.pTag = tag;*/
+			tagInfo = device.debugMarkerSetObjectTagEXT();
 		}
 	}
 
@@ -114,9 +112,9 @@ namespace DebugMarker
 		{
 			vk::DebugMarkerMarkerInfoEXT markerInfo = {};
 
-			memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
-			markerInfo.pMarkerName = pMarkerName;
-			vkCmdDebugMarkerBegin(cmdbuffer, &markerInfo);
+			//memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
+			//markerInfo.pMarkerName = pMarkerName;
+			markerInfo = cmdbuffer.debugMarkerBeginEXT();
 		}
 	}
 
@@ -128,9 +126,9 @@ namespace DebugMarker
 		{
 			vk::DebugMarkerMarkerInfoEXT markerInfo = {};
 
-			memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
-			markerInfo.pMarkerName = markerName.c_str();
-			vkCmdDebugMarkerInsert(cmdbuffer, &markerInfo);
+			//memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
+			//markerInfo.pMarkerName = markerName.c_str();
+			markerInfo = cmdbuffer.debugMarkerInsertEXT();
 		}
 	}
 
@@ -140,7 +138,7 @@ namespace DebugMarker
 		// Check for valid function (may not be present if not runnin in a debugging application)
 		if (vkCmdDebugMarkerEnd)
 		{
-			vkCmdDebugMarkerEnd(cmdBuffer);
+			cmdBuffer.debugMarkerEndEXT();
 		}
 	}
 };
@@ -160,7 +158,7 @@ struct Scene {
 
 	void draw(vk::CommandBuffer cmdBuffer)
 	{
-		vk::DeviceSize offsets[1] = { 0 };
+		std::vector<vk::DeviceSize> offsets = { 0 };
 		cmdBuffer.bindVertexBuffers(VERTEX_BUFFER_BIND_ID, model.vertices.buffer, offsets);
 		cmdBuffer.bindIndexBuffer(model.indices.buffer, 0, vk::IndexType::eUint32);
 		for (uint32_t i = 0; i < model.parts.size(); i++)
@@ -323,13 +321,13 @@ public:
 		memReqs = device.getImageMemoryRequirements(offscreenPass.color.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&offscreenPass.color.mem = device.allocateMemory(memAlloc);
+		offscreenPass.color.mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(offscreenPass.color.image, offscreenPass.color.mem, 0);
 
 		vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 		colorImageView.viewType = vk::ImageViewType::e2D;
 		colorImageView.format = OFFSCREEN_FORMAT;
-		colorImageView.subresourceRange = {};
+		colorImageView.subresourceRange;
 		colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		colorImageView.subresourceRange.baseMipLevel = 0;
 		colorImageView.subresourceRange.levelCount = 1;
@@ -361,14 +359,14 @@ public:
 		memReqs = device.getImageMemoryRequirements(offscreenPass.depth.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&offscreenPass.depth.mem = device.allocateMemory(memAlloc);
+		offscreenPass.depth.mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(offscreenPass.depth.image, offscreenPass.depth.mem, 0);
 
 		vk::ImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
 		depthStencilView.viewType = vk::ImageViewType::e2D;
 		depthStencilView.format = fbDepthFormat;
-		depthStencilView.flags = 0;
-		depthStencilView.subresourceRange = {};
+		//depthStencilView.flags = 0;
+		//depthStencilView.subresourceRange = {};
 		depthStencilView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 		depthStencilView.subresourceRange.baseMipLevel = 0;
 		depthStencilView.subresourceRange.levelCount = 1;
@@ -459,9 +457,9 @@ public:
 		offscreenPass.descriptor.sampler = offscreenPass.sampler;
 
 		// Name some objects for debugging
-		DebugMarker::setObjectName(device, (uint64_t)offscreenPass.color.image, vk::DebugReportObjectTypeEXT::eImage, "Off-screen color framebuffer");
-		DebugMarker::setObjectName(device, (uint64_t)offscreenPass.depth.image, vk::DebugReportObjectTypeEXT::eImage, "Off-screen depth framebuffer");
-		DebugMarker::setObjectName(device, (uint64_t)offscreenPass.sampler, vk::DebugReportObjectTypeEXT::eSampler, "Off-screen framebuffer default sampler");
+		DebugMarker::setObjectName(device, (uint64_t)(VkImage)offscreenPass.color.image, vk::DebugReportObjectTypeEXT::eImage, "Off-screen color framebuffer");
+		DebugMarker::setObjectName(device, (uint64_t)(VkImage)offscreenPass.depth.image, vk::DebugReportObjectTypeEXT::eImage, "Off-screen depth framebuffer");
+		DebugMarker::setObjectName(device, (uint64_t)(VkSampler)offscreenPass.sampler, vk::DebugReportObjectTypeEXT::eSampler, "Off-screen framebuffer default sampler");
 	}
 
 	// Command buffer for rendering color only scene for glow
@@ -481,8 +479,8 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[2];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = offscreenPass.renderPass;
@@ -501,7 +499,7 @@ public:
 		offscreenPass.commandBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
-		vkCmdSetScissor(offscreenPass.commandBuffer, 0, 1, &scissor);
+		offscreenPass.commandBuffer.setScissor(0, scissor);
 
 		offscreenPass.commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
@@ -557,7 +555,7 @@ public:
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -584,7 +582,7 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(wireframe ? width / 2 : width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.scene, nullptr);
 
@@ -605,7 +603,7 @@ public:
 				DebugMarker::beginRegion(drawCmdBuffers[i], "Wireframe draw", glm::vec4(0.53f, 0.78f, 0.91f, 1.0f));
 
 				scissor.offset.x = width / 2;
-				vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+				drawCmdBuffers[i].setScissor(0, scissor);
 
 				drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.wireframe);
 				scene.draw(drawCmdBuffers[i]);
@@ -614,7 +612,7 @@ public:
 
 				scissor.offset.x = 0;
 				scissor.extent.width = width;
-				vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+				drawCmdBuffers[i].setScissor(0, scissor);
 			}
 
 			// Post processing
@@ -719,7 +717,7 @@ public:
 				&offscreenPass.descriptor)
 		};
 
-		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -727,19 +725,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -754,12 +751,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -767,17 +762,14 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				dynamicStateEnables.size(),
-				0);
+				dynamicStateEnables);
 
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
 		pipelineCreateInfo.pRasterizationState = &rasterizationState;
@@ -869,11 +861,11 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Vertex shader uniform buffer block
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffer,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 
 		// Map persistent
 		uniformBuffer.map();

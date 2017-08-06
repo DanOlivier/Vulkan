@@ -147,8 +147,8 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[2];
-		clearValues[0].color = { { 0.1f, 0.1f, 0.1f, 1.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.1f, 0.1f, 0.1f, 1.0f } };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -172,15 +172,15 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width,	height,	0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 
 			// Skybox
 			if (displaySkybox)
 			{
 				drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.skybox, nullptr);
-				drawCmdBuffers[i].bindVertexBuffers(0, 1, models.skybox.vertices.buffer, offsets);
+				drawCmdBuffers[i].bindVertexBuffers(0, models.skybox.vertices.buffer, offsets);
 				drawCmdBuffers[i].bindIndexBuffer(models.skybox.indices.buffer, 0, vk::IndexType::eUint32);
 				drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.skybox);
 				drawCmdBuffers[i].drawIndexed(models.skybox.indexCount, 1, 0, 0, 0);
@@ -188,7 +188,7 @@ public:
 
 			// Objects
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets.object, nullptr);
-			drawCmdBuffers[i].bindVertexBuffers(0, 1, models.object.vertices.buffer, offsets);
+			drawCmdBuffers[i].bindVertexBuffers(0, models.object.vertices.buffer, offsets);
 			drawCmdBuffers[i].bindIndexBuffer(models.object.indices.buffer, 0, vk::IndexType::eUint32);
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.pbr);
 
@@ -256,7 +256,7 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.object, vk::DescriptorType::eCombinedImageSampler, 8, &textures.metallicMap.descriptor),
 			vks::initializers::writeDescriptorSet(descriptorSets.object, vk::DescriptorType::eCombinedImageSampler, 9, &textures.roughnessMap.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Sky box
 		descriptorSets.skybox = device.allocateDescriptorSets(allocInfo)[0];
@@ -265,19 +265,21 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.skybox, vk::DescriptorType::eUniformBuffer, 1, &uniformBuffers.params.descriptor),
 			vks::initializers::writeDescriptorSet(descriptorSets.skybox, vk::DescriptorType::eCombinedImageSampler, 2, &textures.environmentCube.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
 	{
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
-			vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, 0, VK_FALSE);
+			vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState(
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
@@ -379,13 +381,12 @@ public:
 		memReqs = device.getImageMemoryRequirements(textures.lutBrdf.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&textures.lutBrdf.deviceMemory = device.allocateMemory(memAlloc);
+		textures.lutBrdf.deviceMemory = device.allocateMemory(memAlloc);
 		device.bindImageMemory(textures.lutBrdf.image, textures.lutBrdf.deviceMemory, 0);
 		// Image view
 		vk::ImageViewCreateInfo viewCI = vks::initializers::imageViewCreateInfo();
 		viewCI.viewType = vk::ImageViewType::e2D;
 		viewCI.format = format;
-		viewCI.subresourceRange = {};
 		viewCI.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		viewCI.subresourceRange.levelCount = 1;
 		viewCI.subresourceRange.layerCount = 1;
@@ -490,9 +491,11 @@ public:
 		pipelinelayout = device.createPipelineLayout(pipelineLayoutCI);
 
 		// Pipeline
-		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, 0, VK_FALSE);
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -522,7 +525,7 @@ public:
 
 		// Render
 		vk::ClearValue clearValues[1];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderpass;
@@ -537,7 +540,7 @@ public:
 		vk::Viewport viewport = vks::initializers::viewport((float)dim, (float)dim, 0.0f, 1.0f);
 		vk::Rect2D scissor = vks::initializers::rect2D(dim, dim, 0, 0);
 		cmdBuf.setViewport(0, viewport);
-		vkCmdSetScissor(cmdBuf, 0, 1, &scissor);
+		cmdBuf.setScissor(0, scissor);
 		cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		vkCmdDraw(cmdBuf, 3, 1, 0, 0);
 		cmdBuf.endRenderPass();
@@ -587,13 +590,13 @@ public:
 		memReqs = device.getImageMemoryRequirements(textures.irradianceCube.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&textures.irradianceCube.deviceMemory = device.allocateMemory(memAlloc);
+		textures.irradianceCube.deviceMemory = device.allocateMemory(memAlloc);
 		device.bindImageMemory(textures.irradianceCube.image, textures.irradianceCube.deviceMemory, 0);
 		// Image view
 		vk::ImageViewCreateInfo viewCI = vks::initializers::imageViewCreateInfo();
 		viewCI.viewType = vk::ImageViewType::eCube;
 		viewCI.format = format;
-		viewCI.subresourceRange = {};
+		//viewCI.subresourceRange = {};
 		viewCI.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		viewCI.subresourceRange.levelCount = numMips;
 		viewCI.subresourceRange.layerCount = 6;
@@ -693,14 +696,14 @@ public:
 			memReqs = device.getImageMemoryRequirements(offscreen.image);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-			&offscreen.memory = device.allocateMemory(memAlloc);
+			offscreen.memory = device.allocateMemory(memAlloc);
 			device.bindImageMemory(offscreen.image, offscreen.memory, 0);
 
 			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
 			colorImageView.flags = 0;
-			colorImageView.subresourceRange = {};
+			//colorImageView.subresourceRange = {};
 			colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			colorImageView.subresourceRange.baseMipLevel = 0;
 			colorImageView.subresourceRange.levelCount = 1;
@@ -747,7 +750,7 @@ public:
 		vk::DescriptorSetAllocateInfo allocInfo = vks::initializers::descriptorSetAllocateInfo(descriptorpool, &descriptorsetlayout, 1);
 		descriptorset = device.allocateDescriptorSets(allocInfo)[0];
 		vk::WriteDescriptorSet writeDescriptorSet = vks::initializers::writeDescriptorSet(descriptorset, vk::DescriptorType::eCombinedImageSampler, 0, &textures.environmentCube.descriptor);
-		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+		device.updateDescriptorSets(writeDescriptorSet, nullptr);
 
 		// Pipeline layout
 		struct PushBlock {
@@ -767,9 +770,11 @@ public:
 		pipelinelayout = device.createPipelineLayout(pipelineLayoutCI);
 
 		// Pipeline
-		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, 0, VK_FALSE);
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -809,7 +814,7 @@ public:
 		// Render
 
 		vk::ClearValue clearValues[1];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.2f, 0.0f } };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 0.0f } };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		// Reuse render pass from example pass
@@ -841,9 +846,9 @@ public:
 		vk::Rect2D scissor = vks::initializers::rect2D(dim, dim, 0, 0);
 
 		cmdBuf.setViewport(0, viewport);
-		vkCmdSetScissor(cmdBuf, 0, 1, &scissor);
+		cmdBuf.setScissor(0, scissor);
 
-		vk::ImageSubresourceRange subresourceRange = {};
+		vk::ImageSubresourceRange subresourceRange;
 		subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		subresourceRange.baseMipLevel = 0;
 		subresourceRange.levelCount = numMips;
@@ -869,14 +874,14 @@ public:
 				// Update shader push constant block
 				pushBlock.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
 
-				vkCmdPushConstants(cmdBuf, pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushBlock), &pushBlock);
+				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, pushBlock);
 
 				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 				cmdBuf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelinelayout, 0, descriptorset, nullptr);
 
-				vk::DeviceSize offsets[1] = { 0 };
+				std::vector<vk::DeviceSize> offsets = { 0 };
 
-				cmdBuf.bindVertexBuffers(0, 1, models.skybox.vertices.buffer, offsets);
+				cmdBuf.bindVertexBuffers(0, models.skybox.vertices.buffer, offsets);
 				cmdBuf.bindIndexBuffer(models.skybox.indices.buffer, 0, vk::IndexType::eUint32);
 				cmdBuf.drawIndexed(models.skybox.indexCount, 1, 0, 0, 0);
 
@@ -908,14 +913,12 @@ public:
 				copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
 				copyRegion.extent.depth = 1;
 
-				vkCmdCopyImage(
-					cmdBuf,
+				cmdBuf.copyImage(
 					offscreen.image,
 					vk::ImageLayout::eTransferSrcOptimal,
 					textures.irradianceCube.image,
 					vk::ImageLayout::eTransferDstOptimal,
-					1,
-					&copyRegion);
+					copyRegion);
 
 				// Transform framebuffer color attachment back 
 				vks::tools::setImageLayout(
@@ -982,13 +985,13 @@ public:
 		memReqs = device.getImageMemoryRequirements(textures.prefilteredCube.image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&textures.prefilteredCube.deviceMemory = device.allocateMemory(memAlloc);
+		textures.prefilteredCube.deviceMemory = device.allocateMemory(memAlloc);
 		device.bindImageMemory(textures.prefilteredCube.image, textures.prefilteredCube.deviceMemory, 0);
 		// Image view
 		vk::ImageViewCreateInfo viewCI = vks::initializers::imageViewCreateInfo();
 		viewCI.viewType = vk::ImageViewType::eCube;
 		viewCI.format = format;
-		viewCI.subresourceRange = {};
+		//viewCI.subresourceRange = {};
 		viewCI.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		viewCI.subresourceRange.levelCount = numMips;
 		viewCI.subresourceRange.layerCount = 6;
@@ -1088,14 +1091,14 @@ public:
 			memReqs = device.getImageMemoryRequirements(offscreen.image);
 			memAlloc.allocationSize = memReqs.size;
 			memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-			&offscreen.memory = device.allocateMemory(memAlloc);
+			offscreen.memory = device.allocateMemory(memAlloc);
 			device.bindImageMemory(offscreen.image, offscreen.memory, 0);
 
 			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
 			colorImageView.flags = 0;
-			colorImageView.subresourceRange = {};
+			//colorImageView.subresourceRange = {};
 			colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			colorImageView.subresourceRange.baseMipLevel = 0;
 			colorImageView.subresourceRange.levelCount = 1;
@@ -1142,7 +1145,7 @@ public:
 		vk::DescriptorSetAllocateInfo allocInfo =	vks::initializers::descriptorSetAllocateInfo(descriptorpool, &descriptorsetlayout, 1);
 		descriptorset = device.allocateDescriptorSets(allocInfo)[0];
 		vk::WriteDescriptorSet writeDescriptorSet = vks::initializers::writeDescriptorSet(descriptorset, vk::DescriptorType::eCombinedImageSampler, 0, &textures.environmentCube.descriptor);
-		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+		device.updateDescriptorSets(writeDescriptorSet, nullptr);
 
 		// Pipeline layout
 		struct PushBlock {
@@ -1161,9 +1164,11 @@ public:
 		pipelinelayout = device.createPipelineLayout(pipelineLayoutCI);
 
 		// Pipeline
-		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, 0, VK_FALSE);
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -1203,7 +1208,7 @@ public:
 		// Render
 
 		vk::ClearValue clearValues[1];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.2f, 0.0f } };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 0.0f } };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		// Reuse render pass from example pass
@@ -1235,9 +1240,9 @@ public:
 		vk::Rect2D scissor = vks::initializers::rect2D(dim, dim, 0, 0);
 		
 		cmdBuf.setViewport(0, viewport);
-		vkCmdSetScissor(cmdBuf, 0, 1, &scissor);
+		cmdBuf.setScissor(0, scissor);
 
-		vk::ImageSubresourceRange subresourceRange = {};
+		vk::ImageSubresourceRange subresourceRange;
 		subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		subresourceRange.baseMipLevel = 0;
 		subresourceRange.levelCount = numMips;
@@ -1264,14 +1269,14 @@ public:
 				// Update shader push constant block
 				pushBlock.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
 
-				vkCmdPushConstants(cmdBuf, pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushBlock), &pushBlock);
+				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, pushBlock);
 
 				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 				cmdBuf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelinelayout, 0, descriptorset, nullptr);
 
-				vk::DeviceSize offsets[1] = { 0 };
+				std::vector<vk::DeviceSize> offsets = { 0 };
 
-				cmdBuf.bindVertexBuffers(0, 1, models.skybox.vertices.buffer, offsets);
+				cmdBuf.bindVertexBuffers(0, models.skybox.vertices.buffer, offsets);
 				cmdBuf.bindIndexBuffer(models.skybox.indices.buffer, 0, vk::IndexType::eUint32);
 				cmdBuf.drawIndexed(models.skybox.indexCount, 1, 0, 0, 0);
 
@@ -1303,14 +1308,12 @@ public:
 				copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
 				copyRegion.extent.depth = 1;
 
-				vkCmdCopyImage(
-					cmdBuf,
+				cmdBuf.copyImage(
 					offscreen.image,
 					vk::ImageLayout::eTransferSrcOptimal,
 					textures.prefilteredCube.image,
 					vk::ImageLayout::eTransferDstOptimal,
-					1,
-					&copyRegion);
+					copyRegion);
 
 				// Transform framebuffer color attachment back 
 				vks::tools::setImageLayout(
@@ -1351,25 +1354,25 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Objact vertex shader uniform buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.object,
-			sizeof(uboMatrices)));
+			sizeof(uboMatrices));
 
 		// Skybox vertex shader uniform buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.skybox,
-			sizeof(uboMatrices)));
+			sizeof(uboMatrices));
 
 		// Shared parameter uniform buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.params,
-			sizeof(uboParams)));
+			sizeof(uboParams));
 
 		// Map persistent
 		uniformBuffers.object.map();

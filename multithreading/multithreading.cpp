@@ -181,11 +181,11 @@ public:
 				cmdPool,
 				vk::CommandBufferLevel::ePrimary,
 				1);
-		primaryCommandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
+		primaryCommandBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 		// Create a secondary command buffer for rendering the star sphere
 		cmdBufAllocateInfo.level = vk::CommandBufferLevel::eSecondary;
-		secondaryCommandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
+		secondaryCommandBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 		
 		threadData.resize(numThreads);
 
@@ -252,7 +252,7 @@ public:
 		}
 
 		vk::CommandBufferBeginInfo commandBufferBeginInfo = vks::initializers::commandBufferBeginInfo();
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+		commandBufferBeginInfo.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 		commandBufferBeginInfo.pInheritanceInfo = &inheritanceInfo;
 
 		vk::CommandBuffer cmdBuffer = thread->commandBuffer[cmdBufferIndex];
@@ -263,7 +263,7 @@ public:
 		cmdBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+		cmdBuffer.setScissor(0, scissor);
 
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.phong);
 
@@ -288,16 +288,15 @@ public:
 
 		// Update shader push constant block
 		// Contains model view matrix
-		vkCmdPushConstants(
-			cmdBuffer,
+		cmdBuffer.pushConstants(
 			pipelineLayout,
 			vk::ShaderStageFlagBits::eVertex,
 			0,
 			sizeof(ThreadPushConstantBlock),
 			&thread->pushConstBlock[cmdBufferIndex]);
 
-		vk::DeviceSize offsets[1] = { 0 };
-		cmdBuffer.bindVertexBuffers(0, 1, models.ufo.vertices.buffer, offsets);
+		std::vector<vk::DeviceSize> offsets = { 0 };
+		cmdBuffer.bindVertexBuffers(0, models.ufo.vertices.buffer, offsets);
 		cmdBuffer.bindIndexBuffer(models.ufo.indices.buffer, 0, vk::IndexType::eUint32);
 		cmdBuffer.drawIndexed(models.ufo.indexCount, 1, 0, 0, 0);
 
@@ -308,7 +307,7 @@ public:
 	{
 		// Secondary command buffer for the sky sphere
 		vk::CommandBufferBeginInfo commandBufferBeginInfo = vks::initializers::commandBufferBeginInfo();
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+		commandBufferBeginInfo.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 		commandBufferBeginInfo.pInheritanceInfo = &inheritanceInfo;
 
 		secondaryCommandBuffer.begin(commandBufferBeginInfo);
@@ -317,7 +316,7 @@ public:
 		secondaryCommandBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(secondaryCommandBuffer, 0, 1, &scissor);
+		secondaryCommandBuffer.setScissor(0, scissor);
 
 		secondaryCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.starsphere);
 
@@ -328,16 +327,15 @@ public:
 
 		glm::mat4 mvp = matrices.projection * view;
 
-		vkCmdPushConstants(
-			secondaryCommandBuffer,
+		secondaryCommandBuffer.pushConstants(
 			pipelineLayout,
 			vk::ShaderStageFlagBits::eVertex,
 			0,
-			sizeof(mvp),
+			1,
 			&mvp);
 
-		vk::DeviceSize offsets[1] = { 0 };
-		secondaryCommandBuffer.bindVertexBuffers(0, 1, models.skysphere.vertices.buffer, offsets);
+		std::vector<vk::DeviceSize> offsets = { 0 };
+		secondaryCommandBuffer.bindVertexBuffers(0, models.skysphere.vertices.buffer, offsets);
 		secondaryCommandBuffer.bindIndexBuffer(models.skysphere.indices.buffer, 0, vk::IndexType::eUint32);
 		secondaryCommandBuffer.drawIndexed(models.skysphere.indexCount, 1, 0, 0, 0);
 
@@ -353,8 +351,8 @@ public:
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
-		clearValues[0].color = { {0.0f, 0.0f, 0.2f, 0.0f} };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{0.0f, 0.0f, 0.2f, 0.0f} };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -411,7 +409,7 @@ public:
 		}
 
 		// Execute render commands from the secondary command buffer
-		vkCmdExecuteCommands(primaryCommandBuffer, commandBuffers.size(), commandBuffers.data());
+		primaryCommandBuffer.executeCommands(commandBuffers);
 
 		primaryCommandBuffer.endRenderPass();
 
@@ -491,19 +489,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -518,12 +515,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -531,9 +526,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				dynamicStateEnables.size(),
-				0);
+				dynamicStateEnables);
 
 		// Solid rendering pipeline
 		// Load shaders
@@ -545,8 +538,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -595,7 +587,7 @@ public:
 		vk::Result fenceRes;
 		do
 		{
-			fenceRes = vkWaitForFences(device, 1, &renderFence, VK_TRUE, 100000000);
+			fenceRes = device.waitForFences(renderFence, VK_TRUE, 100000000);
 		} while (fenceRes == vk::Result::eTimeout);
 		VK_CHECK_RESULT(fenceRes);
 		device.resetFences(renderFence);
@@ -607,8 +599,8 @@ public:
 	{
 		VulkanExampleBase::prepare();
 		// Create a fence for synchronization
-		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(VK_FLAGS_NONE);
-		vkCreateFence(device, &fenceCreateInfo, NULL, &renderFence);
+		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo();
+		renderFence = device.createFence(fenceCreateInfo);
 		loadMeshes();
 		setupVertexDescriptions();
 		setupPipelineLayout();

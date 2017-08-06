@@ -312,35 +312,35 @@ namespace vks
 				vks::Buffer vertexStaging, indexStaging;
 
 				// Vertex buffer
-				VK_CHECK_RESULT(device->createBuffer(
+				device->createBuffer(
 					vk::BufferUsageFlagBits::eTransferSrc,
 					vk::MemoryPropertyFlagBits::eHostVisible,
 					&vertexStaging,
 					vBufferSize,
-					vertexBuffer.data()));
+					vertexBuffer.data());
 
 				// Index buffer
-				VK_CHECK_RESULT(device->createBuffer(
+				device->createBuffer(
 					vk::BufferUsageFlagBits::eTransferSrc,
 					vk::MemoryPropertyFlagBits::eHostVisible,
 					&indexStaging,
 					iBufferSize,
-					indexBuffer.data()));
+					indexBuffer.data());
 
 				// Create device local target buffers
 				// Vertex buffer
-				VK_CHECK_RESULT(device->createBuffer(
+				device->createBuffer(
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 					vk::MemoryPropertyFlagBits::eDeviceLocal,
 					&vertices,
-					vBufferSize));
+					vBufferSize);
 
 				// Index buffer
-				VK_CHECK_RESULT(device->createBuffer(
+				device->createBuffer(
 					vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 					vk::MemoryPropertyFlagBits::eDeviceLocal,
 					&indices,
-					iBufferSize));
+					iBufferSize);
 
 				// Copy from staging buffers
 				vk::CommandBuffer copyCmd = device->createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);

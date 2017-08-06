@@ -253,7 +253,7 @@ private:
 					&descriptorSetLayouts.material,
 					1);
 
-			materials[i].descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo);
+			materials[i].descriptorSet = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo)[0];
 
 			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 
@@ -266,7 +266,7 @@ private:
 				0,
 				&materials[i].diffuse.descriptor));
 
-			vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets);
+			vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets, nullptr);
 		}
 
 		// Scene descriptor set
@@ -275,7 +275,7 @@ private:
 				descriptorPool,
 				&descriptorSetLayouts.scene,
 				1);
-		descriptorSetScene = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo);
+		descriptorSetScene = vulkanDevice->logicalDevice.allocateDescriptorSets(allocInfo)[0];
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		// Binding 0 : Vertex shader uniform buffer
@@ -285,7 +285,7 @@ private:
 			0,
 			&uniformBuffer.descriptor));
 
-		vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets);
+		vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	// Load all meshes from the scene and generate the buffers for rendering them
@@ -346,32 +346,32 @@ private:
 
 		// Vertex buffer
 		// Staging buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&vertexStaging,
 			static_cast<uint32_t>(vertexDataSize),
-			vertices.data()));
+			vertices.data());
 		// Target
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&vertexBuffer,
-			static_cast<uint32_t>(vertexDataSize)));
+			static_cast<uint32_t>(vertexDataSize));
 
 		// Index buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&indexStaging,
 			static_cast<uint32_t>(indexDataSize),
-			indices.data()));
+			indices.data());
 		// Target
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&indexBuffer,
-			static_cast<uint32_t>(indexDataSize)));
+			static_cast<uint32_t>(indexDataSize));
 
 		// Copy
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
@@ -454,9 +454,9 @@ public:
 		memReqs = vulkanDevice->logicalDevice.getBufferMemoryRequirements(uniformBuffer.buffer);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-		&uniformBuffer.memory = vulkanDevice->logicalDevice.allocateMemory(memAlloc);
+		uniformBuffer.memory = vulkanDevice->logicalDevice.allocateMemory(memAlloc);
 		vulkanDevice->logicalDevice.bindBufferMemory(uniformBuffer.buffer, uniformBuffer.memory, 0);
-		uniformBuffer.mapped = vulkanDevice->logicalDevice.mapMemory(uniformBuffer.memory, 0, sizeof(uniformData), 0);
+		uniformBuffer.mapped = vulkanDevice->logicalDevice.mapMemory(uniformBuffer.memory, 0, sizeof(uniformData), vk::MemoryMapFlags());
 		uniformBuffer.descriptor.offset = 0;
 		uniformBuffer.descriptor.buffer = uniformBuffer.buffer;
 		uniformBuffer.descriptor.range = sizeof(uniformData);
@@ -520,10 +520,10 @@ public:
 	// In a real world application we would do some visibility culling in here
 	void render(vk::CommandBuffer cmdBuffer, bool wireframe)
 	{
-		vk::DeviceSize offsets[1] = { 0 };
+		std::vector<vk::DeviceSize> offsets = { 0 };
 
 		// Bind scene vertex and index buffers
-		cmdBuffer.bindVertexBuffers(0, 1, vertexBuffer.buffer, offsets);
+		cmdBuffer.bindVertexBuffers(0, vertexBuffer.buffer, offsets);
 		cmdBuffer.bindIndexBuffer(indexBuffer.buffer, 0, vk::IndexType::eUint32);
 
 		for (size_t i = 0; i < meshes.size(); i++)
@@ -549,8 +549,7 @@ public:
 			cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, nullptr);
 
 			// Pass material properies via push constants
-			vkCmdPushConstants(
-				cmdBuffer,
+			cmdBuffer.pushConstants(
 				pipelineLayout,
 				vk::ShaderStageFlagBits::eFragment,
 				0,
@@ -619,8 +618,8 @@ public:
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
-		clearValues[0].color = { { 0.25f, 0.25f, 0.25f, 1.0f} };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.25f, 0.25f, 0.25f, 1.0f} };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -643,7 +642,7 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			scene->render(drawCmdBuffers[i], wireframe);
 
@@ -707,19 +706,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eCounterClockwise,
-				0);
+				vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -734,12 +732,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -747,9 +743,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
@@ -760,8 +754,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				scene->pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -781,7 +774,7 @@ public:
 		blendAttachmentState.blendEnable = VK_TRUE;
 		blendAttachmentState.colorBlendOp = vk::BlendOp::eAdd;
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcColor;
-		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOne_MINUS_SRC_COLOR;
+		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcColor;
 
 		scene->pipelines.blending = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 

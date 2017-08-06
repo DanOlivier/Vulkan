@@ -392,7 +392,7 @@ namespace vks
 		*
 		* @return vk::Result::eSuccess if buffer handle and memory have been created and (optionally passed) data has been copied
 		*/
-		vk::Result createBuffer(vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags memoryPropertyFlags, vks::Buffer *buffer, vk::DeviceSize size, void *data = nullptr)
+		void createBuffer(vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags memoryPropertyFlags, vks::Buffer *buffer, vk::DeviceSize size, void *data = nullptr)
 		{
 			buffer->device = logicalDevice;
 

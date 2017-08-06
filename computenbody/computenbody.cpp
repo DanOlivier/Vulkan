@@ -144,8 +144,8 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[2];
-		clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f} };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -171,12 +171,12 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphics.pipeline);
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, 0, graphics.descriptorSet, nullptr);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, compute.storageBuffer.buffer, offsets);
 			vkCmdDraw(drawCmdBuffers[i], numParticles, 1, 0, 0);
 
@@ -205,14 +205,13 @@ public:
 		bufferBarrier.srcQueueFamilyIndex = vulkanDevice->queueFamilyIndices.graphics;			
 		bufferBarrier.dstQueueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;			
 
-		vkCmdPipelineBarrier(
-			compute.commandBuffer,
+		compute.commandBuffer.pipelineBarrier(
 			vk::PipelineStageFlagBits::eVertexShader,
 			vk::PipelineStageFlagBits::eComputeShader,
-			VK_FLAGS_NONE,
-			0, nullptr,
-			1, &bufferBarrier,
-			0, nullptr);
+			vk::DependencyFlags(),
+			nullptr,
+			bufferBarrier,
+			nullptr);
 
 		compute.commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, compute.pipelineCalculate);
 		compute.commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0, compute.descriptorSet, nullptr);
@@ -230,14 +229,13 @@ public:
 		bufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; 
 		bufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-		vkCmdPipelineBarrier(
-			compute.commandBuffer,
+		compute.commandBuffer.pipelineBarrier(
 			vk::PipelineStageFlagBits::eComputeShader,
 			vk::PipelineStageFlagBits::eComputeShader,
-			VK_FLAGS_NONE,
-			0, nullptr,
-			1, &bufferBarrier,
-			0, nullptr);
+			vk::DependencyFlags(),
+			nullptr,
+			bufferBarrier,
+			nullptr);
 
 		// Second pass: Integrate particles
 		// -------------------------------------------------------------------------------------------------------
@@ -254,14 +252,13 @@ public:
 		bufferBarrier.srcQueueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;
 		bufferBarrier.dstQueueFamilyIndex = vulkanDevice->queueFamilyIndices.graphics;
 
-		vkCmdPipelineBarrier(
-			compute.commandBuffer,
+		compute.commandBuffer.pipelineBarrier(
 			vk::PipelineStageFlagBits::eComputeShader,
 			vk::PipelineStageFlagBits::eVertexShader,
-			VK_FLAGS_NONE,
-			0, nullptr,
-			1, &bufferBarrier,
-			0, nullptr);
+			vk::DependencyFlags(),
+			nullptr,
+			bufferBarrier,
+			nullptr);
 
 		vkEndCommandBuffer(compute.commandBuffer);
 	}
@@ -450,7 +447,7 @@ public:
 			vks::initializers::writeDescriptorSet(graphics.descriptorSet, vk::DescriptorType::eCombinedImageSampler, 1, &textures.gradient.descriptor),
 			vks::initializers::writeDescriptorSet(graphics.descriptorSet, vk::DescriptorType::eUniformBuffer, 2, &graphics.uniformBuffer.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -458,19 +455,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::ePointList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eNone,
-				vk::FrontFace::eCounterClockwise,
-				0);
+				vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -485,12 +481,11 @@ public:
 				vk::CompareOp::eAlways);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
 			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+				vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -498,9 +493,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		// Rendering pipeline
 		// Load shaders
@@ -512,8 +505,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				graphics.pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -528,7 +520,7 @@ public:
 		pipelineCreateInfo.renderPass = renderPass;
 
 		// Additive blending
-		blendAttachmentState.colorWriteMask = 0xF;
+		blendAttachmentState.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 		blendAttachmentState.blendEnable = VK_TRUE;
 		blendAttachmentState.colorBlendOp = vk::BlendOp::eAdd;
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eOne;
@@ -547,11 +539,9 @@ public:
 		// Depending on the implementation this may result in different queue family indices for graphics and computes,
 		// requiring proper synchronization (see the memory barriers in buildComputeCommandBuffer)
 		//vk::DeviceQueueCreateInfo queueCreateInfo = {};
-
-		//queueCreateInfo.pNext = NULL;
 		//queueCreateInfo.queueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;
 		//queueCreateInfo.queueCount = 1;
-		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute);
+		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute, 0);
 
 		// Create compute pipeline
 		// Compute pipelines are created separate from graphics pipelines even if they use the same queue (family index)
@@ -574,14 +564,14 @@ public:
 				setLayoutBindings.data(),
 				static_cast<uint32_t>(setLayoutBindings.size()));
 
-		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device,	&descriptorLayout, nullptr,	&compute.descriptorSetLayout));
+		compute.descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(
 				&compute.descriptorSetLayout,
 				1);
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr,	&compute.pipelineLayout));
+		compute.pipelineLayout = device.vkCreatePipelineLayout(pPipelineLayoutCreateInfo);
 
 		vk::DescriptorSetAllocateInfo allocInfo =
 			vks::initializers::descriptorSetAllocateInfo(
@@ -607,10 +597,10 @@ public:
 				&compute.uniformBuffer.descriptor)
 		};
 
-		device.updateDescriptorSets(computeWriteDescriptorSets);
+		device.updateDescriptorSets(computeWriteDescriptorSets, nullptr);
 
 		// Create pipelines
-		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout, 0);
+		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout);
 
 		// 1st pass
 		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computenbody/particle_calculate.comp.spv", vk::ShaderStageFlagBits::eCompute);
@@ -639,11 +629,11 @@ public:
 			vks::initializers::specializationInfo(static_cast<uint32_t>(specializationMapEntries.size()), specializationMapEntries.data(), sizeof(specializationData), &specializationData);
 		computePipelineCreateInfo.stage.pSpecializationInfo = &specializationInfo;
 
-		compute.pipelineCalculate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo);
+		compute.pipelineCalculate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo)[0];
 
 		// 2nd pass
 		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computenbody/particle_integrate.comp.spv", vk::ShaderStageFlagBits::eCompute);
-		compute.pipelineIntegrate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo);
+		compute.pipelineIntegrate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo)[0];
 
 		// Separate command pool as queue family for compute may be different than graphics
 		vk::CommandPoolCreateInfo cmdPoolInfo = {};
@@ -659,10 +649,10 @@ public:
 				vk::CommandBufferLevel::ePrimary,
 				1);	
 
-		compute.commandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
+		compute.commandBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 		// Fence for compute CB sync
-		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
 		compute.fence = device.createFence(fenceCreateInfo);
 
 		// Build a single command buffer containing the compute dispatch commands
@@ -723,7 +713,7 @@ public:
 		VulkanExampleBase::submitFrame();
 
 		// Submit compute commands
-		vkWaitForFences(device, 1, &compute.fence, VK_TRUE, UINT64_MAX);
+		device.waitForFences(compute.fence, VK_TRUE, UINT64_MAX);
 		device.resetFences(compute.fence);
 
 		vk::SubmitInfo computeSubmitInfo = vks::initializers::submitInfo();

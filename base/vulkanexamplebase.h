@@ -148,7 +148,7 @@ public:
 		bool vsync = false;
 	} settings;
 
-	vk::ClearColorValue defaultClearColor = { { 0.025f, 0.025f, 0.025f, 1.0f } };
+	vk::ClearColorValue defaultClearColor = std::array<float,4>{ 0.025f, 0.025f, 0.025f, 1.0f };
 
 	float zoom = 0;
 

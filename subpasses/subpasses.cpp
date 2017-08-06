@@ -183,7 +183,7 @@ public:
 	// Create a frame buffer attachment
 	void createAttachment(vk::Format format, vk::ImageUsageFlags usage, FrameBufferAttachment *attachment)
 	{
-		vk::ImageAspectFlags aspectMask = 0;
+		vk::ImageAspectFlags aspectMask;
 		//vk::ImageLayout imageLayout;
 
 		attachment->format = format;
@@ -199,7 +199,7 @@ public:
 			//imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 		}
 
-		assert(aspectMask > 0);
+		//assert(aspectMask > 0);
 
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
@@ -227,7 +227,7 @@ public:
 		vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
 		imageView.viewType = vk::ImageViewType::e2D;
 		imageView.format = format;
-		imageView.subresourceRange = {};
+		//imageView.subresourceRange = {};
 		imageView.subresourceRange.aspectMask = aspectMask;
 		imageView.subresourceRange.baseMipLevel = 0;
 		imageView.subresourceRange.levelCount = 1;
@@ -252,8 +252,6 @@ public:
 		vk::ImageView attachments[5];
 
 		vk::FramebufferCreateInfo frameBufferCreateInfo = {};
-
-		frameBufferCreateInfo.pNext = NULL;
 		frameBufferCreateInfo.renderPass = renderPass;
 		frameBufferCreateInfo.attachmentCount = 5;
 		frameBufferCreateInfo.pAttachments = attachments;
@@ -433,11 +431,11 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[5];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[3].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[4].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[2].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[3].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[4].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -464,9 +462,9 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
 
@@ -478,7 +476,7 @@ public:
 			// Second sub pass
 			// This subpass will use the G-Buffer components that have been filled in the first subpass as input attachment for the final compositing
 
-			vkCmdNextSubpass(drawCmdBuffers[i], vk::SubpassContents::eInline);
+			drawCmdBuffers[i].nextSubpass(vk::SubpassContents::eInline);
 
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.composition);
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.composition, 0, descriptorSets.composition, nullptr);
@@ -486,7 +484,7 @@ public:
 
 			// Third subpass
 			// Render transparent geometry using a forward pass that compares against depth generted during G-Buffer fill
-			vkCmdNextSubpass(drawCmdBuffers[i], vk::SubpassContents::eInline);
+			drawCmdBuffers[i].nextSubpass(vk::SubpassContents::eInline);
 
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.transparent);
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.transparent, 0, descriptorSets.transparent, nullptr);
@@ -630,7 +628,7 @@ public:
 				0,
 				&uniformBuffers.GBuffer.descriptor)
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -638,19 +636,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -665,12 +662,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -678,9 +673,7 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		// Final fullscreen pass pipeline
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
@@ -688,8 +681,7 @@ public:
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayouts.offscreen,
-				renderPass,
-				0);
+				renderPass);
 
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -703,12 +695,10 @@ public:
 		pipelineCreateInfo.pStages = shaderStages.data();
 		pipelineCreateInfo.subpass = 0;
 
-		std::array<vk::PipelineColorBlendAttachmentState, 4> blendAttachmentStates = {
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE)
-		};
+		vk::PipelineColorBlendAttachmentState def = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
+		std::array<vk::PipelineColorBlendAttachmentState, 4> blendAttachmentStates = { def, def, def, def };
 
 		colorBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());
 		colorBlendState.pAttachments = blendAttachmentStates.data();
@@ -770,19 +760,19 @@ public:
 		// Image descriptors for the offscreen color attachments
 		vk::DescriptorImageInfo texDescriptorPosition =
 			vks::initializers::descriptorImageInfo(
-				VK_NULL_HANDLE,
+				nullptr,
 				attachments.position.view,
 				vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		vk::DescriptorImageInfo texDescriptorNormal =
 			vks::initializers::descriptorImageInfo(
-				VK_NULL_HANDLE,
+				nullptr,
 				attachments.normal.view,
 				vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		vk::DescriptorImageInfo texDescriptorAlbedo =
 			vks::initializers::descriptorImageInfo(
-				VK_NULL_HANDLE,
+				nullptr,
 				attachments.albedo.view,
 				vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -813,17 +803,19 @@ public:
 				&uniformBuffers.lights.descriptor),
 		};
 
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Pipeline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
-			vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, 0, VK_FALSE);
+			vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
-			vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise, 0);
+			vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState(
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(1,	&blendAttachmentState);
@@ -832,14 +824,14 @@ public:
 			vks::initializers::pipelineDepthStencilStateCreateInfo(VK_TRUE, VK_TRUE, vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1, 0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {	vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 		vk::PipelineDynamicStateCreateInfo dynamicState =
-			vks::initializers::pipelineDynamicStateCreateInfo(dynamicStateEnables.data(), static_cast<uint32_t>(dynamicStateEnables.size()), 0);
+			vks::initializers::pipelineDynamicStateCreateInfo(dynamicStateEnables);
 
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 		
@@ -863,7 +855,7 @@ public:
 		shaderStages[1].pSpecializationInfo = &specializationInfo;
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
-			vks::initializers::pipelineCreateInfo(pipelineLayouts.composition, renderPass, 0);
+			vks::initializers::pipelineCreateInfo(pipelineLayouts.composition, renderPass);
 
 		vk::PipelineVertexInputStateCreateInfo emptyInputState{};
 
@@ -910,12 +902,12 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.transparent, vk::DescriptorType::eInputAttachment, 1, &texDescriptorPosition),
 			vks::initializers::writeDescriptorSet(descriptorSets.transparent, vk::DescriptorType::eCombinedImageSampler, 2, &textures.glass.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Enable blending
 		blendAttachmentState.blendEnable = VK_TRUE;
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
-		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOne_MINUS_SRC_ALPHA;
+		blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
 		blendAttachmentState.colorBlendOp = vk::BlendOp::eAdd;
 		blendAttachmentState.srcAlphaBlendFactor = vk::BlendFactor::eOne;
 		blendAttachmentState.dstAlphaBlendFactor = vk::BlendFactor::eZero;

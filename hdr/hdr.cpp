@@ -193,8 +193,8 @@ public:
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };;
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };;
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -205,7 +205,7 @@ public:
 
 		vk::Viewport viewport;
 		vk::Rect2D scissor;
-		//vk::DeviceSize offsets[1] = { 0 };
+		//std::vector<vk::DeviceSize> offsets = { 0 };
 
 		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
@@ -225,7 +225,7 @@ public:
 			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			drawCmdBuffers[i].setViewport(0, viewport);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.bloomFilter, 0, descriptorSets.bloomFilter, nullptr);
 
@@ -247,7 +247,7 @@ public:
 			drawCmdBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			drawCmdBuffers[i].setViewport(0, viewport);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.composition, 0, descriptorSets.composition, nullptr);
 
@@ -275,12 +275,12 @@ public:
 
 		attachment->format = format;
 
-		if (usage & vk::ImageUsageFlagBits::eColorAttachment)
+		if (!!(usage & vk::ImageUsageFlagBits::eColorAttachment))
 		{
 			aspectMask = vk::ImageAspectFlagBits::eColor;
 			//imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
 		}
-		if (usage & vk::ImageUsageFlagBits::eDepthStencilAttachment)
+		if (!!(usage & vk::ImageUsageFlagBits::eDepthStencilAttachment))
 		{
 			aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 			//imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
@@ -307,13 +307,13 @@ public:
 		memReqs = device.getImageMemoryRequirements(attachment->image);
 		memAlloc.allocationSize = memReqs.size;
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-		&attachment->mem = device.allocateMemory(memAlloc);
+		attachment->mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(attachment->image, attachment->mem, 0);
 
 		vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
 		imageView.viewType = vk::ImageViewType::e2D;
 		imageView.format = format;
-		imageView.subresourceRange = {};
+		//imageView.subresourceRange = {};
 		imageView.subresourceRange.aspectMask = aspectMask;
 		imageView.subresourceRange.baseMipLevel = 0;
 		imageView.subresourceRange.levelCount = 1;
@@ -416,8 +416,6 @@ public:
 			attachments[2] = offscreen.depth.view;
 
 			vk::FramebufferCreateInfo fbufCreateInfo = {};
-
-			fbufCreateInfo.pNext = NULL;
 			fbufCreateInfo.renderPass = offscreen.renderPass;
 			fbufCreateInfo.pAttachments = attachments.data();
 			fbufCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -507,8 +505,6 @@ public:
 			attachments[0] = filterPass.color[0].view;
 
 			vk::FramebufferCreateInfo fbufCreateInfo = {};
-
-			fbufCreateInfo.pNext = NULL;
 			fbufCreateInfo.renderPass = filterPass.renderPass;
 			fbufCreateInfo.pAttachments = attachments.data();
 			fbufCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -553,9 +549,9 @@ public:
 
 		// Clear values for all attachments written in the fragment sahder
 		std::array<vk::ClearValue, 3> clearValues;
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[2].depthStencil = { 1.0f, 0 };
+		clearValues[2].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = offscreen.renderPass;
@@ -573,15 +569,15 @@ public:
 		offscreen.cmdBuffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor = vks::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
-		vkCmdSetScissor(offscreen.cmdBuffer, 0, 1, &scissor);
+		offscreen.cmdBuffer.setScissor(0, scissor);
 
-		vk::DeviceSize offsets[1] = { 0 };
+		std::vector<vk::DeviceSize> offsets = { 0 };
 
 		// Skybox
 		if (displaySkybox)
 		{
 			offscreen.cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.models, 0, descriptorSets.skybox, nullptr);
-			offscreen.cmdBuffer.bindVertexBuffers(0, 1, models.skybox.vertices.buffer, offsets);
+			offscreen.cmdBuffer.bindVertexBuffers(0, models.skybox.vertices.buffer, offsets);
 			offscreen.cmdBuffer.bindIndexBuffer(models.skybox.indices.buffer, 0, vk::IndexType::eUint32);
 			offscreen.cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.skybox);
 			offscreen.cmdBuffer.drawIndexed(models.skybox.indexCount, 1, 0, 0, 0);
@@ -589,7 +585,7 @@ public:
 
 		// 3D object
 		offscreen.cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.models, 0, descriptorSets.object, nullptr);
-		offscreen.cmdBuffer.bindVertexBuffers(0, 1, models.objects[models.objectIndex].vertices.buffer, offsets);
+		offscreen.cmdBuffer.bindVertexBuffers(0, models.objects[models.objectIndex].vertices.buffer, offsets);
 		offscreen.cmdBuffer.bindIndexBuffer(models.objects[models.objectIndex].indices.buffer, 0, vk::IndexType::eUint32);
 		offscreen.cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.reflect);
 		offscreen.cmdBuffer.drawIndexed(models.objects[models.objectIndex].indexCount, 1, 0, 0, 0);
@@ -686,7 +682,7 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.object, vk::DescriptorType::eCombinedImageSampler, 1, &textures.envmap.descriptor),
 			vks::initializers::writeDescriptorSet(descriptorSets.object, vk::DescriptorType::eUniformBuffer, 2, &uniformBuffers.params.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Sky box descriptor set
 		descriptorSets.skybox = device.allocateDescriptorSets(allocInfo)[0];
@@ -696,7 +692,7 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.skybox, vk::DescriptorType::eCombinedImageSampler, 1, &textures.envmap.descriptor),
 			vks::initializers::writeDescriptorSet(descriptorSets.skybox, vk::DescriptorType::eUniformBuffer, 2, &uniformBuffers.params.descriptor),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Bloom filter 
 		allocInfo = vks::initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayouts.bloomFilter, 1);
@@ -711,7 +707,7 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.bloomFilter, vk::DescriptorType::eCombinedImageSampler, 0, &colorDescriptors[0]),
 			vks::initializers::writeDescriptorSet(descriptorSets.bloomFilter, vk::DescriptorType::eCombinedImageSampler, 1, &colorDescriptors[1]),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Composition descriptor set
 		allocInfo =	vks::initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayouts.composition, 1);
@@ -726,7 +722,7 @@ public:
 			vks::initializers::writeDescriptorSet(descriptorSets.composition, vk::DescriptorType::eCombinedImageSampler, 0, &colorDescriptors[0]),
 			vks::initializers::writeDescriptorSet(descriptorSets.composition, vk::DescriptorType::eCombinedImageSampler, 1, &colorDescriptors[1]),
 		};
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -734,19 +730,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eCounterClockwise,
-				0);
+				vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -761,12 +756,10 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
-			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+			vks::initializers::pipelineMultisampleStateCreateInfo(vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -774,15 +767,12 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayouts.models,
-				renderPass,
-				0);
+				renderPass);
 
 		std::vector<vk::PipelineColorBlendAttachmentState> blendAttachmentStates = {
 			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
@@ -905,18 +895,18 @@ public:
 	void prepareUniformBuffers()
 	{
 		// Matrices vertex shader uniform buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.matrices,
-			sizeof(uboVS)));
+			sizeof(uboVS));
 
 		// Params
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformBuffers.params,
-			sizeof(uboParams)));
+			sizeof(uboParams));
 
 		// Map persistent
 		uniformBuffers.matrices.map();

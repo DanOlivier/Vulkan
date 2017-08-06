@@ -163,8 +163,8 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[2];
-		clearValues[0].color = { { 0.18f, 0.27f, 0.5f, 0.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.18f, 0.27f, 0.5f, 0.0f } };
+		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;
@@ -186,15 +186,15 @@ public:
 			drawCmdBuffers[i].setViewport(0, viewport);
 
 			vk::Rect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
+			drawCmdBuffers[i].setScissor(0, scissor);
 
-			vk::DeviceSize offsets[1] = { 0 };
+			std::vector<vk::DeviceSize> offsets = { 0 };
 			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 
 			// Mesh containing the LODs
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.plants);
 			drawCmdBuffers[i].bindVertexBuffers(VERTEX_BUFFER_BIND_ID, models.lodObject.vertices.buffer, offsets);
-			drawCmdBuffers[i].bindVertexBuffers(INSTANCE_BUFFER_BIND_ID, 1, instanceBuffer.buffer, offsets);
+			drawCmdBuffers[i].bindVertexBuffers(INSTANCE_BUFFER_BIND_ID, instanceBuffer.buffer, offsets);
 			
 			drawCmdBuffers[i].bindIndexBuffer(models.lodObject.indices.buffer, 0, vk::IndexType::eUint32);
 
@@ -298,14 +298,13 @@ public:
 		bufferBarrier.srcQueueFamilyIndex = vulkanDevice->queueFamilyIndices.graphics;			
 		bufferBarrier.dstQueueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;			
 
-		vkCmdPipelineBarrier(
-			compute.commandBuffer,
+		compute.commandBuffer.pipelineBarrier(
 			vk::PipelineStageFlagBits::eDrawIndirect,
 			vk::PipelineStageFlagBits::eComputeShader,
-			VK_FLAGS_NONE,
-			0, nullptr,
-			1, &bufferBarrier,
-			0, nullptr);
+			vk::DependencyFlags(),
+			nullptr,
+			bufferBarrier,
+			nullptr);
 
 		compute.commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, compute.pipeline);
 		compute.commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0, compute.descriptorSet, nullptr);
@@ -323,14 +322,13 @@ public:
 		bufferBarrier.srcQueueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;
 		bufferBarrier.dstQueueFamilyIndex = vulkanDevice->queueFamilyIndices.graphics;
 
-		vkCmdPipelineBarrier(
-			compute.commandBuffer,
+		compute.commandBuffer.pipelineBarrier(
 			vk::PipelineStageFlagBits::eComputeShader,
 			vk::PipelineStageFlagBits::eDrawIndirect,
-			VK_FLAGS_NONE,
-			0, nullptr,
-			1, &bufferBarrier,
-			0, nullptr);
+			vk::DependencyFlags(),
+			nullptr,
+			bufferBarrier,
+			nullptr);
 
 		// todo: barrier for indirect stats buffer?
 
@@ -401,7 +399,7 @@ public:
 				&uniformData.scene.descriptor),
 		};
 
-		device.updateDescriptorSets(writeDescriptorSets);
+		device.updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void preparePipelines()
@@ -409,19 +407,18 @@ public:
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState =
 			vks::initializers::pipelineInputAssemblyStateCreateInfo(
 				vk::PrimitiveTopology::eTriangleList,
-				0,
+				vk::PipelineInputAssemblyStateCreateFlags(),
 				VK_FALSE);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState =
 			vks::initializers::pipelineRasterizationStateCreateInfo(
 				vk::PolygonMode::eFill,
 				vk::CullModeFlagBits::eBack,
-				vk::FrontFace::eClockwise,
-				0);
+				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
 			vks::initializers::pipelineColorBlendAttachmentState(
-				0xf,
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 				VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
@@ -436,12 +433,11 @@ public:
 				vk::CompareOp::eLessOrEqual);
 
 		vk::PipelineViewportStateCreateInfo viewportState =
-			vks::initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+			vks::initializers::pipelineViewportStateCreateInfo(1, 1);
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState =
 			vks::initializers::pipelineMultisampleStateCreateInfo(
-				vk::SampleCountFlagBits::e1,
-				0);
+				vk::SampleCountFlagBits::e1);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
@@ -449,15 +445,12 @@ public:
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicState =
 			vks::initializers::pipelineDynamicStateCreateInfo(
-				dynamicStateEnables.data(),
-				static_cast<uint32_t>(dynamicStateEnables.size()),
-				0);
+				dynamicStateEnables);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
 				pipelineLayout,
-				renderPass,
-				0);
+				renderPass);
 
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
@@ -504,28 +497,28 @@ public:
 
 		indirectStats.drawCount = static_cast<uint32_t>(indirectCommands.size());
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&stagingBuffer,
 			indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand),
-			indirectCommands.data()));
+			indirectCommands.data());
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eIndirectBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst,
 			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&indirectCommandsBuffer,
-			stagingBuffer.size));
+			stagingBuffer.size);
 
 		vulkanDevice->copyBuffer(&stagingBuffer, &indirectCommandsBuffer, queue);
 
 		stagingBuffer.destroy();
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&indirectDrawCountBuffer,
-			sizeof(indirectStats)));
+			sizeof(indirectStats));
 
 		// Map for host access
 		indirectDrawCountBuffer.map();
@@ -544,18 +537,18 @@ public:
 			}
 		}
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&stagingBuffer,
 			instanceData.size() * sizeof(InstanceData),
-			instanceData.data()));
+			instanceData.data());
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst,
 			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&instanceBuffer,
-			stagingBuffer.size));
+			stagingBuffer.size);
 
 		vulkanDevice->copyBuffer(&stagingBuffer, &instanceBuffer, queue);
 
@@ -581,29 +574,29 @@ public:
 			LODLevels.push_back(lod);
 		}
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&stagingBuffer,
 			LODLevels.size() * sizeof(LOD),
-			LODLevels.data()));
+			LODLevels.data());
 
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst,
 			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			&compute.lodLevelsBuffers,
-			stagingBuffer.size));
+			stagingBuffer.size);
 
 		vulkanDevice->copyBuffer(&stagingBuffer, &compute.lodLevelsBuffers, queue);
 
 		stagingBuffer.destroy();
 
 		// Scene uniform buffer
-		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+		vulkanDevice->createBuffer(
 			vk::BufferUsageFlagBits::eUniformBuffer,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			&uniformData.scene,
-			sizeof(uboScene)));
+			sizeof(uboScene));
 
 		uniformData.scene.map();
 
@@ -614,11 +607,9 @@ public:
 	{
 		// Create a compute capable device queue
 		//vk::DeviceQueueCreateInfo queueCreateInfo = {};
-
-		//queueCreateInfo.pNext = NULL;
 		//queueCreateInfo.queueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;
 		//queueCreateInfo.queueCount = 1;
-		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute);
+		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute, 0);
 
 		// Create compute pipeline
 		// Compute pipelines are created separate from graphics pipelines even if they use the same queue (family index)
@@ -707,10 +698,10 @@ public:
 				&compute.lodLevelsBuffers.descriptor)
 		};
 
-		device.updateDescriptorSets(computeWriteDescriptorSets);
+		device.updateDescriptorSets(computeWriteDescriptorSets, nullptr);
 
 		// Create pipeline		
-		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout, 0);
+		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout);
 		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computecullandlod/cull.comp.spv", vk::ShaderStageFlagBits::eCompute);
 
 		// Use specialization constants to pass max. level of detail (determined by no. of meshes)
@@ -729,7 +720,7 @@ public:
 
 		computePipelineCreateInfo.stage.pSpecializationInfo = &specializationInfo;
 
-		compute.pipeline = device.createComputePipelines(pipelineCache, computePipelineCreateInfo);
+		compute.pipeline = device.createComputePipelines(pipelineCache, computePipelineCreateInfo)[0];
 
 		// Separate command pool as queue family for compute may be different than graphics
 		vk::CommandPoolCreateInfo cmdPoolInfo = {};
@@ -745,10 +736,10 @@ public:
 				vk::CommandBufferLevel::ePrimary,
 				1);
 
-		compute.commandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo);
+		compute.commandBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 		// Fence for compute CB sync
-		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
 		compute.fence = device.createFence(fenceCreateInfo);
 
 		vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
@@ -782,7 +773,7 @@ public:
 		// Submit compute shader for frustum culling
 
 		// Wait for fence to ensure that compute buffer writes have finished
-		vkWaitForFences(device, 1, &compute.fence, VK_TRUE, UINT64_MAX);
+		device.waitForFences(compute.fence, VK_TRUE, UINT64_MAX);
 		device.resetFences(compute.fence);
 
 		vk::SubmitInfo computeSubmitInfo = vks::initializers::submitInfo();

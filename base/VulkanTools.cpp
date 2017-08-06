@@ -12,63 +12,15 @@ namespace vks
 {
 	namespace tools
 	{
-		std::string errorString(vk::Result errorCode)
-		{
-			switch (errorCode)
-			{
-#define STR(r) case VK_ ##r: return #r
-				STR(NOT_READY);
-				STR(TIMEOUT);
-				STR(EVENT_SET);
-				STR(EVENT_RESET);
-				STR(INCOMPLETE);
-				STR(ERROR_OUT_OF_HOST_MEMORY);
-				STR(ERROR_OUT_OF_DEVICE_MEMORY);
-				STR(ERROR_INITIALIZATION_FAILED);
-				STR(ERROR_DEVICE_LOST);
-				STR(ERROR_MEMORY_MAP_FAILED);
-				STR(ERROR_LAYER_NOT_PRESENT);
-				STR(ERROR_EXTENSION_NOT_PRESENT);
-				STR(ERROR_FEATURE_NOT_PRESENT);
-				STR(ERROR_INCOMPATIBLE_DRIVER);
-				STR(ERROR_TOO_MANY_OBJECTS);
-				STR(ERROR_FORMAT_NOT_SUPPORTED);
-				STR(ERROR_SURFACE_LOST_KHR);
-				STR(ERROR_NATIVE_WINDOW_IN_USE_KHR);
-				STR(SUBOPTIMAL_KHR);
-				STR(ERROR_OUT_OF_DATE_KHR);
-				STR(ERROR_INCOMPATIBLE_DISPLAY_KHR);
-				STR(ERROR_VALIDATION_FAILED_EXT);
-				STR(ERROR_INVALID_SHADER_NV);
-#undef STR
-			default:
-				return "UNKNOWN_ERROR";
-			}
-		}
-
-		std::string physicalDeviceTypeString(vk::PhysicalDeviceType type)
-		{
-			switch (type)
-			{
-#define STR(r) case VK_PHYSICAL_DEVICE_TYPE_ ##r: return #r
-				STR(OTHER);
-				STR(INTEGRATED_GPU);
-				STR(DISCRETE_GPU);
-				STR(VIRTUAL_GPU);
-#undef STR
-			default: return "UNKNOWN_DEVICE_TYPE";
-			}
-		}
-
 		vk::Bool32 getSupportedDepthFormat(vk::PhysicalDevice physicalDevice, vk::Format *depthFormat)
 		{
 			// Since all depth formats may be optional, we need to find a suitable depth format to use
 			// Start with the highest precision packed format
 			std::vector<vk::Format> depthFormats = {
-				vk::Format::eD32Sfloat_S8_UINT,
+				vk::Format::eD32SfloatS8Uint,
 				vk::Format::eD32Sfloat,
 				vk::Format::eD24UnormS8Uint,
-				vk::Format::eD16Unorm_S8_UINT,
+				vk::Format::eD16UnormS8Uint,
 				vk::Format::eD16Unorm
 			};
 
@@ -116,7 +68,7 @@ namespace vks
 				// Image layout is undefined (or does not matter)
 				// Only valid as initial layout
 				// No flags required, listed only for completeness
-				imageMemoryBarrier.srcAccessMask = 0;
+				imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits();
 				break;
 
 			case vk::ImageLayout::ePreinitialized:
@@ -191,7 +143,7 @@ namespace vks
 			case vk::ImageLayout::eShaderReadOnlyOptimal:
 				// Image will be read in a shader (sampler, input attachment)
 				// Make sure any writes to the image have been finished
-				if (imageMemoryBarrier.srcAccessMask == 0)
+				if (!imageMemoryBarrier.srcAccessMask)
 				{
 					imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite;
 				}
@@ -203,14 +155,13 @@ namespace vks
 			}
 
 			// Put barrier inside setup command buffer
-			vkCmdPipelineBarrier(
-				cmdbuffer,
+			cmdbuffer.pipelineBarrier(
 				srcStageMask,
 				dstStageMask,
-				0,
-				0, nullptr,
-				0, nullptr,
-				1, &imageMemoryBarrier);
+				vk::DependencyFlags(),
+				nullptr,
+				nullptr,
+				imageMemoryBarrier);
 		}
 
 		// Fixed sub resource on first mip level and layer
@@ -223,7 +174,7 @@ namespace vks
 			vk::PipelineStageFlags srcStageMask,
 			vk::PipelineStageFlags dstStageMask)
 		{
-			vk::ImageSubresourceRange subresourceRange = {};
+			vk::ImageSubresourceRange subresourceRange;
 			subresourceRange.aspectMask = aspectMask;
 			subresourceRange.baseMipLevel = 0;
 			subresourceRange.levelCount = 1;
@@ -250,14 +201,13 @@ namespace vks
 			imageMemoryBarrier.image = image;
 			imageMemoryBarrier.subresourceRange = subresourceRange;
 
-			vkCmdPipelineBarrier(
-				cmdbuffer,
+			cmdbuffer.pipelineBarrier(
 				srcStageMask,
 				dstStageMask,
-				0,
-				0, nullptr,
-				0, nullptr,
-				1, &imageMemoryBarrier);
+				vk::DependencyFlags(),
+				nullptr,
+				nullptr,
+				imageMemoryBarrier);
 		}
 
 		void exitFatal(std::string message, std::string caption)
@@ -306,13 +256,11 @@ namespace vks
 
 			vk::ShaderModule shaderModule;
 			vk::ShaderModuleCreateInfo moduleCreateInfo;
-
-			moduleCreateInfo.pNext = NULL;
 			moduleCreateInfo.codeSize = size;
 			moduleCreateInfo.pCode = (uint32_t*)shaderCode;
 			moduleCreateInfo.flags = 0;
 
-			VK_CHECK_RESULT(vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule));
+			shaderModule = device.createShaderModule(moduleCreateInfo);
 
 			delete[] shaderCode;
 
@@ -339,7 +287,7 @@ namespace vks
 				moduleCreateInfo.codeSize = size;
 				moduleCreateInfo.pCode = (uint32_t*)shaderCode;
 
-				VK_CHECK_RESULT(vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule));
+				shaderModule = device.createShaderModule(moduleCreateInfo);
 
 				delete[] shaderCode;
 
@@ -348,7 +296,7 @@ namespace vks
 			else
 			{
 				std::cerr << "Error: Could not open shader file \"" << fileName << "\"" << std::endl;
-				return VK_NULL_HANDLE;
+				return nullptr;
 			}
 		}
 #endif
@@ -362,19 +310,17 @@ namespace vks
 
 			vk::ShaderModule shaderModule;
 			vk::ShaderModuleCreateInfo moduleCreateInfo;
-
-			moduleCreateInfo.pNext = NULL;
 			moduleCreateInfo.codeSize = 3 * sizeof(uint32_t) + size + 1;
 			moduleCreateInfo.pCode = (uint32_t*)malloc(moduleCreateInfo.codeSize);
-			moduleCreateInfo.flags = 0;
+			//moduleCreateInfo.flags = 0;
 
 			// Magic SPV number
 			((uint32_t *)moduleCreateInfo.pCode)[0] = 0x07230203;
 			((uint32_t *)moduleCreateInfo.pCode)[1] = 0;
-			((uint32_t *)moduleCreateInfo.pCode)[2] = stage;
+			((uint32_t *)moduleCreateInfo.pCode)[2] = (uint32_t)stage;
 			memcpy(((uint32_t *)moduleCreateInfo.pCode + 3), shaderCode, size + 1);
 
-			VK_CHECK_RESULT(vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule));
+			shaderModule = device.createShaderModule(moduleCreateInfo);
 
 			return shaderModule;
 		}
