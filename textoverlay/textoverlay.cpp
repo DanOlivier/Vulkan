@@ -7,15 +7,12 @@
 */
 #include "textoverlay.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <vector>
+#include "vulkanexamplebase.h"
+#include "VulkanModel.hpp"
+#include "VulkanTexture.hpp"
+
 #include <sstream>
 #include <iomanip>
-
-#include "vulkanexamplebase.h"
 
 #define VERTEX_BUFFER_BIND_ID 0
 #define ENABLE_VALIDATION false

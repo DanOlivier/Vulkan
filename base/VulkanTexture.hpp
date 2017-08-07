@@ -8,9 +8,6 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <string>
-#include <fstream>
 #include <vector>
 
 #include "vulkan/vulkan.hpp"
@@ -19,11 +16,6 @@
 
 #include "VulkanTools.h"
 #include "VulkanDevice.hpp"
-#include "VulkanBuffer.hpp"
-
-#if defined(__ANDROID__)
-#include <android/asset_manager.h>
-#endif
 
 namespace vks
 {

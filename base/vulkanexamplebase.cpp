@@ -7,6 +7,12 @@
 */
 
 #include "vulkanexamplebase.h"
+#include "keycodes.hpp"
+
+#include <chrono>
+#include <sstream>
+#include <iomanip>
+#include <sys/stat.h>
 
 std::vector<const char*> VulkanExampleBase::args;
 

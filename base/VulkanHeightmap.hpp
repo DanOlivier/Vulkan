@@ -6,14 +6,6 @@
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
 
-#include <glm/glm.hpp>
-#include <glm/glm.hpp>
-#include <gli/gli.hpp>
-
-#include "vulkan/vulkan.hpp"
-#include "VulkanDevice.hpp"
-#include "VulkanBuffer.hpp"
-
 namespace vks 
 {
 	class HeightMap

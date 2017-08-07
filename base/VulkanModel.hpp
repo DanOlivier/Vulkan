@@ -8,28 +8,18 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <string>
-#include <fstream>
-#include <vector>
-
 #include "vulkan/vulkan.hpp"
 
 #include <assimp/Importer.hpp> 
 #include <assimp/scene.h>     
 #include <assimp/postprocess.h>
-#include <assimp/cimport.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "VulkanDevice.hpp"
-#include "VulkanBuffer.hpp"
-
-#if defined(__ANDROID__)
-#include <android/asset_manager.h>
-#endif
+#include "keycodes.hpp"
 
 namespace vks
 {

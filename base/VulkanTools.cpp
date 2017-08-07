@@ -7,6 +7,11 @@
 */
 
 #include "VulkanTools.h"
+#include "VulkanInitializers.hpp"
+#include "keycodes.hpp"
+
+#include <iostream>
+#include <fstream>
 
 namespace vks
 {

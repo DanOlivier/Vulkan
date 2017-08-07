@@ -9,7 +9,9 @@
 */
 
 #include "VulkanDebug.h"
+
 #include <iostream>
+#include <sstream>
 
 namespace vks
 {

@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "vulkan/vulkan.hpp"
-#include "VulkanTools.h"
 
 namespace vks
 {	

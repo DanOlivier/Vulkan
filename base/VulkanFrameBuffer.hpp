@@ -8,12 +8,7 @@
 
 #pragma once
 
-#include <algorithm>
-#include <iterator>
-#include <vector>
-#include "vulkan/vulkan.hpp"
 #include "VulkanDevice.hpp"
-#include "VulkanTools.h"
 
 namespace vks
 {

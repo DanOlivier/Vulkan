@@ -10,20 +10,13 @@
 
 #pragma once
 
-#include <math.h>
-#include <vector>
+#include "VulkanDevice.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-
-#include "vulkan/vulkan.hpp"
-
-#include "VulkanTools.h"
-#include "VulkanDevice.hpp"
-#include "VulkanBuffer.hpp"
 
 struct Vertex
 {

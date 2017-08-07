@@ -10,12 +10,6 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <string>
-#include <assert.h>
-#include <stdio.h>
-#include <vector>
-
 #include <vulkan/vulkan.hpp>
 #include "VulkanTools.h"
 

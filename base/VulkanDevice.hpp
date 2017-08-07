@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <exception>
-#include <assert.h>
-#include <algorithm>
 #include "vulkan/vulkan.hpp"
-#include "VulkanTools.h"
 #include "VulkanBuffer.hpp"
+#include "VulkanInitializers.hpp"
+
+// Default fence timeout in nanoseconds
+#define DEFAULT_FENCE_TIMEOUT 100000000000
 
 namespace vks
 {	

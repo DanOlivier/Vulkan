@@ -6,23 +6,14 @@
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <vector>
+#include "vulkanexamplebase.h"
+#include "VulkanTexture.hpp"
+#include "VulkanModel.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-
-#include <vulkan/vulkan.hpp>
-#include "vulkanexamplebase.h"
-#include "VulkanBuffer.hpp"
-#include "VulkanTexture.hpp"
-#include "VulkanModel.hpp"
 
 #define VERTEX_BUFFER_BIND_ID 0
 #define ENABLE_VALIDATION false

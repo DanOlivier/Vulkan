@@ -6,11 +6,9 @@
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <vector>
+#include "vulkanexamplebase.h"
+#include "VulkanTexture.hpp"
+#include "keycodes.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -21,11 +19,6 @@
 #include <assimp/Importer.hpp> 
 #include <assimp/scene.h>     
 #include <assimp/postprocess.h>
-#include <assimp/cimport.h>
-
-#include <vulkan/vulkan.hpp>
-#include "vulkanexamplebase.h"
-#include "VulkanTexture.hpp"
 
 #define VERTEX_BUFFER_BIND_ID 0
 #define ENABLE_VALIDATION false
