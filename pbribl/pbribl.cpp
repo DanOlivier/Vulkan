@@ -10,7 +10,7 @@
 
 // For reference see http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanModel.hpp"
 

@@ -14,7 +14,7 @@ todos:
 - Run-time image data upload
 */
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanHeightmap.hpp"
 #include "keycodes.hpp"

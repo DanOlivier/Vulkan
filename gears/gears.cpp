@@ -7,7 +7,7 @@
 */
 
 #include "vulkangear.h"
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 
 #define VERTEX_BUFFER_BIND_ID 0
 #define ENABLE_VALIDATION false

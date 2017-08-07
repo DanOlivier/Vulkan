@@ -19,7 +19,7 @@
 *
 */
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanModel.hpp"
 

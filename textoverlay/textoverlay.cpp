@@ -7,7 +7,7 @@
 */
 #include "textoverlay.hpp"
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 #include "VulkanModel.hpp"
 #include "VulkanTexture.hpp"
 

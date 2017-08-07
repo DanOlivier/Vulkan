@@ -21,6 +21,10 @@
 #include "VulkanDevice.hpp"
 #include "keycodes.hpp"
 
+#if defined(__ANDROID__)
+#include <android/asset_manager.h>
+#endif
+
 namespace vks
 {
 	/** @brief Vertex layout components */

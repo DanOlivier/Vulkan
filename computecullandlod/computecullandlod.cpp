@@ -7,7 +7,7 @@
 *
 */
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 #include "VulkanModel.hpp"
 #include "frustum.hpp"
 

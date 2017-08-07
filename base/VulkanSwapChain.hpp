@@ -116,7 +116,7 @@ public:
 
 		surfaceCreateInfo.display = display;
 		surfaceCreateInfo.surface = window;
-		surface = instance.ceateWaylandSurfaceKHR(surfaceCreateInfo);
+		surface = instance.createWaylandSurfaceKHR(surfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
 		vk::XcbSurfaceCreateInfoKHR surfaceCreateInfo = {};
 

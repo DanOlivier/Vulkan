@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 
 // Wrapper class for the SW VulkanExample instance.
 class MVKExample {

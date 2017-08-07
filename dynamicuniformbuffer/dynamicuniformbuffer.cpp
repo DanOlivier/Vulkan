@@ -16,7 +16,7 @@
 * offset used to pass data from the single uniform buffer to the connected shader binding point.
 */
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 
 #include <random>
 

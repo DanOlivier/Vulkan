@@ -21,7 +21,7 @@
 * Note that this example is just one way of rendering a scene made up of multiple parts in Vulkan.
 */
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 #include "VulkanTexture.hpp"
 #include "keycodes.hpp"
 

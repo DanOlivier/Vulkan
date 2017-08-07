@@ -6,7 +6,7 @@
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
 
-#include "vulkanexamplebase.h"
+#include "VulkanExampleBase.hpp"
 #include "VulkanModel.hpp"
 
 #define VERTEX_BUFFER_BIND_ID 0
@@ -237,7 +237,7 @@ public:
 
 			// Visible pass
 			// Clear color and depth attachments
-			std::vector<vk::ClearAttachment> clearAttachments = {};
+			std::vector<vk::ClearAttachment> clearAttachments(2);
 
 			clearAttachments[0].aspectMask = vk::ImageAspectFlagBits::eColor;
 			clearAttachments[0].clearValue.color = defaultClearColor;
