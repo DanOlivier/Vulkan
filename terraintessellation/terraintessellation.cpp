@@ -660,7 +660,7 @@ public:
 				2),
 		};
 
-		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.terrain = device.createDescriptorSetLayout(descriptorLayout);
 		pipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.terrain, 1);
 		pipelineLayouts.terrain = device.createPipelineLayout(pipelineLayoutCreateInfo);
@@ -680,7 +680,7 @@ public:
 				1),
 		};
 
-		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.skysphere = device.createDescriptorSetLayout(descriptorLayout);
 		pipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.skysphere, 1);
 		pipelineLayouts.skysphere = device.createPipelineLayout(pipelineLayoutCreateInfo);

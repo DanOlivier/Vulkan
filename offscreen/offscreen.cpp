@@ -635,7 +635,7 @@ public:
 		pipelineLayouts.shaded = device.createPipelineLayout(pipelineLayoutInfo);
 
 		// Textured layouts (use all layout bindings)
-		descriptorLayoutInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayoutInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.textured = device.createDescriptorSetLayout(descriptorLayoutInfo);
 
 		pipelineLayoutInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.textured, 1);

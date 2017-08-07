@@ -418,8 +418,7 @@ public:
 
 		vk::DescriptorSetLayoutCreateInfo descriptorLayout =
 			vks::initializers::descriptorSetLayoutCreateInfo(
-				setLayoutBindings.data(),
-				static_cast<uint32_t>(setLayoutBindings.size()));
+				setLayoutBindings);
 
 		graphics.descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
@@ -561,8 +560,7 @@ public:
 
 		vk::DescriptorSetLayoutCreateInfo descriptorLayout =
 			vks::initializers::descriptorSetLayoutCreateInfo(
-				setLayoutBindings.data(),
-				static_cast<uint32_t>(setLayoutBindings.size()));
+				setLayoutBindings);
 
 		compute.descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 

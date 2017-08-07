@@ -630,7 +630,7 @@ public:
 		};
 
 		vk::DescriptorSetLayoutCreateInfo descriptorLayoutInfo = 
-			vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+			vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 
 		descriptorSetLayouts.models = device.createDescriptorSetLayout(descriptorLayoutInfo);
 
@@ -647,7 +647,7 @@ public:
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 1),
 		};
 
-		descriptorLayoutInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayoutInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.bloomFilter = device.createDescriptorSetLayout(descriptorLayoutInfo);
 
 		pipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.bloomFilter, 1);
@@ -659,7 +659,7 @@ public:
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 1),
 		};
 
-		descriptorLayoutInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayoutInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.composition = device.createDescriptorSetLayout(descriptorLayoutInfo);
 
 		pipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.composition, 1);

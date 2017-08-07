@@ -295,8 +295,7 @@ public:
 
 		vk::DescriptorSetLayoutCreateInfo descriptorLayout =
 			vks::initializers::descriptorSetLayoutCreateInfo(
-				setLayoutBindings.data(),
-				static_cast<uint32_t>(setLayoutBindings.size()));
+				setLayoutBindings);
 
 		descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 

@@ -116,7 +116,7 @@ void VulkanExampleBase::createCommandBuffers()
 
 void VulkanExampleBase::destroyCommandBuffers()
 {
-	device.freeCommandBuffers(cmdPool, nullptr);
+	device.freeCommandBuffers(cmdPool, drawCmdBuffers);
 }
 
 vk::CommandBuffer VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel level, bool begin)
@@ -866,7 +866,7 @@ void VulkanExampleBase::initVulkan()
 	}
 #endif
 
-	vk::PhysicalDevice physicalDevice = physicalDevices[selectedDevice];
+	physicalDevice = physicalDevices[selectedDevice];
 
 	// Store properties (including limits), features and memory properties of the phyiscal device (so that examples can check against them)
 	deviceProperties = physicalDevice.getProperties();

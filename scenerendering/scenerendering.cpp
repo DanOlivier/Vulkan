@@ -217,8 +217,7 @@ private:
 			vk::ShaderStageFlagBits::eVertex,
 			0));
 		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(
-				setLayoutBindings.data(),
-				static_cast<uint32_t>(setLayoutBindings.size()));
+				setLayoutBindings);
 		descriptorSetLayouts.scene = vulkanDevice->logicalDevice.createDescriptorSetLayout(descriptorLayout);
 
 		// Set 1: Material data

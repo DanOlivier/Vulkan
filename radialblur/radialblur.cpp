@@ -549,7 +549,7 @@ public:
 				vk::ShaderStageFlagBits::eFragment,
 				2)
 		};
-		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.scene = device.createDescriptorSetLayout(descriptorLayout);
 		pPipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.scene, 1);
 		pipelineLayouts.scene = device.createPipelineLayout(pPipelineLayoutCreateInfo);
@@ -568,7 +568,7 @@ public:
 				vk::ShaderStageFlagBits::eFragment,
 				1)
 		};
-		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.radialBlur = device.createDescriptorSetLayout(descriptorLayout);
 		pPipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.radialBlur, 1);
 		pipelineLayouts.radialBlur = device.createPipelineLayout(pPipelineLayoutCreateInfo);

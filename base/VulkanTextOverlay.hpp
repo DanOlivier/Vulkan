@@ -159,7 +159,7 @@ public:
 		vulkanDevice->logicalDevice.destroyPipelineCache(pipelineCache);
 		vulkanDevice->logicalDevice.destroyPipeline(pipeline);
 		vulkanDevice->logicalDevice.destroyRenderPass(renderPass);
-		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool, nullptr);
+		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool, cmdBuffers);
 		vulkanDevice->logicalDevice.destroyCommandPool(commandPool);
 		vulkanDevice->logicalDevice.destroyFence(fence);
 	}
@@ -327,13 +327,12 @@ public:
 		descriptorPool = vulkanDevice->logicalDevice.createDescriptorPool(descriptorPoolInfo);
 
 		// Descriptor set layout
-		std::array<vk::DescriptorSetLayoutBinding, 1> setLayoutBindings;
+		std::vector<vk::DescriptorSetLayoutBinding> setLayoutBindings(1);
 		setLayoutBindings[0] = vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 0);
 
 		vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo =
 			vks::initializers::descriptorSetLayoutCreateInfo(
-				setLayoutBindings.data(),
-				static_cast<uint32_t>(setLayoutBindings.size()));
+				setLayoutBindings);
 
 		descriptorSetLayout = vulkanDevice->logicalDevice.createDescriptorSetLayout(descriptorSetLayoutInfo);
 
@@ -361,7 +360,7 @@ public:
 				vk::ImageLayout::eGeneral);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets[0] = vks::initializers::writeDescriptorSet(descriptorSet, vk::DescriptorType::eCombinedImageSampler, 0, &texDescriptor);
+		writeDescriptorSets.push_back(vks::initializers::writeDescriptorSet(descriptorSet, vk::DescriptorType::eCombinedImageSampler, 0, &texDescriptor));
 		vulkanDevice->logicalDevice.updateDescriptorSets(writeDescriptorSets, nullptr);
 
 		// Pipeline cache
@@ -724,7 +723,7 @@ public:
 	*/
 	void reallocateCommandBuffers()
 	{
-		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool, nullptr);
+		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool, cmdBuffers);
 
 		vk::CommandBufferAllocateInfo cmdBufAllocateInfo =
 			vks::initializers::commandBufferAllocateInfo(

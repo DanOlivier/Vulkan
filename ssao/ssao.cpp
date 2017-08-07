@@ -763,7 +763,7 @@ public:
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex, 0),								// VS UBO
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 1),						// FS Color
 		};
-		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.gBuffer = device.createDescriptorSetLayout(setLayoutCreateInfo);
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.gBuffer;
 		pipelineLayouts.gBuffer = device.createPipelineLayout(pipelineLayoutCreateInfo);
@@ -782,7 +782,7 @@ public:
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eFragment, 3),								// FS SSAO Kernel UBO
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eFragment, 4),								// FS Params UBO 
 		};
-		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.ssao = device.createDescriptorSetLayout(setLayoutCreateInfo);
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.ssao;
 		pipelineLayouts.ssao = device.createPipelineLayout(pipelineLayoutCreateInfo);
@@ -805,7 +805,7 @@ public:
 		setLayoutBindings = {
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 0),						// FS Sampler SSAO
 		};
-		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.ssaoBlur = device.createDescriptorSetLayout(setLayoutCreateInfo);
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.ssaoBlur;
 		pipelineLayouts.ssaoBlur = device.createPipelineLayout(pipelineLayoutCreateInfo);
@@ -828,7 +828,7 @@ public:
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 4),						// FS SSAO blurred
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eFragment, 5),								// FS Lights UBO 
 		};
-		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		setLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.composition = device.createDescriptorSetLayout(setLayoutCreateInfo);
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayouts.composition;
 		pipelineLayouts.composition = device.createPipelineLayout(pipelineLayoutCreateInfo);

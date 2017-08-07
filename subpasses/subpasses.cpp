@@ -594,8 +594,7 @@ public:
 
 		vk::DescriptorSetLayoutCreateInfo descriptorLayout =
 			vks::initializers::descriptorSetLayoutCreateInfo(
-				setLayoutBindings.data(),
-				static_cast<uint32_t>(setLayoutBindings.size()));
+				setLayoutBindings);
 
 		descriptorSetLayouts.scene = device.createDescriptorSetLayout(descriptorLayout);
 
@@ -740,8 +739,7 @@ public:
 
 		vk::DescriptorSetLayoutCreateInfo descriptorLayout =
 			vks::initializers::descriptorSetLayoutCreateInfo(
-				setLayoutBindings.data(),
-				static_cast<uint32_t>(setLayoutBindings.size()));
+				setLayoutBindings);
 
 		descriptorSetLayouts.composition = device.createDescriptorSetLayout(descriptorLayout);
 
@@ -886,7 +884,7 @@ public:
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 2),
 		};
 
-		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.transparent = device.createDescriptorSetLayout(descriptorLayout);
 
 		// Pipeline layout

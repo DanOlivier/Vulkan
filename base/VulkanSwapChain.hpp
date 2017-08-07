@@ -109,7 +109,7 @@ public:
 		vk::IOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
 		//surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
-		surface = instance.createIOSSurfaceMVK(instancesurfaceCreateInfo);
+		surface = instance.createIOSSurfaceMVK(surfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_MACOS_MVK)
 		vk::MacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
 		//surfaceCreateInfo.flags = 0;
@@ -375,8 +375,7 @@ public:
 		swapchainCI.compositeAlpha = compositeAlpha;
 
 		// Set additional usage flag for blitting from the swapchain images if supported
-		vk::FormatProperties formatProps;
-		formatProps = physicalDevice.getFormatProperties(colorFormat);
+		vk::FormatProperties formatProps = physicalDevice.getFormatProperties(colorFormat);
 		if (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst) {
 			swapchainCI.imageUsage |= vk::ImageUsageFlagBits::eTransferSrc;
 		}
@@ -391,11 +390,12 @@ public:
 			{
 				device.destroyImageView(buffers[i].view);
 			}
-			fpDestroySwapchainKHR(device, oldSwapchain, nullptr);
+			device.destroySwapchainKHR(oldSwapchain);
 		}
 
 		// Get the swap chain images
 		images = device.getSwapchainImagesKHR(swapChain);
+		imageCount = images.size();
 
 		// Get the swap chain buffers containing the image and imageview
 		buffers.resize(imageCount);

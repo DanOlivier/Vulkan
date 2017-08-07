@@ -604,7 +604,7 @@ public:
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eFragment, 0),			// Binding 0: Fragment shader uniform buffer
 			vks::initializers::descriptorSetLayoutBinding(vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 1)	// Binding 1: Fragment shader image sampler
 		};
-		descriptorSetLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+		descriptorSetLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 		descriptorSetLayouts.blur = device.createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 		pipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayouts.blur, 1);
 		pipelineLayouts.blur = device.createPipelineLayout(pipelineLayoutCreateInfo);
