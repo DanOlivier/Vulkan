@@ -450,7 +450,7 @@ public:
 		pipelineCreateInfo.renderPass = renderPass;
 
 		// Additive blending
-		blendAttachmentState.colorWriteMask = 0xF;
+		blendAttachmentState.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 		blendAttachmentState.blendEnable = VK_TRUE;
 		blendAttachmentState.colorBlendOp = vk::BlendOp::eAdd;
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eOne;
@@ -468,7 +468,7 @@ public:
 		// The VulkanDevice::createLogicalDevice functions finds a compute capable queue and prefers queue families that only support compute
 		// Depending on the implementation this may result in different queue family indices for graphics and computes,
 		// requiring proper synchronization (see the memory barriers in buildComputeCommandBuffer)
-		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute);
+		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute, 0);
 
 		// Create compute pipeline
 		// Compute pipelines are created separate from graphics pipelines even if they use the same queue (family index)
@@ -498,7 +498,7 @@ public:
 				&compute.descriptorSetLayout,
 				1);
 
-		compute.pipelineLayout = device.createDescriptorSetLayout(pPipelineLayoutCreateInfo);
+		compute.pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 
 		vk::DescriptorSetAllocateInfo allocInfo =
 			vks::initializers::descriptorSetAllocateInfo(
@@ -524,7 +524,7 @@ public:
 				&compute.uniformBuffer.descriptor)
 		};
 
-		device.updateDescriptorSets(writeDescriptorSets, nullptr)(computeWriteDescriptorSets);
+		device.updateDescriptorSets(computeWriteDescriptorSets, nullptr);
 
 		// Create pipeline		
 		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout);

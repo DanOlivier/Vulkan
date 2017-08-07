@@ -220,12 +220,12 @@ public:
 	// Create a frame buffer attachment
 	void createAttachment(
 		vk::Format format,  
-		vk::ImageUsageFlagBits usage,
+		vk::ImageUsageFlags usage,
 		FrameBufferAttachment *attachment,
 		uint32_t width,
 		uint32_t height)
 	{
-		vk::ImageAspectFlags aspectMask = 0;
+		vk::ImageAspectFlags aspectMask;
 		//vk::ImageLayout imageLayout;
 
 		attachment->format = format;
@@ -241,7 +241,7 @@ public:
 			//imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 		}
 
-		assert(aspectMask > 0);
+		assert(aspectMask);
 
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
@@ -546,8 +546,8 @@ public:
 		// Clear values for all attachments written in the fragment sahder
 		std::vector<vk::ClearValue> clearValues(4);
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[2].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[2].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
 		clearValues[3].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
@@ -966,11 +966,10 @@ public:
 		// Blend attachment states required for all color attachments
 		// This is important, as color write mask will otherwise be 0x0 and you
 		// won't see anything rendered to the attachment
-		std::array<vk::PipelineColorBlendAttachmentState, 3> blendAttachmentStates = {
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE)
-		};
+		vk::PipelineColorBlendAttachmentState tmp = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
+		std::array<vk::PipelineColorBlendAttachmentState, 3> blendAttachmentStates = { tmp, tmp, tmp };
 		colorBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());
 		colorBlendState.pAttachments = blendAttachmentStates.data();
 		pipelines.offscreen = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];

@@ -109,7 +109,8 @@ public:
 		vk::DeviceMemory memory;
 	} queryResult;
 	vk::QueryPool queryPool;
-	std::vector<uint64_t> pipelineStats = { 0 };
+	
+	uint64_t pipelineStats[2] = { 0 };
 
 	// View frustum passed to tessellation control shader for culling
 	vks::Frustum frustum;

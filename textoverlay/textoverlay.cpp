@@ -158,7 +158,7 @@ public:
 				vk::CommandBufferLevel::ePrimary,
 				(uint32_t)cmdBuffers.size());
 
-		cmdBuffers = vulkanDevice->logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo)[0];
+		cmdBuffers = vulkanDevice->logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo);
 
 		// Vertex buffer
 		vk::DeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT * sizeof(glm::vec4);
@@ -507,7 +507,7 @@ public:
 
 		vk::SubpassDescription subpassDescription = {};
 		subpassDescription.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-		subpassDescription.flags = 0;
+		//subpassDescription.flags = 0;
 		subpassDescription.inputAttachmentCount = 0;
 		subpassDescription.pInputAttachments = NULL;
 		subpassDescription.colorAttachmentCount = 1;
@@ -531,7 +531,7 @@ public:
 	// Map buffer 
 	void beginTextUpdate()
 	{
-		mapped = vulkanDevice->logicalDevice.mapMemory(memory, 0, VK_WHOLE_SIZE, vk::MemoryMapFlags());
+		mapped = (glm::vec4*)vulkanDevice->logicalDevice.mapMemory(memory, 0, VK_WHOLE_SIZE, vk::MemoryMapFlags());
 		numLetters = 0;
 	}
 
@@ -618,7 +618,7 @@ public:
 		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
 		vk::ClearValue clearValues[2];
-		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
 		renderPassBeginInfo.renderPass = renderPass;

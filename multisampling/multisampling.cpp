@@ -123,8 +123,8 @@ public:
 	void setupMultisampleTarget()
 	{
 		// Check if device supports requested sample count for color and depth frame buffer
-		assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) && 
-			(deviceProperties.limits.framebufferDepthSampleCounts >= sampleCount));
+		assert((uint32_t(deviceProperties.limits.framebufferColorSampleCounts) >= uint32_t(sampleCount)) && 
+			(uint32_t(deviceProperties.limits.framebufferDepthSampleCounts) >= uint32_t(sampleCount)));
 
 		// Color target
 		vk::ImageCreateInfo info = vks::initializers::imageCreateInfo();
@@ -165,10 +165,7 @@ public:
 		viewInfo.image = multisampleTarget.color.image;
 		viewInfo.viewType = vk::ImageViewType::e2D;
 		viewInfo.format = swapChain.colorFormat;
-		viewInfo.components.r = vk::ComponentSwizzle::eR;
-		viewInfo.components.g = vk::ComponentSwizzle::eG;
-		viewInfo.components.b = vk::ComponentSwizzle::eB;
-		viewInfo.components.a = vk::ComponentSwizzle::eA;
+		viewInfo.components =  { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB,	vk::ComponentSwizzle::eA };
 		viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.layerCount = 1;
@@ -209,10 +206,7 @@ public:
 		viewInfo.image = multisampleTarget.depth.image;
 		viewInfo.viewType = vk::ImageViewType::e2D;
 		viewInfo.format = depthFormat;
-		viewInfo.components.r = vk::ComponentSwizzle::eR;
-		viewInfo.components.g = vk::ComponentSwizzle::eG;
-		viewInfo.components.b = vk::ComponentSwizzle::eB;
-		viewInfo.components.a = vk::ComponentSwizzle::eA;
+		viewInfo.components =  { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB,	vk::ComponentSwizzle::eA };
 		viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.layerCount = 1;
@@ -371,7 +365,7 @@ public:
 		vk::ClearValue clearValues[3];
 		// Clear to a white background for higher contrast
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f } };
-		clearValues[1].color = { { 1.0f, 1.0f, 1.0f, 1.0f } };
+		clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f } };
 		clearValues[2].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
@@ -733,8 +727,9 @@ public:
     // Returns the maximum sample count usable by the platform
     vk::SampleCountFlagBits getMaxUsableSampleCount()
     {
-        vk::SampleCountFlags counts = std::min(deviceProperties.limits.framebufferColorSampleCounts,
-                                            deviceProperties.limits.framebufferDepthSampleCounts);
+        vk::SampleCountFlags counts = deviceProperties.limits.framebufferColorSampleCounts;
+		if(uint32_t(deviceProperties.limits.framebufferDepthSampleCounts) < uint32_t(counts))
+			counts = deviceProperties.limits.framebufferDepthSampleCounts;
 
         if (counts & vk::SampleCountFlagBits::e64) { return vk::SampleCountFlagBits::e64; }
         if (counts & vk::SampleCountFlagBits::e32) { return vk::SampleCountFlagBits::e32; }

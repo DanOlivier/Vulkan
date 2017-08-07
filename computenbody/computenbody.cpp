@@ -571,7 +571,7 @@ public:
 				&compute.descriptorSetLayout,
 				1);
 
-		compute.pipelineLayout = device.vkCreatePipelineLayout(pPipelineLayoutCreateInfo);
+		compute.pipelineLayout = device.createPipelineLayout(pPipelineLayoutCreateInfo);
 
 		vk::DescriptorSetAllocateInfo allocInfo =
 			vks::initializers::descriptorSetAllocateInfo(

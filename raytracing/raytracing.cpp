@@ -150,7 +150,7 @@ public:
 		imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
 		// Image will be sampled in the fragment shader and used as storage target in the compute shader
 		imageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage;
-		imageCreateInfo.flags = 0;
+		//imageCreateInfo.flags = 0;
 
 		vk::MemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
 		vk::MemoryRequirements memReqs;
@@ -541,7 +541,7 @@ public:
 		queueCreateInfo.queueFamilyIndex = vulkanDevice->queueFamilyIndices.compute;
 		queueCreateInfo.queueCount = 1;
 		*/
-		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute);
+		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute, 0);
 
 		std::vector<vk::DescriptorSetLayoutBinding> setLayoutBindings = {
 			// Binding 0: Storage image (raytraced output)
@@ -640,7 +640,7 @@ public:
 				vk::CommandBufferLevel::ePrimary,
 				1);
 
-		compute.commandBuffer) = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
+		compute.commandBuffer = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
 		// Fence for compute CB sync
 		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);

@@ -702,7 +702,7 @@ public:
 			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
-			colorImageView.flags = 0;
+			//colorImageView.flags = 0;
 			//colorImageView.subresourceRange = {};
 			colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			colorImageView.subresourceRange.baseMipLevel = 0;
@@ -874,7 +874,7 @@ public:
 				// Update shader push constant block
 				pushBlock.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
 
-				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, pushBlock);
+				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushBlock), &pushBlock);
 
 				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 				cmdBuf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelinelayout, 0, descriptorset, nullptr);
@@ -901,13 +901,13 @@ public:
 				copyRegion.srcSubresource.baseArrayLayer = 0;
 				copyRegion.srcSubresource.mipLevel = 0;
 				copyRegion.srcSubresource.layerCount = 1;
-				copyRegion.srcOffset = { 0, 0, 0 };
+				copyRegion.srcOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
 				copyRegion.dstSubresource.baseArrayLayer = f;
 				copyRegion.dstSubresource.mipLevel = m;
 				copyRegion.dstSubresource.layerCount = 1;
-				copyRegion.dstOffset = { 0, 0, 0 };
+				copyRegion.dstOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
 				copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
@@ -1097,7 +1097,7 @@ public:
 			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
-			colorImageView.flags = 0;
+			//colorImageView.flags = 0;
 			//colorImageView.subresourceRange = {};
 			colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			colorImageView.subresourceRange.baseMipLevel = 0;
@@ -1269,7 +1269,7 @@ public:
 				// Update shader push constant block
 				pushBlock.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
 
-				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, pushBlock);
+				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushBlock), &pushBlock);
 
 				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 				cmdBuf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelinelayout, 0, descriptorset, nullptr);
@@ -1296,13 +1296,13 @@ public:
 				copyRegion.srcSubresource.baseArrayLayer = 0;
 				copyRegion.srcSubresource.mipLevel = 0;
 				copyRegion.srcSubresource.layerCount = 1;
-				copyRegion.srcOffset = { 0, 0, 0 };
+				copyRegion.srcOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
 				copyRegion.dstSubresource.baseArrayLayer = f;
 				copyRegion.dstSubresource.mipLevel = m;
 				copyRegion.dstSubresource.layerCount = 1;
-				copyRegion.dstOffset = { 0, 0, 0 };
+				copyRegion.dstOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
 				copyRegion.extent.height = static_cast<uint32_t>(viewport.height);

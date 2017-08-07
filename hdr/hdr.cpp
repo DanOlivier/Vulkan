@@ -268,25 +268,25 @@ public:
 		}
 	}
 
-	void createAttachment(vk::Format format, vk::ImageUsageFlagBits usage, FrameBufferAttachment *attachment)
+	void createAttachment(vk::Format format, vk::ImageUsageFlags usage, FrameBufferAttachment *attachment)
 	{
-		vk::ImageAspectFlags aspectMask = 0;
+		vk::ImageAspectFlags aspectMask;
 		//vk::ImageLayout imageLayout;
 
 		attachment->format = format;
 
-		if (!!(usage & vk::ImageUsageFlagBits::eColorAttachment))
+		if (usage & vk::ImageUsageFlagBits::eColorAttachment)
 		{
 			aspectMask = vk::ImageAspectFlagBits::eColor;
 			//imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
 		}
-		if (!!(usage & vk::ImageUsageFlagBits::eDepthStencilAttachment))
+		if (usage & vk::ImageUsageFlagBits::eDepthStencilAttachment)
 		{
 			aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 			//imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 		}
 
-		assert(aspectMask > 0);
+		//assert((aspectMask > 0);
 
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
@@ -550,7 +550,7 @@ public:
 		// Clear values for all attachments written in the fragment sahder
 		std::array<vk::ClearValue, 3> clearValues;
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[2].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
@@ -774,10 +774,10 @@ public:
 				pipelineLayouts.models,
 				renderPass);
 
-		std::vector<vk::PipelineColorBlendAttachmentState> blendAttachmentStates = {
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-		};
+		vk::PipelineColorBlendAttachmentState state = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+			VK_FALSE);
+		std::vector<vk::PipelineColorBlendAttachmentState> blendAttachmentStates = { state, state };
 
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
 		pipelineCreateInfo.pRasterizationState = &rasterizationState;
@@ -815,7 +815,7 @@ public:
 		shaderStages[0] = loadShader(getAssetPath() + "shaders/hdr/bloom.vert.spv", vk::ShaderStageFlagBits::eVertex);
 		shaderStages[1] = loadShader(getAssetPath() + "shaders/hdr/bloom.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		colorBlendState.pAttachments = &blendAttachmentState;
-		blendAttachmentState.colorWriteMask = 0xF;
+		blendAttachmentState.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 		blendAttachmentState.blendEnable = VK_TRUE;
 		blendAttachmentState.colorBlendOp = vk::BlendOp::eAdd;
 		blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eOne;

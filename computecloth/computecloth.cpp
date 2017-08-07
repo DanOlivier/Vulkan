@@ -559,7 +559,7 @@ public:
 	void prepareCompute()
 	{
 		// Create a compute capable device queue
-		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute);
+		compute.queue = device.getQueue(vulkanDevice->queueFamilyIndices.compute, 0);
 
 		// Create compute pipeline
 		std::vector<vk::DescriptorSetLayoutBinding> setLayoutBindings = {
@@ -582,7 +582,7 @@ public:
 		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 		pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
-		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr,	&compute.pipelineLayout));
+		compute.pipelineLayout = device.createPipelineLayout(pipelineLayoutCreateInfo);
 
 		vk::DescriptorSetAllocateInfo allocInfo =
 			vks::initializers::descriptorSetAllocateInfo(descriptorPool, &compute.descriptorSetLayout, 1);

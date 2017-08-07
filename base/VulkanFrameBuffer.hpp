@@ -137,7 +137,7 @@ namespace vks
 
 			attachment.format = createinfo.format;
 
-			vk::ImageAspectFlags aspectMask = VK_FLAGS_NONE;
+			vk::ImageAspectFlags aspectMask;// = VK_FLAGS_NONE;
 
 			// Select aspect mask and layout depending on usage
 
@@ -160,7 +160,7 @@ namespace vks
 				}
 			}
 
-			assert(aspectMask > 0);
+			//assert(aspectMask > 0);
 
 			vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 			image.imageType = vk::ImageType::e2D;
@@ -200,7 +200,7 @@ namespace vks
 			attachment.view = vulkanDevice->logicalDevice.createImageView(imageView);
 
 			// Fill attachment description
-			attachment.description = {};
+			//attachment.description = {};
 			attachment.description.samples = vk::SampleCountFlagBits::e1;
 			attachment.description.loadOp = vk::AttachmentLoadOp::eClear;
 			attachment.description.storeOp = (createinfo.usage & vk::ImageUsageFlagBits::eSampled) ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare;
@@ -248,7 +248,8 @@ namespace vks
 			samplerInfo.minLod = 0.0f;
 			samplerInfo.maxLod = 1.0f;
 			samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-			return vkCreateSampler(vulkanDevice->logicalDevice, &samplerInfo, nullptr, &sampler);
+			sampler = vulkanDevice->logicalDevice.createSampler(samplerInfo);
+			return vk::Result::eSuccess;
 		}
 
 		/**

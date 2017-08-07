@@ -258,7 +258,7 @@ namespace vks
 			vk::ShaderModuleCreateInfo moduleCreateInfo;
 			moduleCreateInfo.codeSize = size;
 			moduleCreateInfo.pCode = (uint32_t*)shaderCode;
-			moduleCreateInfo.flags = 0;
+			//moduleCreateInfo.flags = 0;
 
 			shaderModule = device.createShaderModule(moduleCreateInfo);
 

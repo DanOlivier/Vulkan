@@ -26,7 +26,7 @@
 #define VERTEX_BUFFER_BIND_ID 0
 #define ENABLE_VALIDATION false
 // todo: check if hardware supports sample number (or select max. supported)
-#define SAMPLE_COUNT vk::SampleCountFlagBits::e8
+vk::SampleCountFlagBits SAMPLE_COUNT = vk::SampleCountFlagBits::e8;
 
 class VulkanExample : public VulkanExampleBase
 {
@@ -240,23 +240,23 @@ public:
 		FrameBufferAttachment *attachment,
 		vk::CommandBuffer layoutCmd)
 	{
-		vk::ImageAspectFlags aspectMask = 0;
+		vk::ImageAspectFlags aspectMask;
 		//vk::ImageLayout imageLayout;
 
 		attachment->format = format;
 
-		if (usage & vk::ImageUsageFlagBits::eColorAttachment)
+		if (vk::ImageUsageFlags(usage) & vk::ImageUsageFlagBits::eColorAttachment)
 		{
 			aspectMask = vk::ImageAspectFlagBits::eColor;
 			//imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
 		}
-		if (usage & vk::ImageUsageFlagBits::eDepthStencilAttachment)
+		if (vk::ImageUsageFlags(usage) & vk::ImageUsageFlagBits::eDepthStencilAttachment)
 		{
 			aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 			//imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 		}
 
-		assert(aspectMask > 0);
+		//assert(aspectMask > 0);
 
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
@@ -467,8 +467,8 @@ public:
 
 		// Clear values for all attachments written in the fragment sahder
 		std::array<vk::ClearValue,4> clearValues;
-		clearValues[0].color = clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clearValues[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[0].color = clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
+		clearValues[2].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[3].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
@@ -933,7 +933,7 @@ public:
 		specializationEntry.offset = 0;
 		specializationEntry.size = sizeof(uint32_t);
 		
-		uint32_t specializationData = SAMPLE_COUNT;
+		uint32_t specializationData = uint32_t(SAMPLE_COUNT);
 
 		vk::SpecializationInfo specializationInfo;
 		specializationInfo.mapEntryCount = 1;
@@ -976,10 +976,11 @@ public:
 		// Blend attachment states required for all color attachments
 		// This is important, as color write mask will otherwise be 0x0 and you
 		// won't see anything rendered to the attachment
+		vk::PipelineColorBlendAttachmentState tmp = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
 		std::array<vk::PipelineColorBlendAttachmentState, 3> blendAttachmentStates = {
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE),
-			vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE)
+			tmp, tmp, tmp
 		};
 
 		colorBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());

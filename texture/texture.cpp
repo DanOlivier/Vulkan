@@ -128,7 +128,7 @@ public:
 		case vk::ImageLayout::eUndefined:
 			// Only valid as initial layout, memory contents are not preserved
 			// Can be accessed directly, no source dependency required
-			imageMemoryBarrier.srcAccessMask = 0;
+			//imageMemoryBarrier.srcAccessMask = 0;
 			break;
 		case vk::ImageLayout::ePreinitialized:
 			// Only valid as initial layout for linear images, preserves memory contents

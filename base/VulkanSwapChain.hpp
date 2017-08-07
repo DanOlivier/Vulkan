@@ -107,12 +107,12 @@ public:
 		surface = instancecreateAndroidSurfaceKHR(surfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_IOS_MVK)
 		vk::IOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-		surfaceCreateInfo.flags = 0;
+		//surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
 		surface = instance.createIOSSurfaceMVK(instancesurfaceCreateInfo);
 #elif defined(VK_USE_PLATFORM_MACOS_MVK)
 		vk::MacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-		surfaceCreateInfo.flags = 0;
+		//surfaceCreateInfo.flags = 0;
 		surfaceCreateInfo.pView = view;
 		surface = instance.createMacOSSurfaceMVK(surfaceCreateInfo);
 #elif defined(_DIRECT2DISPLAY)
@@ -600,7 +600,7 @@ public:
 		}
 
 		vk::DisplaySurfaceCreateInfoKHR surfaceInfo{};
-		surfaceInfo.flags = 0;
+		//surfaceInfo.flags = 0;
 		surfaceInfo.displayMode = displayMode;
 		surfaceInfo.planeIndex = bestPlaneIndex;
 		surfaceInfo.planeStackIndex = pPlaneProperties[bestPlaneIndex].currentStackIndex;

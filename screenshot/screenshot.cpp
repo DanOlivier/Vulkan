@@ -360,13 +360,13 @@ public:
 		vks::tools::insertImageMemoryBarrier(
 			copyCmd,
 			dstImage,
-			0,
+			vk::AccessFlags(),
 			vk::AccessFlagBits::eTransferWrite,
 			vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eTransferDstOptimal,
 			vk::PipelineStageFlagBits::eTransfer,
 			vk::PipelineStageFlagBits::eTransfer,
-			vk::ImageSubresourceRange{ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
+			vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 ));
 
 		// Transition swapchain image from present to transfer source layout
 		vks::tools::insertImageMemoryBarrier(
@@ -378,7 +378,7 @@ public:
 			vk::ImageLayout::eTransferSrcOptimal,
 			vk::PipelineStageFlagBits::eTransfer,
 			vk::PipelineStageFlagBits::eTransfer,
-			vk::ImageSubresourceRange{ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
+			vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 ));
 
 		// If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
 		if (supportsBlit)

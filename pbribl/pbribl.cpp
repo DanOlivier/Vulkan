@@ -232,8 +232,8 @@ public:
 				glm::vec3 pos = glm::vec3(float(x - (objcount / 2.0f)) * 2.15f, 0.0f, 0.0f);
 				mat.params.roughness = 1.0f-glm::clamp((float)x / (float)objcount, 0.005f, 1.0f);
 				mat.params.metallic = glm::clamp((float)x / (float)objcount, 0.005f, 1.0f);
-				drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, pos);
-				drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eFragment, sizeof(glm::vec3), mat);
+				drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::vec3), &pos);
+				drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eFragment, sizeof(glm::vec3), sizeof(Material::PushBlock), &mat);
 				drawCmdBuffers[i].drawIndexed(models.objects[models.objectIndex].indexCount, 1, 0, 0, 0);
 			}
 #else
@@ -241,9 +241,9 @@ public:
 				mat.params.metallic = (float)y / (float)(GRID_DIM);
 				for (uint32_t x = 0; x < GRID_DIM; x++) {
 					glm::vec3 pos = glm::vec3(float(x - (GRID_DIM / 2.0f)) * 2.5f, 0.0f, float(y - (GRID_DIM / 2.0f)) * 2.5f);
-					drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, pos);
+					drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::vec3), &pos);
 					mat.params.roughness = glm::clamp((float)x / (float)(GRID_DIM), 0.05f, 1.0f);
-					drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eFragment, sizeof(glm::vec3), mat);
+					drawCmdBuffers[i].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eFragment, sizeof(glm::vec3), sizeof(Material::PushBlock), &mat);
 					drawCmdBuffers[i].drawIndexed(models.objects[models.objectIndex].indexCount, 1, 0, 0, 0);
 				}
 			}
@@ -545,7 +545,9 @@ public:
 		// Pipeline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -752,7 +754,7 @@ public:
 			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
-			colorImageView.flags = 0;
+			//colorImageView.flags = 0;
 			//colorImageView.subresourceRange = {};
 			colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			colorImageView.subresourceRange.baseMipLevel = 0;
@@ -822,7 +824,9 @@ public:
 		// Pipeline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
+			VK_FALSE);
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -922,7 +926,7 @@ public:
 				// Update shader push constant block
 				pushBlock.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
 
-				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, pushBlock);
+				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushBlock), &pushBlock);
 
 				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 				cmdBuf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelinelayout, 0, descriptorset, nullptr);
@@ -949,19 +953,19 @@ public:
 				copyRegion.srcSubresource.baseArrayLayer = 0;
 				copyRegion.srcSubresource.mipLevel = 0;
 				copyRegion.srcSubresource.layerCount = 1;
-				copyRegion.srcOffset = { 0, 0, 0 };
+				copyRegion.srcOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
 				copyRegion.dstSubresource.baseArrayLayer = f;
 				copyRegion.dstSubresource.mipLevel = m;
 				copyRegion.dstSubresource.layerCount = 1;
-				copyRegion.dstOffset = { 0, 0, 0 };
+				copyRegion.dstOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
 				copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
 				copyRegion.extent.depth = 1;
 
-				copyCmd.copyImage(
+				cmdBuf.copyImage(
 					offscreen.image,
 					vk::ImageLayout::eTransferSrcOptimal,
 					textures.irradianceCube.image,
@@ -1145,7 +1149,7 @@ public:
 			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
-			colorImageView.flags = 0;
+			//colorImageView.flags = 0;
 			//colorImageView.subresourceRange = {};
 			colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 			colorImageView.subresourceRange.baseMipLevel = 0;
@@ -1317,10 +1321,10 @@ public:
 				// Update shader push constant block
 				pushBlock.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
 
-				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, pushBlock);
+				cmdBuf.pushConstants(pipelinelayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushBlock), &pushBlock);
 
 				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-				cmdBuf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelinelayout, 0, descriptorset, nullptr);
+				cmdBuf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelinelayout, 0, 1, &descriptorset, 0, NULL);
 
 				std::vector<vk::DeviceSize> offsets = { 0 };
 
@@ -1344,13 +1348,13 @@ public:
 				copyRegion.srcSubresource.baseArrayLayer = 0;
 				copyRegion.srcSubresource.mipLevel = 0;
 				copyRegion.srcSubresource.layerCount = 1;
-				copyRegion.srcOffset = { 0, 0, 0 };
+				copyRegion.srcOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
 				copyRegion.dstSubresource.baseArrayLayer = f;
 				copyRegion.dstSubresource.mipLevel = m;
 				copyRegion.dstSubresource.layerCount = 1;
-				copyRegion.dstOffset = { 0, 0, 0 };
+				copyRegion.dstOffset = vk::Offset3D{ 0, 0, 0 };
 
 				copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
 				copyRegion.extent.height = static_cast<uint32_t>(viewport.height);

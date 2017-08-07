@@ -138,7 +138,7 @@ public:
 		imageCreateInfo.tiling = vk::ImageTiling::eOptimal;
 		// Image will be sampled in the fragment shader and used as storage target in the compute shader
 		imageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage;
-		imageCreateInfo.flags = 0;
+		//imageCreateInfo.flags = 0;
 		// Sharing mode exclusive means that ownership of the image does not need to be explicitly transferred between the compute and graphics queue
 		imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 
@@ -268,13 +268,13 @@ public:
 			drawCmdBuffers[i].bindIndexBuffer(indexBuffer.buffer, 0, vk::IndexType::eUint32);
 
 			// Left (pre compute)
-			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, graphics.descriptorSetPreCompute, nullptr);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, 0, graphics.descriptorSetPreCompute, nullptr);
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphics.pipeline);
 
 			drawCmdBuffers[i].drawIndexed(indexCount, 1, 0, 0, 0);
 
 			// Right (post compute)
-			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, graphics.descriptorSetPostCompute, nullptr);
+			drawCmdBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphics.pipelineLayout, 0, graphics.descriptorSetPostCompute, nullptr);
 			drawCmdBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphics.pipeline);
 
 			viewport.x = (float)width / 2.0f;
@@ -558,19 +558,15 @@ public:
 	// Find and create a compute capable device queue
 	void getComputeQueue()
 	{
-		uint32_t queueFamilyCount;
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, NULL);
-		assert(queueFamilyCount >= 1);
-
-		std::vector<vk::QueueFamilyProperties> queueFamilyProperties;
-		queueFamilyProperties.resize(queueFamilyCount);
-		queueFamilyProperties = physicalDevice.getQueueFamilyProperties(queueFamilyCount);
+		std::vector<vk::QueueFamilyProperties> queueFamilyProperties = 
+			physicalDevice.getQueueFamilyProperties();
 
 		// Some devices have dedicated compute queues, so we first try to find a queue that supports compute and not graphics
 		bool computeQueueFound = false;
-		for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size()); i++)
+		for (uint32_t i = 0; i < queueFamilyProperties.size(); i++)
 		{
-			if ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eCompute) && ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) == 0))
+			if ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eCompute) && 
+				(~(queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)))
 			{
 				compute.queueFamilyIndex = i;
 				computeQueueFound = true;
@@ -594,7 +590,7 @@ public:
 		// Compute is mandatory in Vulkan, so there must be at least one queue family that supports compute
 		assert(computeQueueFound);
 		// Get a compute queue from the device
-		compute.queue = device.getQueue(compute.queueFamilyIndex);
+		compute.queue = device.getQueue(compute.queueFamilyIndex, 0);
 	}
 
 	void prepareCompute()

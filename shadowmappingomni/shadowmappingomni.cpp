@@ -251,7 +251,6 @@ public:
 
 		// Create image view
 		vk::ImageViewCreateInfo view = vks::initializers::imageViewCreateInfo();
-		view.image;
 		view.viewType = vk::ImageViewType::eCube;
 		view.format = format;
 		view.components = { vk::ComponentSwizzle::eR };
@@ -292,7 +291,7 @@ public:
 		vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
 		colorImageView.viewType = vk::ImageViewType::e2D;
 		colorImageView.format = fbColorFormat;
-		colorImageView.flags = 0;
+		//colorImageView.flags = 0;
 		//colorImageView.subresourceRange = {};
 		colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		colorImageView.subresourceRange.baseMipLevel = 0;
@@ -328,7 +327,7 @@ public:
 		vk::ImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
 		depthStencilView.viewType = vk::ImageViewType::e2D;
 		depthStencilView.format = fbDepthFormat;
-		depthStencilView.flags = 0;
+		//depthStencilView.flags = 0;
 		//depthStencilView.subresourceRange = {};
 		depthStencilView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
 		depthStencilView.subresourceRange.baseMipLevel = 0;
@@ -426,7 +425,8 @@ public:
 			pipelineLayouts.offscreen,
 			vk::ShaderStageFlagBits::eVertex,
 			0,
-			viewMatrix);
+			sizeof(glm::mat4),
+			&viewMatrix);
 
 		offscreenPass.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.offscreen);
 		offscreenPass.commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayouts.offscreen, 0, descriptorSets.offscreen, nullptr);
@@ -467,13 +467,13 @@ public:
 		copyRegion.srcSubresource.baseArrayLayer = 0;
 		copyRegion.srcSubresource.mipLevel = 0;
 		copyRegion.srcSubresource.layerCount = 1;
-		copyRegion.srcOffset = { 0, 0, 0 };
+		copyRegion.srcOffset = vk::Offset3D{ 0, 0, 0 };
 
 		copyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
 		copyRegion.dstSubresource.baseArrayLayer = faceIndex;
 		copyRegion.dstSubresource.mipLevel = 0;
 		copyRegion.dstSubresource.layerCount = 1;
-		copyRegion.dstOffset = { 0, 0, 0 };
+		copyRegion.dstOffset = vk::Offset3D{ 0, 0, 0 };
 
 		copyRegion.extent.width = shadowCubeMap.width;
 		copyRegion.extent.height = shadowCubeMap.height;
