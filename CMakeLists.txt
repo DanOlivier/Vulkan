@@ -85,7 +85,7 @@ add_definitions(-std=c++11)
 file(GLOB SOURCE *.cpp base/*.cpp)
 set(SOURCE
 	#base/VulkanAndroid.cpp
-	#base/VulkanDebug.cpp
+	base/VulkanDebug.cpp
 	base/VulkanExampleBase.cpp
 	base/VulkanTools.cpp
 )
@@ -135,7 +135,7 @@ set(EXAMPLES
 	computenbody
 	computeparticles
 	computeshader
-	#debugmarker
+	debugmarker
 	deferred
 	deferredmultisampling
 	deferredshadows
