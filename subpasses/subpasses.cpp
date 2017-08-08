@@ -193,9 +193,7 @@ public:
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
 		image.format = format;
-		image.extent.width = width;
-		image.extent.height = height;
-		image.extent.depth = 1;
+		image.extent = vk::Extent3D{ width, height, 1 };
 		image.mipLevels = 1;
 		image.arrayLayers = 1;
 		image.samples = vk::SampleCountFlagBits::e1;

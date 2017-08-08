@@ -99,7 +99,7 @@ public:
 
 		// Create font texture
 		unsigned char* fontData;
-		int texWidth, texHeight;
+		uint32_t texWidth, texHeight;
 		io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
 		vk::DeviceSize uploadSize = texWidth*texHeight * 4 * sizeof(char);
 
@@ -107,9 +107,7 @@ public:
 		vk::ImageCreateInfo imageInfo = vks::initializers::imageCreateInfo();
 		imageInfo.imageType = vk::ImageType::e2D;
 		imageInfo.format = vk::Format::eR8G8B8A8Unorm;
-		imageInfo.extent.width = texWidth;
-		imageInfo.extent.height = texHeight;
-		imageInfo.extent.depth = 1;
+		imageInfo.extent = vk::Extent3D{ texWidth, texHeight, 1 };
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
 		imageInfo.samples = vk::SampleCountFlagBits::e1;

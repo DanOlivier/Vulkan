@@ -160,9 +160,7 @@ namespace vks
 			vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 			image.imageType = vk::ImageType::e2D;
 			image.format = createinfo.format;
-			image.extent.width = createinfo.width;
-			image.extent.height = createinfo.height;
-			image.extent.depth = 1;
+			image.extent = vk::Extent3D{ createinfo.width, createinfo.height, 1 };
 			image.mipLevels = 1;
 			image.arrayLayers = createinfo.layerCount;
 			image.samples = vk::SampleCountFlagBits::e1;

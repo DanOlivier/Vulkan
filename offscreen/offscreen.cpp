@@ -90,7 +90,7 @@ public:
 		vk::ImageView view;
 	};
 	struct OffscreenPass {
-		int32_t width, height;
+		uint32_t width, height;
 		vk::Framebuffer frameBuffer;		
 		FrameBufferAttachment color, depth;
 		vk::RenderPass renderPass;
@@ -181,9 +181,7 @@ public:
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
 		image.format = FB_COLOR_FORMAT;
-		image.extent.width = offscreenPass.width;
-		image.extent.height = offscreenPass.height;
-		image.extent.depth = 1;
+		image.extent = vk::Extent3D{ offscreenPass.width, offscreenPass.height, 1 };
 		image.mipLevels = 1;
 		image.arrayLayers = 1;
 		image.samples = vk::SampleCountFlagBits::e1;

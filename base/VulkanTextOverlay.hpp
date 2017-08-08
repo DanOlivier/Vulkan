@@ -194,9 +194,7 @@ public:
 		vk::ImageCreateInfo imageInfo = vks::initializers::imageCreateInfo();
 		imageInfo.imageType = vk::ImageType::e2D;
 		imageInfo.format = vk::Format::eR8Unorm;
-		imageInfo.extent.width = STB_FONT_WIDTH;
-		imageInfo.extent.height = STB_FONT_HEIGHT;
-		imageInfo.extent.depth = 1;
+		imageInfo.extent = vk::Extent3D{ STB_FONT_WIDTH, STB_FONT_HEIGHT, 1 };
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
 		imageInfo.samples = vk::SampleCountFlagBits::e1;

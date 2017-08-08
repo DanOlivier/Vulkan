@@ -347,15 +347,13 @@ public:
 		auto tStart = std::chrono::high_resolution_clock::now();
 
 		const vk::Format format = vk::Format::eR16G16Sfloat;	// R16G16 is supported pretty much everywhere
-		const int32_t dim = 512;
+		const uint32_t dim = 512;
 
 		// Image
 		vk::ImageCreateInfo imageCI = vks::initializers::imageCreateInfo();
 		imageCI.imageType = vk::ImageType::e2D;
 		imageCI.format = format;
-		imageCI.extent.width = dim;
-		imageCI.extent.height = dim;
-		imageCI.extent.depth = 1;
+		imageCI.extent = vk::Extent3D{ dim, dim, 1 };
 		imageCI.mipLevels = 1;
 		imageCI.arrayLayers = 1;
 		imageCI.samples = vk::SampleCountFlagBits::e1;
@@ -561,9 +559,7 @@ public:
 		vk::ImageCreateInfo imageCI = vks::initializers::imageCreateInfo();
 		imageCI.imageType = vk::ImageType::e2D;
 		imageCI.format = format;
-		imageCI.extent.width = dim;
-		imageCI.extent.height = dim;
-		imageCI.extent.depth = 1;
+		imageCI.extent = vk::Extent3D{ dim, dim, 1 };
 		imageCI.mipLevels = numMips;
 		imageCI.arrayLayers = 6;
 		imageCI.samples = vk::SampleCountFlagBits::e1;
@@ -665,9 +661,7 @@ public:
 			vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
 			imageCreateInfo.imageType = vk::ImageType::e2D;
 			imageCreateInfo.format = format;
-			imageCreateInfo.extent.width = dim;
-			imageCreateInfo.extent.height = dim;
-			imageCreateInfo.extent.depth = 1;
+			imageCreateInfo.extent = vk::Extent3D{ dim, dim, 1 };
 			imageCreateInfo.mipLevels = 1;
 			imageCreateInfo.arrayLayers = 1;
 			imageCreateInfo.samples = vk::SampleCountFlagBits::e1;
@@ -956,9 +950,7 @@ public:
 		vk::ImageCreateInfo imageCI = vks::initializers::imageCreateInfo();
 		imageCI.imageType = vk::ImageType::e2D;
 		imageCI.format = format;
-		imageCI.extent.width = dim;
-		imageCI.extent.height = dim;
-		imageCI.extent.depth = 1;
+		imageCI.extent = vk::Extent3D{ dim, dim, 1 };
 		imageCI.mipLevels = numMips;
 		imageCI.arrayLayers = 6;
 		imageCI.samples = vk::SampleCountFlagBits::e1;
@@ -1060,9 +1052,7 @@ public:
 			vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
 			imageCreateInfo.imageType = vk::ImageType::e2D;
 			imageCreateInfo.format = format;
-			imageCreateInfo.extent.width = dim;
-			imageCreateInfo.extent.height = dim;
-			imageCreateInfo.extent.depth = 1;
+			imageCreateInfo.extent = vk::Extent3D{ dim, dim, 1 };
 			imageCreateInfo.mipLevels = 1;
 			imageCreateInfo.arrayLayers = 1;
 			imageCreateInfo.samples = vk::SampleCountFlagBits::e1;

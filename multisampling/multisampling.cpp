@@ -117,9 +117,7 @@ public:
 		vk::ImageCreateInfo info = vks::initializers::imageCreateInfo();
 		info.imageType = vk::ImageType::e2D;
 		info.format = swapChain.colorFormat;
-		info.extent.width = width;
-		info.extent.height = height;
-		info.extent.depth = 1;
+		info.extent = vk::Extent3D{ width, height, 1 };
 		info.mipLevels = 1;
 		info.arrayLayers = 1;
 		info.sharingMode = vk::SharingMode::eExclusive;
@@ -162,9 +160,7 @@ public:
 		// Depth target
 		info.imageType = vk::ImageType::e2D;
 		info.format = depthFormat;
-		info.extent.width = width;
-		info.extent.height = height;
-		info.extent.depth = 1;
+		info.extent = vk::Extent3D{ width, height, 1 };
 		info.mipLevels = 1;
 		info.arrayLayers = 1;
 		info.sharingMode = vk::SharingMode::eExclusive;

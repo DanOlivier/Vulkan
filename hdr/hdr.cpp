@@ -94,7 +94,7 @@ public:
 		}
 	};
 	struct FrameBuffer {
-		int32_t width, height;
+		uint32_t width, height;
 		vk::Framebuffer frameBuffer;
 		FrameBufferAttachment color[2];
 		FrameBufferAttachment depth;
@@ -105,7 +105,7 @@ public:
 	} offscreen;
 
 	struct {
-		int32_t width, height;
+		uint32_t width, height;
 		vk::Framebuffer frameBuffer;
 		FrameBufferAttachment color[1];
 		vk::RenderPass renderPass;
@@ -279,9 +279,7 @@ public:
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
 		image.format = format;
-		image.extent.width = offscreen.width;
-		image.extent.height = offscreen.height;
-		image.extent.depth = 1;
+		image.extent = vk::Extent3D{ offscreen.width, offscreen.height, 1 };
 		image.mipLevels = 1;
 		image.arrayLayers = 1;
 		image.samples = vk::SampleCountFlagBits::e1;

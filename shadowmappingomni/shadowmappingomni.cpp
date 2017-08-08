@@ -96,7 +96,7 @@ public:
 		vk::ImageView view;
 	};
 	struct OffscreenPass {
-		int32_t width, height;
+		uint32_t width, height;
 		vk::Framebuffer frameBuffer;
 		FrameBufferAttachment color, depth;
 		vk::RenderPass renderPass;

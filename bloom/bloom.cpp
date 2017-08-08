@@ -105,7 +105,7 @@ public:
 		vk::DescriptorImageInfo descriptor;
 	};
 	struct OffscreenPass {
-		int32_t width, height;
+		uint32_t width, height;
 		vk::RenderPass renderPass;
 		vk::Sampler sampler;
 		vk::CommandBuffer commandBuffer;
@@ -182,9 +182,7 @@ public:
 		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
 		image.imageType = vk::ImageType::e2D;
 		image.format = colorFormat;
-		image.extent.width = FB_DIM;
-		image.extent.height = FB_DIM;
-		image.extent.depth = 1;
+		image.extent = vk::Extent3D{ FB_DIM, FB_DIM, 1 };
 		image.mipLevels = 1;
 		image.arrayLayers = 1;
 		image.samples = vk::SampleCountFlagBits::e1;

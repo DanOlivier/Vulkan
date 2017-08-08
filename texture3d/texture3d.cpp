@@ -250,9 +250,7 @@ public:
 		imageCreateInfo.tiling = vk::ImageTiling::eOptimal;
 		imageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled;
 		imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
-		imageCreateInfo.extent.width = texture.width;
-		imageCreateInfo.extent.height = texture.width;
-		imageCreateInfo.extent.depth = texture.depth;
+		imageCreateInfo.extent = vk::Extent3D{ texture.width, texture.width, texture.depth };
 		// Set initial layout of the image to undefined
 		imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
 		imageCreateInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;

@@ -318,9 +318,7 @@ public:
 		imgCreateInfo.imageType = vk::ImageType::e2D;
 		// Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
 		imgCreateInfo.format = vk::Format::eR8G8B8A8Unorm;
-		imgCreateInfo.extent.width = width;
-		imgCreateInfo.extent.height = height;
-		imgCreateInfo.extent.depth = 1;
+		imgCreateInfo.extent = vk::Extent3D{ width, height, 1 };
 		imgCreateInfo.arrayLayers = 1;
 		imgCreateInfo.mipLevels = 1;
 		imgCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
