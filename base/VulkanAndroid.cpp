@@ -8,9 +8,8 @@
 
 #include "VulkanAndroid.h"
 
-#if defined(__ANDROID__)
-	#include <android/log.h>
-	#include <dlfcn.h>
+#include <android/log.h>
+#include <dlfcn.h>
 
 android_app* androidApp;
 
@@ -294,5 +293,3 @@ namespace vks
 		}
 	}
 }
-
-#endif

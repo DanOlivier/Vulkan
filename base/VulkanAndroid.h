@@ -8,19 +8,7 @@
 
 #pragma once
 
-#ifndef VULKANANDROID_H
-#define VULKANANDROID_H
-
-// Vulkan needs to be loaded dynamically on android
-
-#pragma once
-
-#ifndef VULKANANDROID_HPP
-#define VULKANANDROID_HPP
-
 #include "vulkan/vulkan.h"
-
-#if defined(__ANDROID__)
 
 #include <android/log.h>
 #include <android_native_app_glue.h>
@@ -169,11 +157,3 @@ namespace vks
 		void getDeviceConfig();
 	}
 }
-
-#endif
-
-#endif // VULKANANDROID_HPP
-
-
-#endif // VULKANANDROID_H
- 

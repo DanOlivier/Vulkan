@@ -9,7 +9,14 @@
 */
 
 #include "VulkanDebug.h"
+
 #include <iostream>
+#include <sstream>
+#include <memory.h>
+
+#ifdef __ANDROID__
+#include "VulkanAndroid.h"
+#endif
 
 namespace vks
 {
