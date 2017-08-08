@@ -146,7 +146,7 @@ public:
 		buffer = vulkanDevice->logicalDevice.createBuffer(bufferInfo);
 
 		vk::MemoryRequirements memReqs;
-		vk::MemoryAllocateInfo allocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo allocInfo;
 
 		memReqs = vulkanDevice->logicalDevice.getBufferMemoryRequirements(buffer);
 		allocInfo.allocationSize = memReqs.size;
@@ -156,7 +156,7 @@ public:
 		vulkanDevice->logicalDevice.bindBufferMemory(buffer, memory, 0);
 
 		// Font texture
-		vk::ImageCreateInfo imageInfo = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageInfo;
 		imageInfo.imageType = vk::ImageType::e2D;
 		imageInfo.format = vk::Format::eR8Unorm;
 		imageInfo.extent = vk::Extent3D{ STB_FONT_WIDTH, STB_FONT_HEIGHT, 1 };
@@ -184,7 +184,7 @@ public:
 			vk::Buffer buffer;
 		} stagingBuffer;
 
-		vk::BufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo();
+		vk::BufferCreateInfo bufferCreateInfo;
 		bufferCreateInfo.size = allocInfo.allocationSize;
 		bufferCreateInfo.usage = vk::BufferUsageFlagBits::eTransferSrc;
 		bufferCreateInfo.sharingMode = vk::SharingMode::eExclusive;
@@ -212,7 +212,7 @@ public:
 		cmdBufAllocateInfo.commandBufferCount = 1;
 		copyCmd = vulkanDevice->logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 	
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 		copyCmd.begin(cmdBufInfo);
 
 		// Prepare for transfer
@@ -248,7 +248,7 @@ public:
 
 		copyCmd.end();
 
-		vk::SubmitInfo submitInfo = vks::initializers::submitInfo();
+		vk::SubmitInfo submitInfo;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &copyCmd;
 
@@ -259,7 +259,7 @@ public:
 		vulkanDevice->logicalDevice.freeMemory(stagingBuffer.memory);
 		vulkanDevice->logicalDevice.destroyBuffer(stagingBuffer.buffer);
 
-		vk::ImageViewCreateInfo imageViewInfo = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo imageViewInfo;
 		imageViewInfo.image = image;
 		imageViewInfo.viewType = vk::ImageViewType::e2D;
 		imageViewInfo.format = imageInfo.format;
@@ -591,12 +591,12 @@ public:
 	// Needs to be called by the application
 	void updateCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.extent.width = *frameBufferWidth;
 		renderPassBeginInfo.renderArea.extent.height = *frameBufferHeight;

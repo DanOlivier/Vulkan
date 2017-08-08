@@ -58,7 +58,7 @@ namespace vks
 			vk::PipelineStageFlags dstStageMask)
 		{
 			// Create an image barrier object
-			vk::ImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
+			vk::ImageMemoryBarrier imageMemoryBarrier;
 			imageMemoryBarrier.oldLayout = oldImageLayout;
 			imageMemoryBarrier.newLayout = newImageLayout;
 			imageMemoryBarrier.image = image;
@@ -198,7 +198,7 @@ namespace vks
 			vk::PipelineStageFlags dstStageMask,
 			vk::ImageSubresourceRange subresourceRange)
 		{
-			vk::ImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
+			vk::ImageMemoryBarrier imageMemoryBarrier;
 			imageMemoryBarrier.srcAccessMask = srcAccessMask;
 			imageMemoryBarrier.dstAccessMask = dstAccessMask;
 			imageMemoryBarrier.oldLayout = oldImageLayout;

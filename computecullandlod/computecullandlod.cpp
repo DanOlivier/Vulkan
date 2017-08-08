@@ -145,13 +145,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.18f, 0.27f, 0.5f, 0.0f } };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.extent.width = width;
 		renderPassBeginInfo.renderArea.extent.height = height;
@@ -270,12 +270,12 @@ public:
 
 	void buildComputeCommandBuffer()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		compute.commandBuffer.begin(cmdBufInfo);
 
 		// Add memory barrier to ensure that the indirect commands have been consumed before the compute shader updates them
-		vk::BufferMemoryBarrier bufferBarrier = vks::initializers::bufferMemoryBarrier();
+		vk::BufferMemoryBarrier bufferBarrier;
 		bufferBarrier.buffer = indirectCommandsBuffer.buffer;
 		bufferBarrier.size = indirectCommandsBuffer.descriptor.range;
 		bufferBarrier.srcAccessMask = vk::AccessFlagBits::eIndirectCommandRead;						
@@ -401,9 +401,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
@@ -725,7 +723,7 @@ public:
 		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
 		compute.fence = device.createFence(fenceCreateInfo);
 
-		vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
+		vk::SemaphoreCreateInfo semaphoreCreateInfo;
 		compute.semaphore = device.createSemaphore(semaphoreCreateInfo);
 		
 		// Build a single command buffer containing the compute dispatch commands
@@ -759,7 +757,7 @@ public:
 		device.waitForFences(compute.fence, VK_TRUE, UINT64_MAX);
 		device.resetFences(compute.fence);
 
-		vk::SubmitInfo computeSubmitInfo = vks::initializers::submitInfo();
+		vk::SubmitInfo computeSubmitInfo;
 		computeSubmitInfo.commandBufferCount = 1;
 		computeSubmitInfo.pCommandBuffers = &compute.commandBuffer;
 		computeSubmitInfo.signalSemaphoreCount = 1;

@@ -344,12 +344,12 @@ public:
 		}
 
 		// Create a semaphore used to synchronize offscreen rendering and usage
-		vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
+		vk::SemaphoreCreateInfo semaphoreCreateInfo;
 		offscreenSemaphore = device.createSemaphore(semaphoreCreateInfo);
 
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		std::array<vk::ClearValue, 4> clearValues = {};
 		vk::Viewport viewport;
 		vk::Rect2D scissor;
@@ -465,13 +465,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 0.0f } };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -853,9 +853,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
@@ -924,9 +922,7 @@ public:
 		// Blend attachment states required for all color attachments
 		// This is important, as color write mask will otherwise be 0x0 and you
 		// won't see anything rendered to the attachment
-		vk::PipelineColorBlendAttachmentState tmp = vks::initializers::pipelineColorBlendAttachmentState(
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-			VK_FALSE);
+		vk::PipelineColorBlendAttachmentState tmp = vks::initializers::pipelineColorBlendAttachmentState();
 		std::array<vk::PipelineColorBlendAttachmentState, 3> blendAttachmentStates = { tmp, tmp, tmp };
 
 		colorBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());

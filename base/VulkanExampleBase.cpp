@@ -140,7 +140,7 @@ vk::CommandBuffer VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel 
 	// If requested, also start the new command buffer
 	if (begin)
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 		cmdBuffer.begin(cmdBufInfo);
 	}
 
@@ -902,7 +902,7 @@ void VulkanExampleBase::initVulkan()
 	swapChain.connect(instance, physicalDevice, device);
 
 	// Create synchronization objects
-	vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
+	vk::SemaphoreCreateInfo semaphoreCreateInfo;
 	// Create a semaphore used to synchronize image presentation
 	// Ensures that the image is displayed before we start submitting new commands to the queu
 	semaphores.presentComplete = device.createSemaphore(semaphoreCreateInfo);
@@ -917,7 +917,7 @@ void VulkanExampleBase::initVulkan()
 	// Set up submit info structure
 	// Semaphores will stay the same during application lifetime
 	// Command buffer submission info is set by each example
-	submitInfo = vks::initializers::submitInfo();
+	submitInfo = vk::SubmitInfo();
 	submitInfo.pWaitDstStageMask = &submitPipelineStages;
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = &semaphores.presentComplete;

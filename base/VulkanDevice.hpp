@@ -350,7 +350,7 @@ namespace vks
 
 			// Create the memory backing up the buffer handle
 			vk::MemoryRequirements memReqs;
-			vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+			vk::MemoryAllocateInfo memAlloc;
 			memReqs = logicalDevice.getBufferMemoryRequirements(*buffer);
 			memAlloc.allocationSize = memReqs.size;
 			// Find a memory type index that fits the properties of the buffer
@@ -366,7 +366,7 @@ namespace vks
 				// If host coherency hasn't been requested, do a manual flush to make writes visible
 				if (~(memoryPropertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent))
 				{
-					vk::MappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
+					vk::MappedMemoryRange mappedRange;
 					mappedRange.memory = *memory;
 					mappedRange.offset = 0;
 					mappedRange.size = size;
@@ -402,7 +402,7 @@ namespace vks
 
 			// Create the memory backing up the buffer handle
 			vk::MemoryRequirements memReqs;
-			vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+			vk::MemoryAllocateInfo memAlloc;
 			memReqs = logicalDevice.getBufferMemoryRequirements(buffer->buffer);
 			memAlloc.allocationSize = memReqs.size;
 			// Find a memory type index that fits the properties of the buffer
@@ -497,7 +497,7 @@ namespace vks
 			// If requested, also start recording for the new command buffer
 			if (begin)
 			{
-				vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+				vk::CommandBufferBeginInfo cmdBufInfo;
 				cmdBuffer.begin(cmdBufInfo);
 			}
 
@@ -523,12 +523,12 @@ namespace vks
 
 			commandBuffer.end();
 
-			vk::SubmitInfo submitInfo = vks::initializers::submitInfo();
+			vk::SubmitInfo submitInfo;
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &commandBuffer;
 
 			// Create fence to ensure that the command buffer has finished executing
-			vk::FenceCreateInfo fenceInfo = vks::initializers::fenceCreateInfo();
+			vk::FenceCreateInfo fenceInfo;
 			vk::Fence fence;
 			fence = logicalDevice.createFence(fenceInfo);
 			

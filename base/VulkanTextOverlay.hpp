@@ -191,7 +191,7 @@ public:
 		vertexBuffer.map();
 
 		// Font texture
-		vk::ImageCreateInfo imageInfo = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageInfo;
 		imageInfo.imageType = vk::ImageType::e2D;
 		imageInfo.format = vk::Format::eR8Unorm;
 		imageInfo.extent = vk::Extent3D{ STB_FONT_WIDTH, STB_FONT_HEIGHT, 1 };
@@ -205,7 +205,7 @@ public:
 		image = vulkanDevice->logicalDevice.createImage(imageInfo);
 
 		vk::MemoryRequirements memReqs;
-		vk::MemoryAllocateInfo allocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo allocInfo;
 		memReqs = vulkanDevice->logicalDevice.getImageMemoryRequirements(image);
 		allocInfo.allocationSize = memReqs.size;
 		allocInfo.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -230,7 +230,7 @@ public:
 		cmdBufAllocateInfo.commandBufferCount = 1;
 		copyCmd = vulkanDevice->logicalDevice.allocateCommandBuffers(cmdBufAllocateInfo)[0];
 
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 		copyCmd.begin(cmdBufInfo);
 
 		// Prepare for transfer
@@ -266,7 +266,7 @@ public:
 
 		copyCmd.end();
 
-		vk::SubmitInfo submitInfo = vks::initializers::submitInfo();
+		vk::SubmitInfo submitInfo;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &copyCmd;
 
@@ -277,7 +277,7 @@ public:
 
 		vulkanDevice->logicalDevice.freeCommandBuffers(commandPool, copyCmd);
 
-		vk::ImageViewCreateInfo imageViewInfo = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo imageViewInfo;
 		imageViewInfo.image = image;
 		imageViewInfo.viewType = vk::ImageViewType::e2D;
 		imageViewInfo.format = imageInfo.format;
@@ -286,7 +286,7 @@ public:
 		view = vulkanDevice->logicalDevice.createImageView(imageViewInfo);
 
 		// Sampler
-		vk::SamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
+		vk::SamplerCreateInfo samplerInfo;
 		samplerInfo.magFilter = vk::Filter::eLinear;
 		samplerInfo.minFilter = vk::Filter::eLinear;
 		samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
@@ -357,7 +357,7 @@ public:
 		pipelineCache = vulkanDevice->logicalDevice.createPipelineCache(pipelineCacheCreateInfo);
 
 		// Command buffer execution fence
-		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo();
+		vk::FenceCreateInfo fenceCreateInfo;
 		fence = vulkanDevice->logicalDevice.createFence(fenceCreateInfo);
 	}
 
@@ -635,9 +635,9 @@ public:
 	*/
 	void updateCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.extent.width = *frameBufferWidth;
 		renderPassBeginInfo.renderArea.extent.height = *frameBufferHeight;

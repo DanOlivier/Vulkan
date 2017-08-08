@@ -99,12 +99,12 @@ public:
 
 		// Create font texture
 		unsigned char* fontData;
-		uint32_t texWidth, texHeight;
+		int32_t texWidth, texHeight;
 		io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
 		vk::DeviceSize uploadSize = texWidth*texHeight * 4 * sizeof(char);
 
 		// Create target image for copy
-		vk::ImageCreateInfo imageInfo = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageInfo;
 		imageInfo.imageType = vk::ImageType::e2D;
 		imageInfo.format = vk::Format::eR8G8B8A8Unorm;
 		imageInfo.extent = vk::Extent3D{ texWidth, texHeight, 1 };
@@ -118,14 +118,14 @@ public:
 		fontImage = device->logicalDevice.createImage(imageInfo);
 		vk::MemoryRequirements memReqs;
 		memReqs = device->logicalDevice.getImageMemoryRequirements(fontImage);
-		vk::MemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAllocInfo;
 		memAllocInfo.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex = device->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 		fontMemory = device->logicalDevice.allocateMemory(memAllocInfo);
 		device->logicalDevice.bindImageMemory(fontImage, fontMemory, 0);
 
 		// Image view
-		vk::ImageViewCreateInfo viewInfo = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo viewInfo;
 		viewInfo.image = fontImage;
 		viewInfo.viewType = vk::ImageViewType::e2D;
 		viewInfo.format = vk::Format::eR8G8B8A8Unorm;
@@ -516,13 +516,13 @@ public:
 	
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.2f, 0.2f, 0.2f, 1.0f} };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -623,9 +623,7 @@ public:
 			vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eFront, vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);

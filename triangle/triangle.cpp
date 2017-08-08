@@ -200,7 +200,7 @@ public:
 		// If requested, also start the new command buffer
 		if (begin)
 		{
-			vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+			vk::CommandBufferBeginInfo cmdBufInfo;
 			cmdBuffer.begin(cmdBufInfo);
 		}
 

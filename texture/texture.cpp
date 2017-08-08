@@ -104,7 +104,7 @@ public:
 	void setImageLayout(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageAspectFlags aspectMask, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout, vk::ImageSubresourceRange subresourceRange)
 	{
 		// Create an image barrier object
-		vk::ImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();;
+		vk::ImageMemoryBarrier imageMemoryBarrier;;
 		imageMemoryBarrier.oldLayout = oldImageLayout;
 		imageMemoryBarrier.newLayout = newImageLayout;
 		imageMemoryBarrier.image = image;
@@ -223,7 +223,7 @@ public:
 			useStaging = !(formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage);
 		}
 
-		vk::MemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAllocInfo;
 		vk::MemoryRequirements memReqs = {};
 
 		if (useStaging)
@@ -232,7 +232,7 @@ public:
 			vk::Buffer stagingBuffer;
 			vk::DeviceMemory stagingMemory;
 
-			vk::BufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo();
+			vk::BufferCreateInfo bufferCreateInfo;
 			bufferCreateInfo.size = tex2D.size();
 			// This buffer is used as a transfer source for the buffer copy
 			bufferCreateInfo.usage = vk::BufferUsageFlagBits::eTransferSrc;
@@ -277,7 +277,7 @@ public:
 			}
 
 			// Create optimal tiled target image
-			vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
+			vk::ImageCreateInfo imageCreateInfo;
 			imageCreateInfo.imageType = vk::ImageType::e2D;
 			imageCreateInfo.format = format;
 			imageCreateInfo.mipLevels = texture.mipLevels;
@@ -354,7 +354,7 @@ public:
 			vk::DeviceMemory mappableMemory;
 
 			// Load mip map level 0 to linear tiling image
-			vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
+			vk::ImageCreateInfo imageCreateInfo;
 			imageCreateInfo.imageType = vk::ImageType::e2D;
 			imageCreateInfo.format = format;
 			imageCreateInfo.mipLevels = 1;
@@ -438,7 +438,7 @@ public:
 		// In Vulkan textures are accessed by samplers
 		// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different settings
 		// Note: Similar to the samplers available with OpenGL 3.3
-		vk::SamplerCreateInfo sampler = vks::initializers::samplerCreateInfo();
+		vk::SamplerCreateInfo sampler;
 		sampler.magFilter = vk::Filter::eLinear;
 		sampler.minFilter = vk::Filter::eLinear;
 		sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
@@ -471,7 +471,7 @@ public:
 		// Textures are not directly accessed by the shaders and
 		// are abstracted by image views containing additional
 		// information and sub resource ranges
-		vk::ImageViewCreateInfo view = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo view;
 		view.viewType = vk::ImageViewType::e2D;
 		view.format = format;
 		view.components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA };
@@ -500,13 +500,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;

@@ -17,21 +17,6 @@ namespace vks
 {
 	namespace initializers
 	{
-
-		inline vk::MemoryAllocateInfo memoryAllocateInfo()
-		{
-			vk::MemoryAllocateInfo memAllocInfo {};
-
-			return memAllocInfo;
-		}
-
-		inline vk::MappedMemoryRange mappedMemoryRange()
-		{
-			vk::MappedMemoryRange mappedMemoryRange {};
-
-			return mappedMemoryRange;
-		}
-
 		inline vk::CommandBufferAllocateInfo commandBufferAllocateInfo(
 			vk::CommandPool commandPool, 
 			vk::CommandBufferLevel level, 
@@ -45,75 +30,6 @@ namespace vks
 			return commandBufferAllocateInfo;
 		}
 
-		inline vk::CommandPoolCreateInfo commandPoolCreateInfo()
-		{
-			vk::CommandPoolCreateInfo cmdPoolCreateInfo {};
-
-			return cmdPoolCreateInfo;
-		}
-
-		inline vk::CommandBufferBeginInfo commandBufferBeginInfo()
-		{
-			vk::CommandBufferBeginInfo cmdBufferBeginInfo {};
-
-			return cmdBufferBeginInfo;
-		}
-
-		inline vk::CommandBufferInheritanceInfo commandBufferInheritanceInfo()
-		{
-			vk::CommandBufferInheritanceInfo cmdBufferInheritanceInfo {};
-
-			return cmdBufferInheritanceInfo;
-		}
-
-		inline vk::RenderPassBeginInfo renderPassBeginInfo()
-		{
-			vk::RenderPassBeginInfo renderPassBeginInfo {};
-
-			return renderPassBeginInfo;
-		}
-
-		inline vk::RenderPassCreateInfo renderPassCreateInfo()
-		{
-			vk::RenderPassCreateInfo renderPassCreateInfo {};
-
-			return renderPassCreateInfo;
-		}
-
-		/** @brief Initialize an image memory barrier with no image transfer ownership */
-		inline vk::ImageMemoryBarrier imageMemoryBarrier()
-		{
-			vk::ImageMemoryBarrier imageMemoryBarrier {};
-
-			imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			return imageMemoryBarrier;
-		}
-
-		/** @brief Initialize a buffer memory barrier with no image transfer ownership */
-		inline vk::BufferMemoryBarrier bufferMemoryBarrier()
-		{
-			vk::BufferMemoryBarrier bufferMemoryBarrier {};
-
-			bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			return bufferMemoryBarrier;
-		}
-
-		inline vk::MemoryBarrier memoryBarrier()
-		{
-			vk::MemoryBarrier memoryBarrier {};
-
-			return memoryBarrier;
-		}
-
-		inline vk::ImageCreateInfo imageCreateInfo()
-		{
-			vk::ImageCreateInfo imageCreateInfo {};
-
-			return imageCreateInfo;
-		}
-
 		inline vk::SamplerCreateInfo samplerCreateInfo()
 		{
 			vk::SamplerCreateInfo samplerCreateInfo {};
@@ -122,47 +38,12 @@ namespace vks
 			return samplerCreateInfo;
 		}
 
-		inline vk::ImageViewCreateInfo imageViewCreateInfo()
-		{
-			vk::ImageViewCreateInfo imageViewCreateInfo {};
-
-			return imageViewCreateInfo;
-		}
-
-		inline vk::FramebufferCreateInfo framebufferCreateInfo()
-		{
-			vk::FramebufferCreateInfo framebufferCreateInfo {};
-
-			return framebufferCreateInfo;
-		}
-
-		inline vk::SemaphoreCreateInfo semaphoreCreateInfo()
-		{
-			vk::SemaphoreCreateInfo semaphoreCreateInfo {};
-
-			return semaphoreCreateInfo;
-		}
-
 		inline vk::FenceCreateInfo fenceCreateInfo(vk::FenceCreateFlags flags = vk::FenceCreateFlags())
 		{
 			vk::FenceCreateInfo fenceCreateInfo {};
 
 			fenceCreateInfo.flags = flags;
 			return fenceCreateInfo;
-		}
-
-		inline vk::EventCreateInfo eventCreateInfo()
-		{
-			vk::EventCreateInfo eventCreateInfo {};
-
-			return eventCreateInfo;
-		}
-
-		inline vk::SubmitInfo submitInfo()
-		{
-			vk::SubmitInfo submitInfo {};
-
-			return submitInfo;
 		}
 
 		inline vk::Viewport viewport(
@@ -180,24 +61,15 @@ namespace vks
 		}
 
 		inline vk::Rect2D rect2D(
-			int32_t width,
-			int32_t height,
+			uint32_t width,
+			uint32_t height,
 			int32_t offsetX,
 			int32_t offsetY)
 		{
 			vk::Rect2D rect2D {};
-			rect2D.extent.width = width;
-			rect2D.extent.height = height;
-			rect2D.offset.x = offsetX;
-			rect2D.offset.y = offsetY;
+			rect2D.extent = vk::Extent2D{ width, height };
+			rect2D.offset = vk::Offset2D{ offsetX, offsetY };
 			return rect2D;
-		}
-
-		inline vk::BufferCreateInfo bufferCreateInfo()
-		{
-			vk::BufferCreateInfo bufCreateInfo {};
-
-			return bufCreateInfo;
 		}
 
 		inline vk::BufferCreateInfo bufferCreateInfo(
@@ -421,8 +293,8 @@ namespace vks
 		}
 
 		inline vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
-			vk::ColorComponentFlags colorWriteMask,
-			vk::Bool32 blendEnable)
+			vk::ColorComponentFlags colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+			vk::Bool32 blendEnable = VK_FALSE)
 		{
 			vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState {};
 			pipelineColorBlendAttachmentState.colorWriteMask = colorWriteMask;

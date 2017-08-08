@@ -178,7 +178,7 @@ public:
 		assert(validDepthFormat);
 
 		// Color attachment
-		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo image;
 		image.imageType = vk::ImageType::e2D;
 		image.format = FB_COLOR_FORMAT;
 		image.extent = vk::Extent3D{ offscreenPass.width, offscreenPass.height, 1 };
@@ -189,7 +189,7 @@ public:
 		// We will sample directly from the color attachment
 		image.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
 
-		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAlloc;
 		vk::MemoryRequirements memReqs;
 
 		offscreenPass.color.image = device.createImage(image);
@@ -199,7 +199,7 @@ public:
 		offscreenPass.color.mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(offscreenPass.color.image, offscreenPass.color.mem, 0);
 
-		vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo colorImageView;
 		colorImageView.viewType = vk::ImageViewType::e2D;
 		colorImageView.format = FB_COLOR_FORMAT;
 		//colorImageView.subresourceRange = {};
@@ -212,7 +212,7 @@ public:
 		offscreenPass.color.view = device.createImageView(colorImageView);
 
 		// Create sampler to sample from the attachment in the fragment shader
-		vk::SamplerCreateInfo samplerInfo = vks::initializers::samplerCreateInfo();
+		vk::SamplerCreateInfo samplerInfo;
 		samplerInfo.magFilter = vk::Filter::eLinear;
 		samplerInfo.minFilter = vk::Filter::eLinear;
 		samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
@@ -237,7 +237,7 @@ public:
 		offscreenPass.depth.mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(offscreenPass.depth.image, offscreenPass.depth.mem, 0);
 
-		vk::ImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo depthStencilView;
 		depthStencilView.viewType = vk::ImageViewType::e2D;
 		depthStencilView.format = fbDepthFormat;
 		//depthStencilView.flags = 0;
@@ -316,7 +316,7 @@ public:
 		attachments[0] = offscreenPass.color.view;
 		attachments[1] = offscreenPass.depth.view;
 
-		vk::FramebufferCreateInfo fbufCreateInfo = vks::initializers::framebufferCreateInfo();
+		vk::FramebufferCreateInfo fbufCreateInfo;
 		fbufCreateInfo.renderPass = offscreenPass.renderPass;
 		fbufCreateInfo.attachmentCount = 2;
 		fbufCreateInfo.pAttachments = attachments;
@@ -342,17 +342,17 @@ public:
 		if (!offscreenPass.semaphore)
 		{
 			// Create a semaphore used to synchronize offscreen rendering and usage
-			vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
+			vk::SemaphoreCreateInfo semaphoreCreateInfo;
 			offscreenPass.semaphore = device.createSemaphore(semaphoreCreateInfo);
 		}
 
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = offscreenPass.renderPass;
 		renderPassBeginInfo.framebuffer = offscreenPass.frameBuffer;
 		renderPassBeginInfo.renderArea.extent.width = offscreenPass.width;
@@ -396,13 +396,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -730,9 +730,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(

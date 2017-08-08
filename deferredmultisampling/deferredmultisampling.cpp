@@ -245,7 +245,7 @@ public:
 
 		//assert(aspectMask > 0);
 
-		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo image;
 		image.imageType = vk::ImageType::e2D;
 		image.format = format;
 		image.extent = vk::Extent3D{ offScreenFrameBuf.width, offScreenFrameBuf.height, 1 };
@@ -255,7 +255,7 @@ public:
 		image.tiling = vk::ImageTiling::eOptimal;
 		image.usage = usage | vk::ImageUsageFlagBits::eSampled;
 
-		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAlloc;
 		vk::MemoryRequirements memReqs;
 
 		attachment->image = device.createImage(image);
@@ -265,7 +265,7 @@ public:
 		attachment->mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(attachment->image, attachment->mem, 0);
 		
-		vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo imageView;
 		imageView.viewType = vk::ImageViewType::e2D;
 		imageView.format = format;
 		//imageView.subresourceRange = {};
@@ -421,7 +421,7 @@ public:
 		offScreenFrameBuf.frameBuffer = device.createFramebuffer(fbufCreateInfo);
 
 		// Create sampler to sample from the color attachments
-		vk::SamplerCreateInfo sampler = vks::initializers::samplerCreateInfo();
+		vk::SamplerCreateInfo sampler;
 		sampler.magFilter = vk::Filter::eNearest;
 		sampler.minFilter = vk::Filter::eNearest;
 		sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
@@ -445,10 +445,10 @@ public:
 		}
 
 		// Create a semaphore used to synchronize offscreen rendering and usage
-		vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
+		vk::SemaphoreCreateInfo semaphoreCreateInfo;
 		offscreenSemaphore = device.createSemaphore(semaphoreCreateInfo);
 
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		// Clear values for all attachments written in the fragment sahder
 		std::array<vk::ClearValue,4> clearValues;
@@ -456,7 +456,7 @@ public:
 		clearValues[2].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[3].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass =  offScreenFrameBuf.renderPass;
 		renderPassBeginInfo.framebuffer = offScreenFrameBuf.frameBuffer;
 		renderPassBeginInfo.renderArea.extent.width = offScreenFrameBuf.width;
@@ -508,13 +508,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 0.0f } };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -857,9 +857,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
@@ -960,9 +958,7 @@ public:
 		// Blend attachment states required for all color attachments
 		// This is important, as color write mask will otherwise be 0x0 and you
 		// won't see anything rendered to the attachment
-		vk::PipelineColorBlendAttachmentState tmp = vks::initializers::pipelineColorBlendAttachmentState(
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-			VK_FALSE);
+		vk::PipelineColorBlendAttachmentState tmp = vks::initializers::pipelineColorBlendAttachmentState();
 		std::array<vk::PipelineColorBlendAttachmentState, 3> blendAttachmentStates = {
 			tmp, tmp, tmp
 		};

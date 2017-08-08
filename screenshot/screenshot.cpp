@@ -73,13 +73,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -187,9 +187,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
@@ -314,7 +312,7 @@ public:
 		vk::Image srcImage = swapChain.images[currentBuffer];
 	
 		// Create the linear tiled destination image to copy to and to read the memory from
-		vk::ImageCreateInfo imgCreateInfo(vks::initializers::imageCreateInfo());
+		vk::ImageCreateInfo imgCreateInfo;
 		imgCreateInfo.imageType = vk::ImageType::e2D;
 		// Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
 		imgCreateInfo.format = vk::Format::eR8G8B8A8Unorm;
@@ -330,7 +328,7 @@ public:
 		dstImage = device.createImage(imgCreateInfo);
 		// Create memory to back up the image
 		vk::MemoryRequirements memRequirements;
-		vk::MemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
+		vk::MemoryAllocateInfo memAllocInfo;
 		vk::DeviceMemory dstImageMemory;
 		memRequirements = device.getImageMemoryRequirements(dstImage);
 		memAllocInfo.allocationSize = memRequirements.size;
@@ -342,7 +340,7 @@ public:
 		// Do the actual blit from the swapchain image to our host visible destination image
 		vk::CommandBuffer copyCmd = vulkanDevice->createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
 
-		//vk::ImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
+		//vk::ImageMemoryBarrier imageMemoryBarrier;
 		
 		// Transition destination image to transfer destination layout
 		vks::tools::insertImageMemoryBarrier(

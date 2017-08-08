@@ -189,7 +189,7 @@ public:
 			ThreadData *thread = &threadData[i];
 			
 			// Create one command pool for each thread
-			vk::CommandPoolCreateInfo cmdPoolInfo = vks::initializers::commandPoolCreateInfo();
+			vk::CommandPoolCreateInfo cmdPoolInfo;
 			cmdPoolInfo.queueFamilyIndex = swapChain.queueNodeIndex;
 			cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
 			thread->commandPool = device.createCommandPool(cmdPoolInfo);
@@ -239,7 +239,7 @@ public:
 			return;
 		}
 
-		vk::CommandBufferBeginInfo commandBufferBeginInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo commandBufferBeginInfo;
 		commandBufferBeginInfo.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 		commandBufferBeginInfo.pInheritanceInfo = &inheritanceInfo;
 
@@ -294,7 +294,7 @@ public:
 	void updateSecondaryCommandBuffer(vk::CommandBufferInheritanceInfo inheritanceInfo)
 	{
 		// Secondary command buffer for the sky sphere
-		vk::CommandBufferBeginInfo commandBufferBeginInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo commandBufferBeginInfo;
 		commandBufferBeginInfo.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 		commandBufferBeginInfo.pInheritanceInfo = &inheritanceInfo;
 
@@ -335,14 +335,14 @@ public:
 	// lat submitted to the queue for rendering
 	void updateCommandBuffers(vk::Framebuffer frameBuffer)
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{0.0f, 0.0f, 0.2f, 0.0f} };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -361,7 +361,7 @@ public:
 		primaryCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eSecondaryCommandBuffers);
 
 		// Inheritance info for the secondary command buffers
-		vk::CommandBufferInheritanceInfo inheritanceInfo = vks::initializers::commandBufferInheritanceInfo();
+		vk::CommandBufferInheritanceInfo inheritanceInfo;
 		inheritanceInfo.renderPass = renderPass;
 		// Secondary command buffer also use the currently active framebuffer
 		inheritanceInfo.framebuffer = frameBuffer;
@@ -487,9 +487,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
@@ -587,7 +585,7 @@ public:
 	{
 		VulkanExampleBase::prepare();
 		// Create a fence for synchronization
-		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo();
+		vk::FenceCreateInfo fenceCreateInfo;
 		renderFence = device.createFence(fenceCreateInfo);
 		loadMeshes();
 		setupVertexDescriptions();

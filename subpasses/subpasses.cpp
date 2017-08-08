@@ -190,7 +190,7 @@ public:
 
 		//assert(aspectMask > 0);
 
-		vk::ImageCreateInfo image = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo image;
 		image.imageType = vk::ImageType::e2D;
 		image.format = format;
 		image.extent = vk::Extent3D{ width, height, 1 };
@@ -201,7 +201,7 @@ public:
 		image.usage = usage | vk::ImageUsageFlagBits::eInputAttachment;	// vk::ImageUsageFlagBits::eInputAttachment flag is required for input attachments;
 		image.initialLayout = vk::ImageLayout::eUndefined;
 
-		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAlloc;
 		vk::MemoryRequirements memReqs;
 
 		attachment->image = device.createImage(image);
@@ -211,7 +211,7 @@ public:
 		attachment->mem = device.allocateMemory(memAlloc);
 		device.bindImageMemory(attachment->image, attachment->mem, 0);
 
-		vk::ImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo imageView;
 		imageView.viewType = vk::ImageViewType::e2D;
 		imageView.format = format;
 		//imageView.subresourceRange = {};
@@ -415,7 +415,7 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[5];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
@@ -424,7 +424,7 @@ public:
 		clearValues[3].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } };
 		clearValues[4].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -632,9 +632,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
@@ -681,9 +679,7 @@ public:
 		pipelineCreateInfo.pStages = shaderStages.data();
 		pipelineCreateInfo.subpass = 0;
 
-		vk::PipelineColorBlendAttachmentState def = vks::initializers::pipelineColorBlendAttachmentState(
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-			VK_FALSE);
+		vk::PipelineColorBlendAttachmentState def = vks::initializers::pipelineColorBlendAttachmentState();
 		std::array<vk::PipelineColorBlendAttachmentState, 4> blendAttachmentStates = { def, def, def, def };
 
 		colorBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());
@@ -798,9 +794,7 @@ public:
 			vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(1,	&blendAttachmentState);

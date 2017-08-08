@@ -69,7 +69,7 @@ struct VirtualTexturePage
 
 		imageMemoryBind = vk::SparseImageMemoryBind();
 
-		vk::MemoryAllocateInfo allocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo allocInfo;
 		allocInfo.allocationSize = size;
 		allocInfo.memoryTypeIndex = memoryTypeIndex;
 		imageMemoryBind.memory = device.allocateMemory(allocInfo);
@@ -322,7 +322,7 @@ public:
 		}
 
 		// Create sparse image
-		vk::ImageCreateInfo sparseImageCreateInfo = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo sparseImageCreateInfo;
 		sparseImageCreateInfo.imageType = vk::ImageType::e2D;
 		sparseImageCreateInfo.format = texture.format;
 		sparseImageCreateInfo.mipLevels = texture.mipLevels;
@@ -471,7 +471,7 @@ public:
 			if ((!singleMipTail) && (sparseMemoryReq.imageMipTailFirstLod < texture.mipLevels))
 			{
 				// Allocate memory for the mip tail
-				vk::MemoryAllocateInfo allocInfo = vks::initializers::memoryAllocateInfo();
+				vk::MemoryAllocateInfo allocInfo;
 				allocInfo.allocationSize = sparseMemoryReq.imageMipTailSize;
 				allocInfo.memoryTypeIndex = memoryTypeIndex;
 
@@ -496,7 +496,7 @@ public:
 		if ((sparseMemoryReq.formatProperties.flags & vk::SparseImageFormatFlagBits::eSingleMiptail) && (sparseMemoryReq.imageMipTailFirstLod < texture.mipLevels))
 		{
 			// Allocate memory for the mip tail
-			vk::MemoryAllocateInfo allocInfo = vks::initializers::memoryAllocateInfo();
+			vk::MemoryAllocateInfo allocInfo;
 			allocInfo.allocationSize = sparseMemoryReq.imageMipTailSize;
 			allocInfo.memoryTypeIndex = memoryTypeIndex;
 
@@ -513,7 +513,7 @@ public:
 		}
 
 		// Create signal semaphore for sparse binding
-		vk::SemaphoreCreateInfo semaphoreCreateInfo = vks::initializers::semaphoreCreateInfo();
+		vk::SemaphoreCreateInfo semaphoreCreateInfo;
 		bindSparseSemaphore = device.createSemaphore(semaphoreCreateInfo);
 
 		// Prepare bind sparse info for reuse in queue submission
@@ -526,7 +526,7 @@ public:
 		queue.waitIdle();
 
 		// Create sampler
-		vk::SamplerCreateInfo sampler = vks::initializers::samplerCreateInfo();
+		vk::SamplerCreateInfo sampler;
 		sampler.magFilter = vk::Filter::eLinear;
 		sampler.minFilter = vk::Filter::eLinear;
 		sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
@@ -544,7 +544,7 @@ public:
 		texture.sampler = device.createSampler(sampler);
 
 		// Create image view
-		vk::ImageViewCreateInfo view = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo view;
 		view.viewType = vk::ImageViewType::e2D;
 		view.format = format;
 		view.components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA };
@@ -576,13 +576,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 1.0f } };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;

@@ -150,13 +150,13 @@ public:
 			createCommandBuffers();
 		}
 
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };;
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -210,13 +210,13 @@ public:
 	// todo: check barriers (validation, separate compute queue)
 	void buildComputeCommandBuffer()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		for (uint32_t i = 0; i < 2; i++) {
 
 			compute.commandBuffers[i].begin(cmdBufInfo);
 
-			vk::BufferMemoryBarrier bufferBarrier = vks::initializers::bufferMemoryBarrier();
+			vk::BufferMemoryBarrier bufferBarrier;
 			bufferBarrier.srcAccessMask = vk::AccessFlagBits::eVertexAttributeRead;
 			bufferBarrier.dstAccessMask = vk::AccessFlagBits::eShaderWrite;
 			bufferBarrier.srcQueueFamilyIndex = vulkanDevice->queueFamilyIndices.graphics;
@@ -457,9 +457,7 @@ public:
 			vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
@@ -695,7 +693,7 @@ public:
 		device.waitForFences(compute.fence, VK_TRUE, UINT64_MAX);
 		device.resetFences(compute.fence);
 
-		vk::SubmitInfo computeSubmitInfo = vks::initializers::submitInfo();
+		vk::SubmitInfo computeSubmitInfo;
 		computeSubmitInfo.commandBufferCount = 1;
 		computeSubmitInfo.pCommandBuffers = &compute.commandBuffers[readSet];
 

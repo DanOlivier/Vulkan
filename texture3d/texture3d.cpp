@@ -241,7 +241,7 @@ public:
 		}
 
 		// Create optimal tiled target image
-		vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageCreateInfo;
 		imageCreateInfo.imageType = vk::ImageType::e3D;
 		imageCreateInfo.format = texture.format;
 		imageCreateInfo.mipLevels = texture.mipLevels;
@@ -257,7 +257,7 @@ public:
 		texture.image = device.createImage(imageCreateInfo);
 
 		// Device local memory to back up image
-		vk::MemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAllocInfo;
 		vk::MemoryRequirements memReqs = {};
 		memReqs = device.getImageMemoryRequirements(texture.image);
 		memAllocInfo.allocationSize = memReqs.size;
@@ -266,7 +266,7 @@ public:
 		device.bindImageMemory(texture.image, texture.deviceMemory, 0);
 
 		// Create sampler
-		vk::SamplerCreateInfo sampler = vks::initializers::samplerCreateInfo();
+		vk::SamplerCreateInfo sampler;
 		sampler.magFilter = vk::Filter::eLinear;
 		sampler.minFilter = vk::Filter::eLinear;
 		sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
@@ -283,7 +283,7 @@ public:
 		texture.sampler = device.createSampler(sampler);
 
 		// Create image view
-		vk::ImageViewCreateInfo view = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo view;
 		view.image = texture.image;
 		view.viewType = vk::ImageViewType::e3D;
 		view.format = texture.format;
@@ -354,14 +354,14 @@ public:
 		vk::DeviceMemory stagingMemory;
 
 		// Buffer object
-		vk::BufferCreateInfo bufferCreateInfo = vks::initializers::bufferCreateInfo();
+		vk::BufferCreateInfo bufferCreateInfo;
 		bufferCreateInfo.size = texMemSize;
 		bufferCreateInfo.usage = vk::BufferUsageFlagBits::eTransferSrc;
 		bufferCreateInfo.sharingMode = vk::SharingMode::eExclusive;			
 		stagingBuffer = device.createBuffer(bufferCreateInfo);
 
 		// Allocate host visible memory for data upload
-		vk::MemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAllocInfo;
 		vk::MemoryRequirements memReqs = {};
 		memReqs = device.getBufferMemoryRequirements(stagingBuffer);
 		memAllocInfo.allocationSize = memReqs.size;
@@ -445,13 +445,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;

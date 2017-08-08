@@ -114,7 +114,7 @@ public:
 			(uint32_t(deviceProperties.limits.framebufferDepthSampleCounts) >= uint32_t(sampleCount)));
 
 		// Color target
-		vk::ImageCreateInfo info = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo info;
 		info.imageType = vk::ImageType::e2D;
 		info.format = swapChain.colorFormat;
 		info.extent = vk::Extent3D{ width, height, 1 };
@@ -131,7 +131,7 @@ public:
 
 		vk::MemoryRequirements memReqs;
 		memReqs = device.getImageMemoryRequirements(multisampleTarget.color.image);
-		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAlloc;
 		memAlloc.allocationSize = memReqs.size;
 		// We prefer a lazily allocated memory type
 		// This means that the memory gets allocated when the implementation sees fit, e.g. when first using the images
@@ -146,7 +146,7 @@ public:
 		vkBindImageMemory(device, multisampleTarget.color.image, multisampleTarget.color.memory, 0);
 
 		// Create image view for the MSAA target
-		vk::ImageViewCreateInfo viewInfo = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo viewInfo;
 		viewInfo.image = multisampleTarget.color.image;
 		viewInfo.viewType = vk::ImageViewType::e2D;
 		viewInfo.format = swapChain.colorFormat;
@@ -173,7 +173,7 @@ public:
 		multisampleTarget.depth.image = device.createImage(info);
 
 		memReqs = device.getImageMemoryRequirements(multisampleTarget.depth.image);
-		memAlloc = vks::initializers::memoryAllocateInfo();
+		memAlloc = vk::MemoryAllocateInfo();
 		memAlloc.allocationSize = memReqs.size;
 
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eLazilyAllocated, &lazyMemTypePresent);
@@ -287,7 +287,7 @@ public:
 		dependencies[1].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
 		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
-		vk::RenderPassCreateInfo renderPassInfo = vks::initializers::renderPassCreateInfo();
+		vk::RenderPassCreateInfo renderPassInfo;
 		renderPassInfo.attachmentCount = attachments.size();
 		renderPassInfo.pAttachments = attachments.data();
 		renderPassInfo.subpassCount = 1;
@@ -343,7 +343,7 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[3];
 		// Clear to a white background for higher contrast
@@ -351,7 +351,7 @@ public:
 		clearValues[1].color = vk::ClearColorValue{ std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f } };
 		clearValues[2].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.extent.width = width;
 		renderPassBeginInfo.renderArea.extent.height = height;
@@ -551,9 +551,7 @@ public:
 				vk::FrontFace::eClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(

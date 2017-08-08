@@ -161,13 +161,13 @@ public:
 
 	void buildCommandBuffers()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.1f, 0.1f, 0.1f, 1.0f } };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -308,9 +308,7 @@ public:
 			vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
@@ -401,7 +399,7 @@ public:
 		const int32_t dim = 512;
 
 		// Image
-		vk::ImageCreateInfo imageCI = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageCI;
 		imageCI.imageType = vk::ImageType::e2D;
 		imageCI.format = format;
 		imageCI.extent = vk::Extent3D{ dim, dim, 1 };
@@ -411,7 +409,7 @@ public:
 		imageCI.tiling = vk::ImageTiling::eOptimal;
 		imageCI.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
 		textures.lutBrdf.image = device.createImage(imageCI);
-		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAlloc;
 		vk::MemoryRequirements memReqs;
 		memReqs = device.getImageMemoryRequirements(textures.lutBrdf.image);
 		memAlloc.allocationSize = memReqs.size;
@@ -419,7 +417,7 @@ public:
 		textures.lutBrdf.deviceMemory = device.allocateMemory(memAlloc);
 		device.bindImageMemory(textures.lutBrdf.image, textures.lutBrdf.deviceMemory, 0);
 		// Image view
-		vk::ImageViewCreateInfo viewCI = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo viewCI;
 		viewCI.viewType = vk::ImageViewType::e2D;
 		viewCI.format = format;
 		//viewCI.subresourceRange = {};
@@ -482,7 +480,7 @@ public:
 		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 		// Create the actual renderpass
-		vk::RenderPassCreateInfo renderPassCI = vks::initializers::renderPassCreateInfo();
+		vk::RenderPassCreateInfo renderPassCI;
 		renderPassCI.attachmentCount = 1;
 		renderPassCI.pAttachments = &attDesc;
 		renderPassCI.subpassCount = 1;
@@ -493,7 +491,7 @@ public:
 		vk::RenderPass renderpass;
 		renderpass = device.createRenderPass(renderPassCI);
 
-		vk::FramebufferCreateInfo framebufferCI = vks::initializers::framebufferCreateInfo();
+		vk::FramebufferCreateInfo framebufferCI;
 		framebufferCI.renderPass = renderpass;
 		framebufferCI.attachmentCount = 1;
 		framebufferCI.pAttachments = &textures.lutBrdf.view;
@@ -529,9 +527,7 @@ public:
 		// Pipeline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-			VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState();
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -563,7 +559,7 @@ public:
 		vk::ClearValue clearValues[1];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderpass;
 		renderPassBeginInfo.renderArea.extent.width = dim;
 		renderPassBeginInfo.renderArea.extent.height = dim;
@@ -608,7 +604,7 @@ public:
 
 		// Pre-filtered cube map
 		// Image
-		vk::ImageCreateInfo imageCI = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageCI;
 		imageCI.imageType = vk::ImageType::e2D;
 		imageCI.format = format;
 		imageCI.extent = vk::Extent3D{ dim, dim, 1 };
@@ -619,7 +615,7 @@ public:
 		imageCI.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst;
 		imageCI.flags = vk::ImageCreateFlagBits::eCubeCompatible;
 		textures.irradianceCube.image = device.createImage(imageCI);
-		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAlloc;
 		vk::MemoryRequirements memReqs;
 		memReqs = device.getImageMemoryRequirements(textures.irradianceCube.image);
 		memAlloc.allocationSize = memReqs.size;
@@ -627,7 +623,7 @@ public:
 		textures.irradianceCube.deviceMemory = device.allocateMemory(memAlloc);
 		device.bindImageMemory(textures.irradianceCube.image, textures.irradianceCube.deviceMemory, 0);
 		// Image view
-		vk::ImageViewCreateInfo viewCI = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo viewCI;
 		viewCI.viewType = vk::ImageViewType::eCube;
 		viewCI.format = format;
 		//viewCI.subresourceRange = {};
@@ -690,7 +686,7 @@ public:
 		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 		// Renderpass
-		vk::RenderPassCreateInfo renderPassCI = vks::initializers::renderPassCreateInfo();
+		vk::RenderPassCreateInfo renderPassCI;
 		renderPassCI.attachmentCount = 1;
 		renderPassCI.pAttachments = &attDesc;
 		renderPassCI.subpassCount = 1;
@@ -710,7 +706,7 @@ public:
 		// Offfscreen framebuffer
 		{
 			// Color attachment
-			vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
+			vk::ImageCreateInfo imageCreateInfo;
 			imageCreateInfo.imageType = vk::ImageType::e2D;
 			imageCreateInfo.format = format;
 			imageCreateInfo.extent = vk::Extent3D{ dim, dim, 1 };
@@ -723,7 +719,7 @@ public:
 			imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 			offscreen.image = device.createImage(imageCreateInfo);
 
-			vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+			vk::MemoryAllocateInfo memAlloc;
 			vk::MemoryRequirements memReqs;
 			memReqs = device.getImageMemoryRequirements(offscreen.image);
 			memAlloc.allocationSize = memReqs.size;
@@ -731,7 +727,7 @@ public:
 			offscreen.memory = device.allocateMemory(memAlloc);
 			device.bindImageMemory(offscreen.image, offscreen.memory, 0);
 
-			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
+			vk::ImageViewCreateInfo colorImageView;
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
 			//colorImageView.flags = 0;
@@ -744,7 +740,7 @@ public:
 			colorImageView.image = offscreen.image;
 			offscreen.view = device.createImageView(colorImageView);
 
-			vk::FramebufferCreateInfo fbufCreateInfo = vks::initializers::framebufferCreateInfo();
+			vk::FramebufferCreateInfo fbufCreateInfo;
 			fbufCreateInfo.renderPass = renderpass;
 			fbufCreateInfo.attachmentCount = 1;
 			fbufCreateInfo.pAttachments = &offscreen.view;
@@ -804,9 +800,7 @@ public:
 		// Pipeline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-			VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState();
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -848,7 +842,7 @@ public:
 		vk::ClearValue clearValues[1];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 0.0f } };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		// Reuse render pass from example pass
 		renderPassBeginInfo.renderPass = renderpass;
 		renderPassBeginInfo.framebuffer = offscreen.framebuffer;
@@ -999,7 +993,7 @@ public:
 
 		// Pre-filtered cube map
 		// Image
-		vk::ImageCreateInfo imageCI = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageCI;
 		imageCI.imageType = vk::ImageType::e2D;
 		imageCI.format = format;
 		imageCI.extent = vk::Extent3D{ dim, dim, 1 };
@@ -1010,7 +1004,7 @@ public:
 		imageCI.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst;
 		imageCI.flags = vk::ImageCreateFlagBits::eCubeCompatible;
 		textures.prefilteredCube.image = device.createImage(imageCI);
-		vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAlloc;
 		vk::MemoryRequirements memReqs;
 		memReqs = device.getImageMemoryRequirements(textures.prefilteredCube.image);
 		memAlloc.allocationSize = memReqs.size;
@@ -1018,7 +1012,7 @@ public:
 		textures.prefilteredCube.deviceMemory = device.allocateMemory(memAlloc);
 		device.bindImageMemory(textures.prefilteredCube.image, textures.prefilteredCube.deviceMemory, 0);
 		// Image view
-		vk::ImageViewCreateInfo viewCI = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo viewCI;
 		viewCI.viewType = vk::ImageViewType::eCube;
 		viewCI.format = format;
 		//viewCI.subresourceRange = {};
@@ -1081,7 +1075,7 @@ public:
 		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 		// Renderpass
-		vk::RenderPassCreateInfo renderPassCI = vks::initializers::renderPassCreateInfo();
+		vk::RenderPassCreateInfo renderPassCI;
 		renderPassCI.attachmentCount = 1;
 		renderPassCI.pAttachments = &attDesc;
 		renderPassCI.subpassCount = 1;
@@ -1101,7 +1095,7 @@ public:
 		// Offfscreen framebuffer
 		{
 			// Color attachment
-			vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
+			vk::ImageCreateInfo imageCreateInfo;
 			imageCreateInfo.imageType = vk::ImageType::e2D;
 			imageCreateInfo.format = format;
 			imageCreateInfo.extent = vk::Extent3D{ dim, dim, 1 };
@@ -1114,7 +1108,7 @@ public:
 			imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 			offscreen.image = device.createImage(imageCreateInfo);
 
-			vk::MemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+			vk::MemoryAllocateInfo memAlloc;
 			vk::MemoryRequirements memReqs;
 			memReqs = device.getImageMemoryRequirements(offscreen.image);
 			memAlloc.allocationSize = memReqs.size;
@@ -1122,7 +1116,7 @@ public:
 			offscreen.memory = device.allocateMemory(memAlloc);
 			device.bindImageMemory(offscreen.image, offscreen.memory, 0);
 
-			vk::ImageViewCreateInfo colorImageView = vks::initializers::imageViewCreateInfo();
+			vk::ImageViewCreateInfo colorImageView;
 			colorImageView.viewType = vk::ImageViewType::e2D;
 			colorImageView.format = format;
 			//colorImageView.flags = 0;
@@ -1135,7 +1129,7 @@ public:
 			colorImageView.image = offscreen.image;
 			offscreen.view = device.createImageView(colorImageView);
 
-			vk::FramebufferCreateInfo fbufCreateInfo = vks::initializers::framebufferCreateInfo();
+			vk::FramebufferCreateInfo fbufCreateInfo;
 			fbufCreateInfo.renderPass = renderpass;
 			fbufCreateInfo.attachmentCount = 1;
 			fbufCreateInfo.pAttachments = &offscreen.view;
@@ -1194,9 +1188,7 @@ public:
 		// Pipeline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = vks::initializers::pipelineInputAssemblyStateCreateInfo(vk::PrimitiveTopology::eTriangleList, vk::PipelineInputAssemblyStateCreateFlags(), VK_FALSE);
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vks::initializers::pipelineRasterizationStateCreateInfo(vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise);
-		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState(
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA, 
-			VK_FALSE);
+		vk::PipelineColorBlendAttachmentState blendAttachmentState = vks::initializers::pipelineColorBlendAttachmentState();
 		vk::PipelineColorBlendStateCreateInfo colorBlendState = vks::initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState = vks::initializers::pipelineDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, vk::CompareOp::eLessOrEqual);
 		vk::PipelineViewportStateCreateInfo viewportState = vks::initializers::pipelineViewportStateCreateInfo(1, 1);
@@ -1238,7 +1230,7 @@ public:
 		vk::ClearValue clearValues[1];
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.2f, 0.0f } };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		// Reuse render pass from example pass
 		renderPassBeginInfo.renderPass = renderpass;
 		renderPassBeginInfo.framebuffer = offscreen.framebuffer;

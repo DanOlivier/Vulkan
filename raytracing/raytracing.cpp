@@ -127,7 +127,7 @@ public:
 		tex->width = width;
 		tex->height = height;
 
-		vk::ImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
+		vk::ImageCreateInfo imageCreateInfo;
 		imageCreateInfo.imageType = vk::ImageType::e2D;
 		imageCreateInfo.format = format;
 		imageCreateInfo.extent = vk::Extent3D{ width, height, 1 };
@@ -140,7 +140,7 @@ public:
 		imageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage;
 		//imageCreateInfo.flags = 0;
 
-		vk::MemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
+		vk::MemoryAllocateInfo memAllocInfo;
 		vk::MemoryRequirements memReqs;
 
 		tex->image = device.createImage(imageCreateInfo);
@@ -163,7 +163,7 @@ public:
 		VulkanExampleBase::flushCommandBuffer(layoutCmd, queue, true);
 
 		// Create sampler
-		vk::SamplerCreateInfo sampler = vks::initializers::samplerCreateInfo();
+		vk::SamplerCreateInfo sampler;
 		sampler.magFilter = vk::Filter::eLinear;
 		sampler.minFilter = vk::Filter::eLinear;
 		sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
@@ -179,7 +179,7 @@ public:
 		tex->sampler = device.createSampler(sampler);
 
 		// Create image view
-		vk::ImageViewCreateInfo view = vks::initializers::imageViewCreateInfo();
+		vk::ImageViewCreateInfo view;
 		view.viewType = vk::ImageViewType::e2D;
 		view.format = format;
 		view.components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA };
@@ -203,14 +203,14 @@ public:
 			createCommandBuffers();
 		}
 
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		vk::ClearValue clearValues[2];
 		clearValues[0].color = defaultClearColor;
 		clearValues[0].color = vk::ClearColorValue{ std::array<float, 4>{0.0f, 0.0f, 0.2f, 0.0f} };
 		clearValues[1].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
-		vk::RenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
+		vk::RenderPassBeginInfo renderPassBeginInfo;
 		renderPassBeginInfo.renderPass = renderPass;
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
@@ -266,7 +266,7 @@ public:
 
 	void buildComputeCommandBuffer()
 	{
-		vk::CommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+		vk::CommandBufferBeginInfo cmdBufInfo;
 
 		compute.commandBuffer.begin(cmdBufInfo);
 
@@ -456,9 +456,7 @@ public:
 				vk::FrontFace::eCounterClockwise);
 
 		vk::PipelineColorBlendAttachmentState blendAttachmentState =
-			vks::initializers::pipelineColorBlendAttachmentState(
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-				VK_FALSE);
+			vks::initializers::pipelineColorBlendAttachmentState();
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState =
 			vks::initializers::pipelineColorBlendStateCreateInfo(
@@ -678,7 +676,7 @@ public:
 		device.waitForFences(compute.fence, VK_TRUE, UINT64_MAX);
 		device.resetFences(compute.fence);
 
-		vk::SubmitInfo computeSubmitInfo = vks::initializers::submitInfo();
+		vk::SubmitInfo computeSubmitInfo;
 		computeSubmitInfo.commandBufferCount = 1;
 		computeSubmitInfo.pCommandBuffers = &compute.commandBuffer;
 
