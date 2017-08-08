@@ -25,7 +25,7 @@
 
 #if defined(__ANDROID__)
 // Use max. screen dimension as deferred framebuffer size
-#define FB_DIM std::max(width,height) 
+#define FB_DIM std::max(width,height)
 #else
 #define FB_DIM 2048
 #endif
@@ -59,7 +59,7 @@ public:
 			vks::Texture2D normalMap;
 		} background;
 	} textures;
-	
+
 	// Vertex layout for the models
 	vks::VertexLayout vertexLayout = vks::VertexLayout({
 		vks::VERTEX_COMPONENT_POSITION,
@@ -216,7 +216,7 @@ public:
 		device.destroySemaphore(offscreenSemaphore);
 	}
 
-	// Enable physical device features required for this example				
+	// Enable physical device features required for this example
 	virtual void getEnabledFeatures()
 	{
 		// Geometry shader support is required for writing to multiple shadow map layers in one single pass
@@ -230,7 +230,7 @@ public:
 		if (deviceFeatures.samplerAnisotropy) {
 			enabledFeatures.samplerAnisotropy = VK_TRUE;
 		}
-		// Enable texture compression  
+		// Enable texture compression
 		if (deviceFeatures.textureCompressionBC) {
 			enabledFeatures.textureCompressionBC = VK_TRUE;
 		}
@@ -244,7 +244,7 @@ public:
 
 	// Prepare a layered shadow map with each layer containing depth from a light's point of view
 	// The shadow mapping pass uses geometry shader instancing to output the scene from the different
-	// light sources' point of view to the layers of the depth attachment in one single pass 
+	// light sources' point of view to the layers of the depth attachment in one single pass
 	void shadowSetup()
 	{
 		frameBuffers.shadow = new vks::Framebuffer(vulkanDevice);
@@ -264,12 +264,12 @@ public:
 		attachmentInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled;
 		frameBuffers.shadow->addAttachment(attachmentInfo);
 
-		// Create sampler to sample from to depth attachment 
+		// Create sampler to sample from to depth attachment
 		// Used to sample in the fragment shader for shadowed rendering
-		VK_CHECK_RESULT(frameBuffers.shadow->createSampler(vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerAddressMode::eClampToEdge));
+		frameBuffers.shadow->createSampler(vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerAddressMode::eClampToEdge);
 
 		// Create default renderpass for the framebuffer
-		VK_CHECK_RESULT(frameBuffers.shadow->createRenderPass());
+		frameBuffers.shadow->createRenderPass();
 	}
 
 	// Prepare the framebuffer for offscreen rendering with multiple attachments used as render targets inside the fragment shaders
@@ -311,10 +311,10 @@ public:
 		frameBuffers.deferred->addAttachment(attachmentInfo);
 
 		// Create sampler to sample from the color attachments
-		VK_CHECK_RESULT(frameBuffers.deferred->createSampler(vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge));
+		frameBuffers.deferred->createSampler(vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge);
 
 		// Create default renderpass for the framebuffer
-		VK_CHECK_RESULT(frameBuffers.deferred->createRenderPass());
+		frameBuffers.deferred->createRenderPass();
 	}
 
 	// Put render commands for the scene into the given command buffer
@@ -356,7 +356,7 @@ public:
 
 		// First pass: Shadow map generation
 		// -------------------------------------------------------------------------------------------------------
-	
+
 		clearValues[0].depthStencil = vk::ClearDepthStencilValue{ 1.0f, 0 };
 
 		renderPassBeginInfo.renderPass = frameBuffers.shadow->renderPass;
@@ -931,7 +931,7 @@ public:
 		pipelines.offscreen = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Shadow mapping pipeline
-		// The shadow mapping pipeline uses geometry shader instancing (invocations layout modifier) to output 
+		// The shadow mapping pipeline uses geometry shader instancing (invocations layout modifier) to output
 		// shadow maps for multiple lights sources into the different shadow map layers in one single render pass
 		std::array<vk::PipelineShaderStageCreateInfo, 3> shadowStages;
 		shadowStages[0] = loadShader(getAssetPath() + "shaders/deferredshadows/shadow.vert.spv", vk::ShaderStageFlagBits::eVertex);
@@ -940,7 +940,7 @@ public:
 
 		pipelineCreateInfo.pStages = shadowStages.data();
 		pipelineCreateInfo.stageCount = static_cast<uint32_t>(shadowStages.size());
-		
+
 		// Shadow pass doesn't use any color attachments
 		colorBlendState.attachmentCount = 0;
 		colorBlendState.pAttachments = nullptr;
@@ -1073,7 +1073,7 @@ public:
 		memcpy(uniformBuffers.uboShadowGS.mapped, &uboShadowGS, sizeof(uboShadowGS));
 
 		uboFragmentLights.viewPos = glm::vec4(camera.position, 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);;
-	
+
 		memcpy(uniformBuffers.fsLights.mapped, &uboFragmentLights, sizeof(uboFragmentLights));
 	}
 

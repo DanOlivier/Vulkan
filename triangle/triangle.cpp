@@ -154,7 +154,7 @@ public:
 			typeBits >>= 1;
 		}
 
-		throw "Could not find a suitable memory type!";
+		throw std::runtime_error("Could not find a suitable memory type!");
 	}
 
 	// Create the Vulkan synchronization primitives used in this example

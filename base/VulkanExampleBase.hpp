@@ -42,7 +42,7 @@
 
 class VulkanExampleBase
 {
-private:	
+private:
 	// fps timer (one second interval)
 	float fpsTimer = 0.0f;
 	// Get window title with example name, device, et.
@@ -115,7 +115,7 @@ protected:
 		// Text overlay submission and execution
 		vk::Semaphore textOverlayComplete;
 	} semaphores;
-public: 
+public:
 	bool prepared = false;
 	uint32_t width = 1280;
 	uint32_t height = 720;
@@ -149,7 +149,7 @@ public:
 	float timer = 0.0f;
 	// Multiplier for speeding up (or slowing down) the global timer
 	float timerSpeed = 0.25f;
-	
+
 	bool paused = false;
 
 	bool enableTextOverlay = false;
@@ -169,7 +169,7 @@ public:
 	std::string title = "Vulkan Example";
 	std::string name = "vulkanExample";
 
-	struct 
+	struct
 	{
 		vk::Image image;
 		vk::DeviceMemory mem;
@@ -183,7 +183,7 @@ public:
 		glm::vec2 axisRight = glm::vec2(0.0f);
 	} gamePadState;
 
-	// OS specific 
+	// OS specific
 #if defined(_WIN32)
 	HWND window;
 	HINSTANCE windowInstance;
@@ -303,12 +303,12 @@ public:
 	*
 	* @note Virtual, can be overriden by derived example class for custom instance creation
 	*/
-	virtual vk::Result createInstance(bool enableValidation);
+	virtual void createInstance(bool enableValidation);
 
 	// Pure virtual render function (override in derived class)
 	virtual void render() = 0;
 	// Called when view change occurs
-	// Can be overriden in derived class to e.g. update uniform buffers 
+	// Can be overriden in derived class to e.g. update uniform buffers
 	// Containing view dependant matrices
 	virtual void viewChanged();
 	// Called if a key is pressed
@@ -346,7 +346,7 @@ public:
 	// Create command buffers for drawing commands
 	void createCommandBuffers();
 	// Destroy all command buffers and set their handles to VK_NULL_HANDLE
-	// May be necessary during runtime if options are toggled 
+	// May be necessary during runtime if options are toggled
 	void destroyCommandBuffers();
 
 	// Command buffer creation
@@ -364,7 +364,7 @@ public:
 
 	// Load a SPIR-V shader
 	vk::PipelineShaderStageCreateInfo loadShader(std::string fileName, vk::ShaderStageFlagBits stage);
-	
+
 	// Start the main render loop
 	void renderLoop();
 
@@ -377,11 +377,11 @@ public:
 	virtual void getOverlayText(VulkanTextOverlay*);
 
 	// Prepare the frame for workload submission
-	// - Acquires the next image from the swap chain 
+	// - Acquires the next image from the swap chain
 	// - Sets the default wait and signal semaphores
 	void prepareFrame();
 
-	// Submit the frames' workload 
+	// Submit the frames' workload
 	// - Submits the text overlay (if enabled)
 	void submitFrame();
 
@@ -411,7 +411,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)									\
 	vulkanExample->renderLoop();																	\
 	delete(vulkanExample);																			\
 	return 0;																						\
-}																									
+}
 #elif defined(__ANDROID__)
 // Android entry point
 // A note on app_dummy(): This is required as the compiler may otherwise remove the main entry point of the application

@@ -16,14 +16,14 @@
 
 std::vector<const char*> VulkanExampleBase::args;
 
-vk::Result VulkanExampleBase::createInstance(bool enableValidation)
+void VulkanExampleBase::createInstance(bool enableValidation)
 {
 	this->settings.validation = enableValidation;
 
 	// Validation can also be forced via a define
 #if defined(_VALIDATION)
 	this->settings.validation = true;
-#endif	
+#endif
 
 	vk::ApplicationInfo appInfo = {};
 
@@ -67,7 +67,6 @@ vk::Result VulkanExampleBase::createInstance(bool enableValidation)
 		instanceCreateInfo.ppEnabledLayerNames = vks::debug::validationLayerNames;
 	}
 	instance = vk::createInstance(instanceCreateInfo);
-	return vk::Result::eSuccess;
 }
 
 std::string VulkanExampleBase::getWindowTitle()
@@ -153,7 +152,7 @@ void VulkanExampleBase::flushCommandBuffer(vk::CommandBuffer commandBuffer, vk::
 	{
 		return;
 	}
-	
+
 	commandBuffer.end();
 
 	vk::SubmitInfo submitInfo = {};
@@ -575,7 +574,7 @@ void VulkanExampleBase::renderLoop()
 		}
 	}
 #endif
-	// Flush device to make sure all resources can be freed 
+	// Flush device to make sure all resources can be freed
 	vkDeviceWaitIdle(device);
 }
 
@@ -593,7 +592,7 @@ void VulkanExampleBase::updateTextOverlay()
 	textOverlay->addText(ss.str(), 5.0f, 25.0f, VulkanTextOverlay::alignLeft);
 
 	std::string deviceName(deviceProperties.deviceName);
-#if defined(__ANDROID__)	
+#if defined(__ANDROID__)
 	deviceName += " (" + androidProduct + ")";
 #endif
 	textOverlay->addText(deviceName, 5.0f, 45.0f, VulkanTextOverlay::alignLeft);
@@ -706,7 +705,7 @@ VulkanExampleBase::VulkanExampleBase(bool enableValidation)
 			if (endptr != args[i + 1]) { height = h; };
 		}
 	}
-	
+
 #if defined(__ANDROID__)
 	// Vulkan library is loaded dynamically on Android
 	bool libLoaded = vks::android::loadVulkanLibrary();
@@ -805,7 +804,7 @@ void VulkanExampleBase::initVulkan()
 	{
 		createInstance(settings.validation);
 	}
- 	catch(const vk::SystemError& err) 
+ 	catch(const vk::SystemError& err)
  	{
 		vks::tools::exitFatal("Could not create Vulkan instance : \n" + std::string(err.what()), "Fatal error");
 	}
@@ -834,7 +833,7 @@ void VulkanExampleBase::initVulkan()
 	// Defaults to the first device unless specified by command line
 	uint32_t selectedDevice = 0;
 
-#if !defined(__ANDROID__)	
+#if !defined(__ANDROID__)
 	// GPU selection via command line argument
 	for (size_t i = 0; i < args.size(); i++)
 	{
@@ -843,12 +842,12 @@ void VulkanExampleBase::initVulkan()
 		{
 			char* endptr;
 			uint32_t index = strtol(args[i + 1], &endptr, 10);
-			if (endptr != args[i + 1]) 
-			{ 
+			if (endptr != args[i + 1])
+			{
 				if (index > gpuCount - 1)
 				{
 					std::cerr << "Selected device index " << index << " is out of range, reverting to device 0 (use -listgpus to show available Vulkan devices)" << std::endl;
-				} 
+				}
 				else
 				{
 					std::cout << "Selected Vulkan device " << index << std::endl;
@@ -886,9 +885,13 @@ void VulkanExampleBase::initVulkan()
 	// This is handled by a separate class that gets a logical device representation
 	// and encapsulates functions related to a device
 	vulkanDevice = new vks::VulkanDevice(physicalDevice);
-	vk::Result res = vulkanDevice->createLogicalDevice(enabledFeatures, enabledExtensions);
-	if (res != vk::Result::eSuccess) {
-		vks::tools::exitFatal("Could not create Vulkan device: \n" + vk::to_string(res), "Fatal error");
+	try
+	{
+		vulkanDevice->createLogicalDevice(enabledFeatures, enabledExtensions);
+	}
+ 	catch(const vk::SystemError& err)
+	{
+		vks::tools::exitFatal(std::string("Could not create Vulkan device: \n") + err.what(), "Fatal error");
 	}
 	device = vulkanDevice->logicalDevice;
 
@@ -937,7 +940,7 @@ void VulkanExampleBase::initVulkan()
 		androidProduct += std::string(prop);
 	};
 	LOGD("androidProduct = %s", androidProduct.c_str());
-#endif	
+#endif
 }
 
 #if defined(_WIN32)
@@ -1743,7 +1746,7 @@ xcb_window_t VulkanExampleBase::setupWindow()
 				&(atom_wm_fullscreen->atom));
 		free(atom_wm_fullscreen);
 		free(atom_wm_state);
-	}	
+	}
 
 	xcb_map_window(connection, window);
 
@@ -1807,8 +1810,8 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 			mousePos.y = (float)motion->event_y;
 		}
 		mousePos = glm::vec2((float)motion->event_x, (float)motion->event_y);
+		break;
 	}
-	break;
 	case XCB_BUTTON_PRESS:
 	{
 		xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
@@ -1818,8 +1821,8 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 			mouseButtons.middle = true;
 		if (press->detail == XCB_BUTTON_INDEX_3)
 			mouseButtons.right = true;
+		break;
 	}
-	break;
 	case XCB_BUTTON_RELEASE:
 	{
 		xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
@@ -1829,61 +1832,61 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 			mouseButtons.middle = false;
 		if (press->detail == XCB_BUTTON_INDEX_3)
 			mouseButtons.right = false;
+		break;
 	}
-	break;
 	case XCB_KEY_PRESS:
 	{
 		const xcb_key_release_event_t *keyEvent = (const xcb_key_release_event_t *)event;
 		switch (keyEvent->detail)
 		{
-			case KEY_W:
-				camera.keys.up = true;
-				break;
-			case KEY_S:
-				camera.keys.down = true;
-				break;
-			case KEY_A:
-				camera.keys.left = true;
-				break;
-			case KEY_D:
-				camera.keys.right = true;
-				break;
-			case KEY_P:
-				paused = !paused;
-				break;
-			case KEY_F1:
-				if (enableTextOverlay)
-				{
-					textOverlay->visible = !textOverlay->visible;
-				}
-				break;				
+		case KEY_W:
+			camera.keys.up = true;
+			break;
+		case KEY_S:
+			camera.keys.down = true;
+			break;
+		case KEY_A:
+			camera.keys.left = true;
+			break;
+		case KEY_D:
+			camera.keys.right = true;
+			break;
+		case KEY_P:
+			paused = !paused;
+			break;
+		case KEY_F1:
+			if (enableTextOverlay)
+			{
+				textOverlay->visible = !textOverlay->visible;
+			}
+			break;
 		}
+		break;
 	}
-	break;	
 	case XCB_KEY_RELEASE:
 	{
 		const xcb_key_release_event_t *keyEvent = (const xcb_key_release_event_t *)event;
 		switch (keyEvent->detail)
 		{
-			case KEY_W:
-				camera.keys.up = false;
-				break;
-			case KEY_S:
-				camera.keys.down = false;
-				break;
-			case KEY_A:
-				camera.keys.left = false;
-				break;
-			case KEY_D:
-				camera.keys.right = false;
-				break;			
-			case KEY_ESCAPE:
-				quit = true;
-				break;
+		case KEY_W:
+			camera.keys.up = false;
+			break;
+		case KEY_S:
+			camera.keys.down = false;
+			break;
+		case KEY_A:
+			camera.keys.left = false;
+			break;
+		case KEY_D:
+			camera.keys.right = false;
+			break;
+		case KEY_ESCAPE:
+			quit = true;
+			break;
 		}
 		keyPressed(keyEvent->detail);
+		break;
 	}
-	break;
 	case XCB_DESTROY_NOTIFY:
 		quit = true;
 		break;
@@ -1892,15 +1895,15 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 		const xcb_configure_notify_event_t *cfgEvent = (const xcb_configure_notify_event_t *)event;
 		if ((prepared) && ((cfgEvent->width != width) || (cfgEvent->height != height)))
 		{
-				destWidth = cfgEvent->width;
-				destHeight = cfgEvent->height;
-				if ((destWidth > 0) && (destHeight > 0))
-				{
-					windowResize();
-				}
+			destWidth = cfgEvent->width;
+			destHeight = cfgEvent->height;
+			if ((destWidth > 0) && (destHeight > 0))
+			{
+				windowResize();
+			}
 		}
+		break;
 	}
-	break;
 	default:
 		break;
 	}
@@ -2086,7 +2089,7 @@ void VulkanExampleBase::windowResize()
 	device.destroyImage(depthStencil.image);
 	device.freeMemory(depthStencil.mem);
 	setupDepthStencil();
-	
+
 	for (uint32_t i = 0; i < frameBuffers.size(); i++)
 	{
 		device.destroyFramebuffer(frameBuffers[i]);
@@ -2125,7 +2128,7 @@ void VulkanExampleBase::initSwapchain()
 {
 #if defined(_WIN32)
 	swapChain.initSurface(windowInstance, window);
-#elif defined(__ANDROID__)	
+#elif defined(__ANDROID__)
 	swapChain.initSurface(androidApp->window);
 #elif (defined(VK_USE_PLATFORM_IOS_MVK) || defined(VK_USE_PLATFORM_MACOS_MVK))
     swapChain.initSurface(view);
@@ -2140,5 +2143,5 @@ void VulkanExampleBase::initSwapchain()
 
 void VulkanExampleBase::setupSwapChain()
 {
-	swapChain.create(&width, &height, settings.vsync);
+	swapChain.create(width, height, settings.vsync);
 }

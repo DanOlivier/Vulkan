@@ -1,6 +1,6 @@
 /*
 * Class wrapping access to the swap chain
-* 
+*
 * A swap chain is a collection of framebuffers used for rendering and presentation to the windowing system
 *
 * Copyright (C) 2016-2017 by Sascha Willems - www.saschawillems.de
@@ -44,14 +44,14 @@ typedef struct _SwapChainBuffers {
 
 class VulkanSwapChain
 {
-private: 
+private:
 	vk::Instance instance;
 	vk::Device device;
 	vk::PhysicalDevice physicalDevice;
 	vk::SurfaceKHR surface;
 	// Function pointers
 	PFN_vkGetPhysicalDeviceSurfaceSupportKHR fpGetPhysicalDeviceSurfaceSupportKHR;
-	PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR fpGetPhysicalDeviceSurfaceCapabilitiesKHR; 
+	PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR fpGetPhysicalDeviceSurfaceCapabilitiesKHR;
 	PFN_vkGetPhysicalDeviceSurfaceFormatsKHR fpGetPhysicalDeviceSurfaceFormatsKHR;
 	PFN_vkGetPhysicalDeviceSurfacePresentModesKHR fpGetPhysicalDeviceSurfacePresentModesKHR;
 	PFN_vkCreateSwapchainKHR fpCreateSwapchainKHR;
@@ -63,14 +63,14 @@ public:
 	vk::Format colorFormat;
 	vk::ColorSpaceKHR colorSpace;
 	/** @brief Handle to the current swap chain, required for recreation */
-	vk::SwapchainKHR swapChain;	
+	vk::SwapchainKHR swapChain;
 	uint32_t imageCount;
 	std::vector<vk::Image> images;
 	std::vector<SwapChainBuffer> buffers;
 	/** @brief Queue family index of the detected graphics and presenting device queue */
 	uint32_t queueNodeIndex = UINT32_MAX;
 
-	/** @brief Creates the platform specific surface abstraction of the native platform window used for presentation */	
+	/** @brief Creates the platform specific surface abstraction of the native platform window used for presentation */
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 	void initSurface(void* platformHandle, void* platformWindow)
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -137,7 +137,7 @@ public:
 		// Find a queue with present support
 		// Will be used to present the swap chain images to the windowing system
 		std::vector<vk::Bool32> supportsPresent(queueCount);
-		for (uint32_t i = 0; i < queueCount; i++) 
+		for (uint32_t i = 0; i < queueCount; i++)
 		{
 			supportsPresent[i] = physicalDevice.getSurfaceSupportKHR(i, surface);
 		}
@@ -146,16 +146,16 @@ public:
 		// families, try to find one that supports both
 		uint32_t graphicsQueueNodeIndex = UINT32_MAX;
 		uint32_t presentQueueNodeIndex = UINT32_MAX;
-		for (uint32_t i = 0; i < queueCount; i++) 
+		for (uint32_t i = 0; i < queueCount; i++)
 		{
-			if (queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) 
+			if (queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics)
 			{
-				if (graphicsQueueNodeIndex == UINT32_MAX) 
+				if (graphicsQueueNodeIndex == UINT32_MAX)
 				{
 					graphicsQueueNodeIndex = i;
 				}
 
-				if (supportsPresent[i] == VK_TRUE) 
+				if (supportsPresent[i] == VK_TRUE)
 				{
 					graphicsQueueNodeIndex = i;
 					presentQueueNodeIndex = i;
@@ -163,13 +163,13 @@ public:
 				}
 			}
 		}
-		if (presentQueueNodeIndex == UINT32_MAX) 
-		{	
+		if (presentQueueNodeIndex == UINT32_MAX)
+		{
 			// If there's no queue that supports both present and graphics
 			// try to find a separate present queue
-			for (uint32_t i = 0; i < queueCount; ++i) 
+			for (uint32_t i = 0; i < queueCount; ++i)
 			{
-				if (supportsPresent[i] == VK_TRUE) 
+				if (supportsPresent[i] == VK_TRUE)
 				{
 					presentQueueNodeIndex = i;
 					break;
@@ -178,13 +178,13 @@ public:
 		}
 
 		// Exit if either a graphics or a presenting queue hasn't been found
-		if (graphicsQueueNodeIndex == UINT32_MAX || presentQueueNodeIndex == UINT32_MAX) 
+		if (graphicsQueueNodeIndex == UINT32_MAX || presentQueueNodeIndex == UINT32_MAX)
 		{
 			vks::tools::exitFatal("Could not find a graphics and/or presenting queue!", "Fatal error");
 		}
 
 		// todo : Add support for separate graphics and presenting queue
-		if (graphicsQueueNodeIndex != presentQueueNodeIndex) 
+		if (graphicsQueueNodeIndex != presentQueueNodeIndex)
 		{
 			vks::tools::exitFatal("Separate graphics and presenting queues are not supported yet!", "Fatal error");
 		}
@@ -232,7 +232,7 @@ public:
 
 	/**
 	* Set instance, physical and logical device to use for the swapchain and get all required function pointers
-	* 
+	*
 	* @param instance Vulkan instance to use
 	* @param physicalDevice Physical device used to query properties and formats relevant to the swapchain
 	* @param device Logical representation of the device to create the swapchain for
@@ -254,14 +254,14 @@ public:
 		GET_DEVICE_PROC_ADDR(device, QueuePresentKHR);
 	}
 
-	/** 
+	/**
 	* Create the swapchain and get it's images with given width and height
-	* 
-	* @param width Pointer to the width of the swapchain (may be adjusted to fit the requirements of the swapchain)
-	* @param height Pointer to the height of the swapchain (may be adjusted to fit the requirements of the swapchain)
+	*
+	* @param width  Reference to the width of the swapchain (may be adjusted to fit the requirements of the swapchain)
+	* @param height Reference to the height of the swapchain (may be adjusted to fit the requirements of the swapchain)
 	* @param vsync (Optional) Can be used to force vsync'd rendering (by using vk::PresentModeKHR::eFifo as presentation mode)
 	*/
-	void create(uint32_t *width, uint32_t *height, bool vsync = false)
+	void create(uint32_t& width, uint32_t& height, bool vsync = false)
 	{
 		vk::SwapchainKHR oldSwapchain = swapChain;
 
@@ -279,15 +279,15 @@ public:
 		{
 			// If the surface size is undefined, the size is set to
 			// the size of the images requested.
-			swapchainExtent.width = *width;
-			swapchainExtent.height = *height;
+			swapchainExtent.width = width;
+			swapchainExtent.height = height;
 		}
 		else
 		{
 			// If the surface size is defined, the swap chain size must match
 			swapchainExtent = surfCaps.currentExtent;
-			*width = surfCaps.currentExtent.width;
-			*height = surfCaps.currentExtent.height;
+			width = surfCaps.currentExtent.width;
+			height = surfCaps.currentExtent.height;
 		}
 
 
@@ -378,8 +378,8 @@ public:
 
 		// If an existing swap chain is re-created, destroy the old swap chain
 		// This also cleans up all the presentable images
-		if (oldSwapchain) 
-		{ 
+		if (oldSwapchain)
+		{
 			for (uint32_t i = 0; i < imageCount; i++)
 			{
 				device.destroyImageView(buffers[i].view);
@@ -419,7 +419,7 @@ public:
 		}
 	}
 
-	/** 
+	/**
 	* Acquires the next image in the swap chain
 	*
 	* @param presentCompleteSemaphore (Optional) Semaphore that is signaled when the image is ready for use
@@ -485,11 +485,11 @@ public:
 #if defined(_DIRECT2DISPLAY)
 	/**
 	* Create direct to display surface
-	*/	
+	*/
 	void createDirect2DisplaySurface(uint32_t width, uint32_t height)
 	{
 		uint32_t displayPropertyCount;
-		
+
 		// Get display property
 		vkGetPhysicalDeviceDisplayPropertiesKHR(physicalDevice, &displayPropertyCount, NULL);
 		vk::DisplayPropertiesKHR* pDisplayProperties = new vk::DisplayPropertiesKHR[displayPropertyCount];
@@ -615,5 +615,5 @@ public:
 		delete[] pDisplayProperties;
 		delete[] pPlaneProperties;
 	}
-#endif 
+#endif
 };

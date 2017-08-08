@@ -13,7 +13,7 @@
 namespace vks
 {
 	/**
-	* @brief Encapsulates a single frame buffer attachment 
+	* @brief Encapsulates a single frame buffer attachment
 	*/
 	struct FramebufferAttachment
 	{
@@ -29,7 +29,7 @@ namespace vks
 		*/
 		bool hasDepth()
 		{
-			std::vector<vk::Format> formats = 
+			std::vector<vk::Format> formats =
 			{
 				vk::Format::eD16Unorm,
 				vk::Format::eX8D24UnormPack32,
@@ -46,7 +46,7 @@ namespace vks
 		*/
 		bool hasStencil()
 		{
-			std::vector<vk::Format> formats = 
+			std::vector<vk::Format> formats =
 			{
 				vk::Format::eS8Uint,
 				vk::Format::eD16UnormS8Uint,
@@ -219,15 +219,14 @@ namespace vks
 
 		/**
 		* Creates a default sampler for sampling from any of the framebuffer attachments
-		* Applications are free to create their own samplers for different use cases 
+		* Applications are free to create their own samplers for different use cases
 		*
 		* @param magFilter Magnification filter for lookups
 		* @param minFilter Minification filter for lookups
 		* @param adressMode Adressing mode for the U,V and W coordinates
 		*
-		* @return vk::Result for the sampler creation
 		*/
-		vk::Result createSampler(vk::Filter magFilter, vk::Filter minFilter, vk::SamplerAddressMode adressMode)
+		void createSampler(vk::Filter magFilter, vk::Filter minFilter, vk::SamplerAddressMode adressMode)
 		{
 			vk::SamplerCreateInfo samplerInfo;
 			samplerInfo.magFilter = magFilter;
@@ -242,15 +241,13 @@ namespace vks
 			samplerInfo.maxLod = 1.0f;
 			samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
 			sampler = vulkanDevice->logicalDevice.createSampler(samplerInfo);
-			return vk::Result::eSuccess;
 		}
 
 		/**
 		* Creates a default render pass setup with one sub pass
 		*
-		* @return vk::Result::eSuccess if all resources have been created successfully
 		*/
-		vk::Result createRenderPass()
+		void createRenderPass()
 		{
 			std::vector<vk::AttachmentDescription> attachmentDescriptions;
 			for (auto& attachment : attachments)
@@ -261,7 +258,7 @@ namespace vks
 			// Collect attachment references
 			std::vector<vk::AttachmentReference> colorReferences;
 			vk::AttachmentReference depthReference = {};
-			bool hasDepth = false; 
+			bool hasDepth = false;
 			bool hasColor = false;
 
 			uint32_t attachmentIndex = 0;
@@ -352,8 +349,6 @@ namespace vks
 			framebufferInfo.height = height;
 			framebufferInfo.layers = maxLayers;
 			framebuffer = vulkanDevice->logicalDevice.createFramebuffer(framebufferInfo);
-
-			return vk::Result::eSuccess;
 		}
 	};
 }
