@@ -1,0 +1,1 @@
+buildExample(texture texture.cpp)

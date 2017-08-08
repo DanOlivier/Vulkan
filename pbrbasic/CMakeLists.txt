@@ -1,0 +1,1 @@
+buildExample(pbrbasic pbrbasic.cpp)

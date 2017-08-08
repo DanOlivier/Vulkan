@@ -1,0 +1,1 @@
+buildExample(subpasses subpasses.cpp)

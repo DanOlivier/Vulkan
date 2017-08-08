@@ -1,0 +1,1 @@
+buildExample(pushconstants pushconstants.cpp)

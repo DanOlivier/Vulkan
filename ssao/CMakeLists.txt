@@ -1,0 +1,1 @@
+buildExample(ssao ssao.cpp)

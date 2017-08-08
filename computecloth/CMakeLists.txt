@@ -1,0 +1,1 @@
+buildExample(computecloth computecloth.cpp)

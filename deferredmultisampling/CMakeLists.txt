@@ -1,0 +1,1 @@
+buildExample(deferredmultisampling deferredmultisampling.cpp)

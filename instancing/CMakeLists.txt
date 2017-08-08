@@ -1,0 +1,1 @@
+buildExample(instancing instancing.cpp)

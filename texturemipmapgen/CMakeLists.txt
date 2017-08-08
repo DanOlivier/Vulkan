@@ -1,0 +1,1 @@
+buildExample(texturemipmapgen texturemipmapgen.cpp)

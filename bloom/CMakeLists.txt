@@ -1,0 +1,1 @@
+buildExample(bloom bloom.cpp)

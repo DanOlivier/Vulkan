@@ -1,0 +1,1 @@
+buildExample(texturecubemap texturecubemap.cpp)

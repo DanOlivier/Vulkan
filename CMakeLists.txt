@@ -7,8 +7,8 @@ set(NAME vulkanExamples)
 project(${NAME})
 
 include_directories(external)
-include_directories(external/glm)
-include_directories(external/gli)
+#include_directories(external/glm)
+#include_directories(external/gli)
 include_directories(external/assimp)
 include_directories(external/imgui)
 include_directories(base)
@@ -82,37 +82,36 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-std=c++11)
 
-file(GLOB SOURCE *.cpp base/*.cpp)
-set(SOURCE
-	#base/VulkanAndroid.cpp
-	base/VulkanDebug.cpp
-	base/VulkanExampleBase.cpp
-	base/VulkanTools.cpp
-)
+add_subdirectory(base)
 
 # Function for building single example
 function(buildExample EXAMPLE_NAME)
-	# Main
-	file(GLOB SOURCE *.cpp base/*.cpp ${EXAMPLE_NAME}/*.cpp)
-	set(MAIN_CPP ${EXAMPLE_NAME}/${EXAMPLE_NAME}.cpp)
-	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME}/main.cpp)
-		set(MAIN_CPP ${EXAMPLE_NAME}/main.cpp)
-	endif()
-	# imgui example requires additional source files
-	if(${EXAMPLE_NAME} STREQUAL "imgui")
-		file(GLOB ADD_SOURCE external/imgui/*.cpp)
-		set(SOURCE ${SOURCE} ${ADD_SOURCE})
-	endif()
+	
 	# Add shaders
 	set(SHADER_DIR data/shaders/${EXAMPLE_NAME})
-	file(GLOB SHADERS "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.geom" "${SHADER_DIR}/*.tesc" "${SHADER_DIR}/*.tese")
+	file(GLOB SHADERS
+		"${SHADER_DIR}/*.vert" 
+		"${SHADER_DIR}/*.frag"
+		"${SHADER_DIR}/*.geom"
+		"${SHADER_DIR}/*.tesc"
+		"${SHADER_DIR}/*.tese"
+	)
 	source_group("Shaders" FILES ${SHADERS})
 	if(WIN32)
-		add_executable(${EXAMPLE_NAME} WIN32 ${MAIN_CPP} ${SOURCE} ${SHADERS})
-		target_link_libraries(${EXAMPLE_NAME} ${Vulkan_LIBRARY} ${ASSIMP_LIBRARIES} ${WINLIBS})
+		add_executable(${EXAMPLE_NAME} WIN32 ${ARGN} ${SHADERS})
+		target_link_libraries(${EXAMPLE_NAME}
+			${Vulkan_LIBRARY}
+			${ASSIMP_LIBRARIES}
+			${WINLIBS})
 	else()
-		add_executable(${EXAMPLE_NAME} ${MAIN_CPP} ${SOURCE} ${SHADERS})
-		target_link_libraries(${EXAMPLE_NAME} ${Vulkan_LIBRARY} VkLayer_api_dump ${ASSIMP_LIBRARIES} ${WAYLAND_CLIENT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+		add_executable(${EXAMPLE_NAME} ${ARGN} ${SHADERS})
+		target_link_libraries(${EXAMPLE_NAME}
+			VulkanBase
+			${Vulkan_LIBRARY} VkLayer_api_dump
+			${ASSIMP_LIBRARIES}
+			${XCB_LIBRARIES}
+			${WAYLAND_CLIENT_LIBRARIES}
+			${CMAKE_THREAD_LIBS_INIT})
 	endif()
 endfunction()
 
@@ -121,16 +120,11 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 endif()
 
-if(WIN32)
-	# Nothing here (yet)
-else()
-	link_libraries(${XCB_LIBRARIES} ${Vulkan_LIBRARY})
-endif()
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 
 set(EXAMPLES 
 	bloom
+	computecloth
 	computecullandlod
 	computenbody
 	computeparticles
@@ -186,5 +180,5 @@ set(EXAMPLES
 )
 
 foreach(EXAMPLE ${EXAMPLES})
-	buildExample(${EXAMPLE})
+	add_subdirectory(${EXAMPLE})
 endforeach()

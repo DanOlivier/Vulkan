@@ -1,0 +1,1 @@
+buildExample(multisampling multisampling.cpp)

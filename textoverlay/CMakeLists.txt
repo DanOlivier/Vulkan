@@ -1,0 +1,1 @@
+buildExample(textoverlay textoverlay.cpp)

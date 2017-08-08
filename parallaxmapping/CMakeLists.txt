@@ -1,0 +1,1 @@
+buildExample(parallaxmapping parallaxmapping.cpp)

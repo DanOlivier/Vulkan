@@ -1,0 +1,1 @@
+buildExample(debugmarker debugmarker.cpp)

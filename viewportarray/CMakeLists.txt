@@ -1,0 +1,1 @@
+buildExample(viewportarray viewportarray.cpp)

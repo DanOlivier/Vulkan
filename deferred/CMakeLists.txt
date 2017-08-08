@@ -1,0 +1,1 @@
+buildExample(deferred deferred.cpp)

@@ -1,0 +1,1 @@
+buildExample(deferredshadows deferredshadows.cpp)

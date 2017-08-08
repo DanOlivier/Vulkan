@@ -1,0 +1,1 @@
+buildExample(occlusionquery occlusionquery.cpp)

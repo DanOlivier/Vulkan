@@ -1,0 +1,1 @@
+buildExample(triangle triangle.cpp)

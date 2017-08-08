@@ -1,0 +1,1 @@
+buildExample(pbribl pbribl.cpp)

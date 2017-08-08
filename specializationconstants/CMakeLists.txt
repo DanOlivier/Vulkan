@@ -1,0 +1,1 @@
+buildExample(specializationconstants specializationconstants.cpp)

@@ -1,0 +1,1 @@
+buildExample(mesh mesh.cpp)

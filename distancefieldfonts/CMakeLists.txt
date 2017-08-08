@@ -1,0 +1,1 @@
+buildExample(distancefieldfonts distancefieldfonts.cpp)

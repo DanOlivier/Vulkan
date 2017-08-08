@@ -1,0 +1,1 @@
+buildExample(sphericalenvmapping sphericalenvmapping.cpp)

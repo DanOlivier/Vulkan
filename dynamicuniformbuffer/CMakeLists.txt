@@ -1,0 +1,1 @@
+buildExample(dynamicuniformbuffer dynamicuniformbuffer.cpp)

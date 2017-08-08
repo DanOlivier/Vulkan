@@ -1,0 +1,1 @@
+buildExample(computeshader computeshader.cpp)

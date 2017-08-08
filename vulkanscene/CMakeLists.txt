@@ -1,0 +1,1 @@
+buildExample(vulkanscene vulkanscene.cpp)

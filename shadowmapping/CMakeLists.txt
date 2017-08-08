@@ -1,0 +1,1 @@
+buildExample(shadowmapping shadowmapping.cpp)

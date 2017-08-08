@@ -1,0 +1,1 @@
+buildExample(pbrtexture main.cpp)

@@ -1,0 +1,1 @@
+buildExample(pipelines pipelines.cpp)

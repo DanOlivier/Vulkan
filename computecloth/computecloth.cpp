@@ -12,6 +12,8 @@
 #include "VulkanTexture.hpp"
 #include "VulkanModel.hpp"
 
+#include <random>
+
 #define ENABLE_VALIDATION false
 
 class VulkanExample : public VulkanExampleBase
@@ -58,7 +60,7 @@ public:
 		vks::Buffer uniformBuffer;
 		vk::Queue queue;
 		vk::CommandPool commandPool;
-		std::array<vk::CommandBuffer,2> commandBuffers;
+		std::vector<vk::CommandBuffer> commandBuffers;
 		vk::Fence fence;
 		vk::DescriptorSetLayout descriptorSetLayout;
 		std::array<vk::DescriptorSet,2> descriptorSets;
@@ -165,7 +167,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
@@ -240,7 +242,7 @@ public:
 			compute.commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eCompute, compute.pipeline);
 
 			uint32_t calculateNormals = 0;
-			compute.commandBuffers[i].pushConstants(compute.pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, calculateNormals);
+			compute.commandBuffers[i].pushConstants(compute.pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, 1, &calculateNormals);
 
 			// Dispatch the compute job
 			const uint32_t iterations = 64;
@@ -250,7 +252,7 @@ public:
 
 				if (j == iterations - 1) {
 					calculateNormals = 1;
-					compute.commandBuffers[i].pushConstants(compute.pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, calculateNormals);
+					compute.commandBuffers[i].pushConstants(compute.pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, 1, &calculateNormals);
 				}
 
 				vkCmdDispatch(compute.commandBuffers[i], cloth.gridsize.x / 10, cloth.gridsize.y / 10, 1);
@@ -280,7 +282,6 @@ public:
 			}
 
 			compute.commandBuffers[i].pipelineBarrier(
-				compute.commandBuffers[i],
 				vk::PipelineStageFlagBits::eComputeShader,
 				vk::PipelineStageFlagBits::eComputeShader,
 				vk::DependencyFlags(),
@@ -399,7 +400,7 @@ public:
 
 		// Copy from staging buffer
 		copyCmd = VulkanExampleBase::createCommandBuffer(vk::CommandBufferLevel::ePrimary, true);
-		copyRegion = {};
+		copyRegion = vk::BufferCopy();
 		copyRegion.size = indexBufferSize;
 		copyCmd.copyBuffer(stagingBuffer.buffer, graphics.indices.buffer, copyRegion);
 		VulkanExampleBase::flushCommandBuffer(copyCmd, queue, true);
@@ -556,7 +557,7 @@ public:
 		vk::DescriptorSetLayoutCreateInfo descriptorLayout =
 			vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
 
-		compute.descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout));
+		compute.descriptorSetLayout = device.createDescriptorSetLayout(descriptorLayout);
 
 		vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo =
 			vks::initializers::pipelineLayoutCreateInfo(&compute.descriptorSetLayout, 1);
@@ -586,7 +587,7 @@ public:
 			vks::initializers::writeDescriptorSet(compute.descriptorSets[1], vk::DescriptorType::eUniformBuffer, 2, &compute.uniformBuffer.descriptor)
 		};
 
-		device.updateDescriptorSets(writeDescriptorSets, nullptr)(computeWriteDescriptorSets);
+		device.updateDescriptorSets(computeWriteDescriptorSets, nullptr);
 
 		// Create pipeline		
 		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout);
@@ -604,7 +605,7 @@ public:
 		vk::CommandBufferAllocateInfo cmdBufAllocateInfo =
 			vks::initializers::commandBufferAllocateInfo(compute.commandPool, vk::CommandBufferLevel::ePrimary, 2);	
 
-		compute.commandBuffers = device.allocateCommandBuffers(cmdBufAllocateInfo)[0];
+		compute.commandBuffers = device.allocateCommandBuffers(cmdBufAllocateInfo);
 
 		// Fence for compute CB sync
 		vk::FenceCreateInfo fenceCreateInfo = vks::initializers::fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);

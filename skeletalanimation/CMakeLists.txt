@@ -1,0 +1,1 @@
+buildExample(skeletalanimation skeletalanimation.cpp)

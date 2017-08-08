@@ -1,0 +1,1 @@
+buildExample(shadowmappingomni shadowmappingomni.cpp)

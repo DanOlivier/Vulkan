@@ -1,0 +1,1 @@
+buildExample(computeparticles computeparticles.cpp)

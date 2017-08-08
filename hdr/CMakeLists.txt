@@ -1,0 +1,1 @@
+buildExample(hdr hdr.cpp)

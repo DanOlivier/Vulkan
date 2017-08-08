@@ -1,0 +1,1 @@
+buildExample(geometryshader geometryshader.cpp)

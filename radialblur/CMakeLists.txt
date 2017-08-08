@@ -1,0 +1,1 @@
+buildExample(radialblur radialblur.cpp)

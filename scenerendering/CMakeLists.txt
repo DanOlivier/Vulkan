@@ -1,0 +1,1 @@
+buildExample(scenerendering scenerendering.cpp)

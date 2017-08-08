@@ -1,0 +1,1 @@
+buildExample(screenshot screenshot.cpp)

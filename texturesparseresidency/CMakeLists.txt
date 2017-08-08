@@ -1,0 +1,1 @@
+buildExample(texturesparseresidency texturesparseresidency.cpp)
