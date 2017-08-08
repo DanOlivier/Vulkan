@@ -13,7 +13,12 @@
 #include <assert.h>
 #include <iostream>
 #if defined(_WIN32)
+#include <windows.h>
+#include <fcntl.h>
+#include <io.h>
 #elif defined(__ANDROID__)
+#include "VulkanAndroid.h"
+#include <android/asset_manager.h>
 #endif
 
 // Custom define for better code readability

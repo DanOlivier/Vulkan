@@ -8,14 +8,24 @@
 
 #pragma once
 
-//#ifdef _WIN32
-//#pragma comment(linker, "/subsystem:windows")
-//#elif defined(__ANDROID__)
-//#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-//#elif defined(_DIRECT2DISPLAY)
-////
-//#elif defined(__linux__)
-//#endif
+#ifdef _WIN32
+#pragma comment(linker, "/subsystem:windows")
+#include <windows.h>
+#include <fcntl.h>
+#include <io.h>
+#elif defined(__ANDROID__)
+#include <android/native_activity.h>
+#include <android/asset_manager.h>
+#include <android_native_app_glue.h>
+#include <sys/system_properties.h>
+#include "VulkanAndroid.h"
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+#include <wayland-client.h>
+#elif defined(_DIRECT2DISPLAY)
+//
+#elif defined(__linux__)
+#include <xcb/xcb.h>
+#endif
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -442,7 +452,7 @@ int main(const int argc, const char *argv[])													    \
 VulkanExample *vulkanExample;																		\
 int main(const int argc, const char *argv[])													    \
 {																									\
-	for (size_t i = 0; i < argc; i++) { VulkanExample::args.push_back(argv[i]); };  				\
+	for (int i = 0; i < argc; i++) { VulkanExample::args.push_back(argv[i]); };  				\
 	vulkanExample = new VulkanExample();															\
 	vulkanExample->initVulkan();																	\
 	vulkanExample->setupWindow();					 												\

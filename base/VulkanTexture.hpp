@@ -17,6 +17,10 @@
 #include "VulkanTools.h"
 #include "VulkanDevice.hpp"
 
+#if defined(__ANDROID__)
+#include <android/asset_manager.h>
+#endif
+
 namespace vks
 {
 	/** @brief Vulkan texture base class */
