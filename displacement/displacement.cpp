@@ -387,10 +387,10 @@ public:
 		// Tessellation pipeline
 		// Load shaders
 		std::array<vk::PipelineShaderStageCreateInfo, 4> shaderStages;
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/displacement/base.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/displacement/base.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		shaderStages[2] = loadShader(getAssetPath() + "shaders/displacement/displacement.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
-		shaderStages[3] = loadShader(getAssetPath() + "shaders/displacement/displacement.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/base.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/base.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[2] = loadShader(getAssetPath() + "shaders/displacement.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
+		shaderStages[3] = loadShader(getAssetPath() + "shaders/displacement.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(

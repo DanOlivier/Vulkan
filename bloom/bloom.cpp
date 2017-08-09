@@ -708,8 +708,8 @@ public:
 		pipelineCreateInfo.pStages = shaderStages.data();
 
 		// Blur pipelines
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/bloom/gaussblur.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/bloom/gaussblur.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/gaussblur.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/gaussblur.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		// Empty vertex input state
 		vk::PipelineVertexInputStateCreateInfo emptyInputState = vks::initializers::pipelineVertexInputStateCreateInfo();
 		pipelineCreateInfo.pVertexInputState = &emptyInputState;
@@ -740,8 +740,8 @@ public:
 		// Phong pass (3D model)
 		pipelineCreateInfo.layout = pipelineLayouts.scene;
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/bloom/phongpass.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/bloom/phongpass.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/phongpass.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/phongpass.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		blendAttachmentState.blendEnable = VK_FALSE;
 		depthStencilState.depthWriteEnable = VK_TRUE;
 		rasterizationState.cullMode = vk::CullModeFlagBits::eBack;
@@ -749,14 +749,14 @@ public:
 		pipelines.phongPass = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Color only pass (offscreen blur base)
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/bloom/colorpass.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/bloom/colorpass.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/colorpass.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/colorpass.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelineCreateInfo.renderPass = offscreenPass.renderPass;
 		pipelines.glowPass = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Skybox (cubemap)
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/bloom/skybox.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/bloom/skybox.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/skybox.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/skybox.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		depthStencilState.depthWriteEnable = VK_FALSE;
 		rasterizationState.cullMode = vk::CullModeFlagBits::eFront;
 		pipelineCreateInfo.renderPass = renderPass;

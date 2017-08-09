@@ -482,8 +482,8 @@ public:
 		// Rendering pipeline
 		std::array<vk::PipelineShaderStageCreateInfo,2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/computecloth/cloth.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/computecloth/cloth.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/cloth.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/cloth.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -537,8 +537,8 @@ public:
 		inputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(inputAttributes.size());
 		inputAssemblyState.topology = vk::PrimitiveTopology::eTriangleList;
 		rasterizationState.polygonMode = vk::PolygonMode::eFill;
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/computecloth/sphere.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/computecloth/sphere.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/sphere.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/sphere.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		graphics.pipelines.sphere = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
@@ -591,7 +591,7 @@ public:
 
 		// Create pipeline		
 		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout);
-		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computecloth/cloth.comp.spv", vk::ShaderStageFlagBits::eCompute);
+		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/cloth.comp.spv", vk::ShaderStageFlagBits::eCompute);
 		compute.pipeline = device.createComputePipelines(pipelineCache, computePipelineCreateInfo)[0];
 
 		// Separate command pool as queue family for compute may be different than graphics

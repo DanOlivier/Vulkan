@@ -884,8 +884,8 @@ public:
 		// Final composition pass pipeline
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/ssao/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/ssao/composition.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/composition.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -916,8 +916,8 @@ public:
 		pipelineCreateInfo.pVertexInputState = &emptyInputState;
 
 		// SSAO Pass
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/ssao/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/ssao/ssao.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/ssao.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		{
 			// Set constant parameters via specialization constants
 			std::array<vk::SpecializationMapEntry, 2> specializationMapEntries;
@@ -936,15 +936,15 @@ public:
 
 
 		// SSAO blur pass
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/ssao/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/ssao/blur.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/fullscreen.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/blur.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelineCreateInfo.renderPass = frameBuffers.ssaoBlur.renderPass;
 		pipelineCreateInfo.layout = pipelineLayouts.ssaoBlur;
 		pipelines.ssaoBlur = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Fill G-Buffer
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/ssao/gbuffer.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/ssao/gbuffer.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/gbuffer.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/gbuffer.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 		pipelineCreateInfo.renderPass = frameBuffers.offscreen.renderPass;
 		pipelineCreateInfo.layout = pipelineLayouts.gBuffer;

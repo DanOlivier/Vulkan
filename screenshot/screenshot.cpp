@@ -253,8 +253,8 @@ public:
 		pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
 		// Mesh rendering pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/screenshot/mesh.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/screenshot/mesh.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/mesh.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/mesh.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 

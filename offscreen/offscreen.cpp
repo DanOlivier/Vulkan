@@ -761,8 +761,8 @@ public:
 		// Load shaders
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/offscreen/quad.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/offscreen/quad.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/quad.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/quad.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -783,8 +783,8 @@ public:
 		pipelines.debug = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Mirror
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/offscreen/mirror.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/offscreen/mirror.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/mirror.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/mirror.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		rasterizationState.cullMode = vk::CullModeFlagBits::eNone;
 		pipelines.mirror = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
@@ -794,8 +794,8 @@ public:
 		// Phong shading pipelines
 		pipelineCreateInfo.layout = pipelineLayouts.shaded;
 		// Scene
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/offscreen/phong.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/offscreen/phong.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/phong.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/phong.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.shaded = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		// Offscreen
 		// Flip culling

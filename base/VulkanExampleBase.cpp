@@ -88,7 +88,8 @@ const std::string VulkanExampleBase::getAssetPath()
 #if defined(__ANDROID__)
 	return "";
 #else
-	return "./../data/";
+	//return "./../data/";
+	return "./";
 #endif
 }
 #endif
@@ -194,8 +195,8 @@ void VulkanExampleBase::prepare()
 	{
 		// Load the text rendering shaders
 		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
-		shaderStages.push_back(loadShader(getAssetPath() + "shaders/base/textoverlay.vert.spv", vk::ShaderStageFlagBits::eVertex));
-		shaderStages.push_back(loadShader(getAssetPath() + "shaders/base/textoverlay.frag.spv", vk::ShaderStageFlagBits::eFragment));
+		shaderStages.push_back(loadShader(getAssetPath() + "shaders/textoverlay.vert.spv", vk::ShaderStageFlagBits::eVertex));
+		shaderStages.push_back(loadShader(getAssetPath() + "shaders/textoverlay.frag.spv", vk::ShaderStageFlagBits::eFragment));
 		textOverlay = new VulkanTextOverlay(
 			vulkanDevice,
 			queue,

@@ -315,8 +315,8 @@ public:
 
 		// Textured pipeline
 		// Phong shading pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/pipelines/phong.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/pipelines/phong.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/phong.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/phong.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.phong = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// All pipelines created after the base pipeline will be derivatives
@@ -328,8 +328,8 @@ public:
 		pipelineCreateInfo.basePipelineIndex = -1;
 
 		// Toon shading pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/pipelines/toon.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/pipelines/toon.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/toon.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/toon.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.toon = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Pipeline for wire frame rendering
@@ -337,8 +337,8 @@ public:
 		if (deviceFeatures.fillModeNonSolid)
 		{
 			rasterizationState.polygonMode = vk::PolygonMode::eLine;
-			shaderStages[0] = loadShader(getAssetPath() + "shaders/pipelines/wireframe.vert.spv", vk::ShaderStageFlagBits::eVertex);
-			shaderStages[1] = loadShader(getAssetPath() + "shaders/pipelines/wireframe.frag.spv", vk::ShaderStageFlagBits::eFragment);
+			shaderStages[0] = loadShader(getAssetPath() + "shaders/wireframe.vert.spv", vk::ShaderStageFlagBits::eVertex);
+			shaderStages[1] = loadShader(getAssetPath() + "shaders/wireframe.frag.spv", vk::ShaderStageFlagBits::eFragment);
 			pipelines.wireframe = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		}
 	}

@@ -686,8 +686,8 @@ public:
 		colorBlendState.pAttachments = blendAttachmentStates.data();
 
 		// Offscreen scene rendering pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/subpasses/gbuffer.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/subpasses/gbuffer.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/gbuffer.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/gbuffer.frag.spv", vk::ShaderStageFlagBits::eFragment);
 	
 		pipelines.offscreen = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
@@ -814,8 +814,8 @@ public:
 
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 		
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/subpasses/composition.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/subpasses/composition.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/composition.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/composition.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		// Use specialization constants to pass number of lights to the shader
 		vk::SpecializationMapEntry specializationEntry{};
@@ -897,8 +897,8 @@ public:
 		pipelineCreateInfo.layout = pipelineLayouts.transparent;
 		pipelineCreateInfo.subpass = 2;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/subpasses/transparent.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/subpasses/transparent.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/transparent.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/transparent.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		pipelines.transparent = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}

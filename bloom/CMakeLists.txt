@@ -6,3 +6,14 @@ copy_assets(bloom
     models/cube.obj
     textures/cubemap_space.ktx
 )
+
+compile_shaders(bloom
+    shaders/colorpass.frag
+    shaders/colorpass.vert
+    shaders/gaussblur.frag
+    shaders/gaussblur.vert
+    shaders/phongpass.frag
+    shaders/phongpass.vert
+    shaders/skybox.frag
+    shaders/skybox.vert
+)

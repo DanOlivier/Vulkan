@@ -328,8 +328,8 @@ public:
 		pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
 		// PBR pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbrbasic/pbr.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbrbasic/pbr.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbr.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbr.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		// Enable depth test and write
 		depthStencilState.depthWriteEnable = VK_TRUE;
 		depthStencilState.depthTestEnable = VK_TRUE;

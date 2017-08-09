@@ -86,17 +86,15 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-std=c++11)
 
-add_subdirectory(base)
-
 function(copy_assets EXAMPLE_NAME)
     foreach(ASSET ${ARGN})
         set(input_file ${CMAKE_SOURCE_DIR}/data/${ASSET})
         get_filename_component(DIR_NAME ${ASSET} DIRECTORY)
-        set(output_file ${ASSET})
+        set(output_file ${CMAKE_BINARY_DIR}/${ASSET})
         # Must do this in two steps to propagate value
         set(all_assets ${all_assets} ${output_file})
         set(all_assets ${all_assets} PARENT_SCOPE)
-        message("Generating: ${ASSET} -> ${output_file}")
+        #message("Generating: ${ASSET} -> ${output_file}")
         add_custom_command(
             OUTPUT ${output_file} POST_BUILD
             COMMAND mkdir -p ${DIR_NAME}
@@ -110,6 +108,37 @@ function(copy_assets EXAMPLE_NAME)
     #file(COPY ${assets} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/assets)
 endfunction()
 
+function(compile_shaders EXAMPLE_NAME)
+	set(SHADERS ${ARGN})
+	# Add shaders
+	#file(GLOB SHADERS
+	#	RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+	#	"shaders/*.vert" 
+	#	"shaders/*.frag"
+	#	"shaders/*.geom"
+	#	"shaders/*.tesc"
+	#	"shaders/*.tese"
+	#)
+	#source_group("Shaders" FILES ${SHADERS})
+	#message("SHADERS: ${SHADERS}")
+
+    foreach(SHADER ${SHADERS})
+        get_filename_component(DIR_NAME ${SHADER} DIRECTORY)
+		set(output_file ${CMAKE_BINARY_DIR}/${SHADER}.spv)
+        set(compiled_shaders ${compiled_shaders} ${output_file})
+        set(compiled_shaders ${compiled_shaders} PARENT_SCOPE)
+        add_custom_command(
+            OUTPUT ${output_file}
+            COMMAND mkdir -p ${DIR_NAME}
+            COMMAND ${GLSLANG_VALIDATOR} -w -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER} -o ${output_file}
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}
+            COMMENT "Compiling shader ${output_file}"
+        )
+    endforeach()
+    add_custom_target(shader-${EXAMPLE_NAME} ALL DEPENDS ${compiled_shaders})
+    add_dependencies(${EXAMPLE_NAME} shader-${EXAMPLE_NAME})
+endfunction()
+
 # Function for building single example
 function(buildExample EXAMPLE_NAME)
     list(REMOVE_AT ARGV 0)
@@ -120,35 +149,12 @@ function(buildExample EXAMPLE_NAME)
 	#message("ARGS_MODELS: ${ARGS_MODELS}")
 	#message("ARGS_UNPARSED_ARGUMENTS: ${ARGS_UNPARSED_ARGUMENTS}")
 	
-	# Add shaders
-	file(GLOB SHADERS
-		"*.vert" 
-		"*.frag"
-		"*.geom"
-		"*.tesc"
-		"*.tese"
-	)
-	source_group("Shaders" FILES ${SHADERS})
-
-    foreach(SHADER ${SHADERS})
-        get_filename_component(FILE_NAME ${SHADER} NAME)
-		set(output_file shaders/${FILE_NAME}.spv)
-		list(APPEND compiled_shaders ${output_file})
-        add_custom_command(
-            OUTPUT ${output_file}
-            COMMAND mkdir -p shaders
-            COMMAND ${GLSLANG_VALIDATOR} -w -V ${SHADER} -o ${output_file}
-            DEPENDS ${SHADER}
-            COMMENT "Generating ${output_file}"
-        )
-    endforeach()
-
 	if(WIN32)
 		add_executable(${EXAMPLE_NAME} WIN32 
 			${ARGS_UNPARSED_ARGUMENTS} 
 			#${ARGS_TEXTURES}
 			#${ARGS_MODELS}
-			${compiled_shaders}
+			#${compiled_shaders}
 		)
 		target_link_libraries(${EXAMPLE_NAME}
 			${Vulkan_LIBRARY}
@@ -159,7 +165,7 @@ function(buildExample EXAMPLE_NAME)
 			${ARGS_UNPARSED_ARGUMENTS}
 			#${ARGS_TEXTURES}
 			#${ARGS_MODELS}
-			${compiled_shaders}
+			#${compiled_shaders}
 		)
 		target_link_libraries(${EXAMPLE_NAME}
 			VulkanBase
@@ -169,6 +175,8 @@ function(buildExample EXAMPLE_NAME)
 			${WAYLAND_CLIENT_LIBRARIES}
 			${CMAKE_THREAD_LIBS_INIT})
 	endif()
+	#compile_shaders(${EXAMPLE_NAME})
+
 endfunction()
 
 # Compiler specific stuff
@@ -234,6 +242,8 @@ set(EXAMPLES
 	viewportarray
 	vulkanscene
 )
+
+add_subdirectory(base)
 
 foreach(EXAMPLE ${EXAMPLES})
 	add_subdirectory(${EXAMPLE})

@@ -924,8 +924,8 @@ public:
 		specializationInfo.pData = &specializationData;
 
 		// With MSAA
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredmultisampling/deferred.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferredmultisampling/deferred.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferred.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferred.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		shaderStages[1].pSpecializationInfo = &specializationInfo;
 		pipelines.deferred = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
@@ -934,15 +934,15 @@ public:
 		pipelines.deferredNoMSAA = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Debug display pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredmultisampling/debug.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferredmultisampling/debug.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/debug.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/debug.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.debug = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 		
 		// Offscreen scene rendering pipeline
 		pipelineCreateInfo.pVertexInputState = &vertices.inputState;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredmultisampling/mrt.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferredmultisampling/mrt.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/mrt.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/mrt.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		//rasterizationState.polygonMode = vk::PolygonMode::eLine;
 		//rasterizationState.lineWidth = 2.0f;

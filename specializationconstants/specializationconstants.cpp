@@ -347,8 +347,8 @@ public:
 
 		// Create pipelines
 		// All pipelines will use the same "uber" shader and specialization constants to change branching and parameters of that shader
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/specializationconstants/uber.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/specializationconstants/uber.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/uber.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/uber.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		// Specialization info is assigned is part of the shader stage (modul) and must be set after creating the module and before creating the pipeline
 		shaderStages[1].pSpecializationInfo = &specializationInfo;
 

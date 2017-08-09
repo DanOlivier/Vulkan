@@ -485,8 +485,8 @@ public:
 		// Load shaders
 		std::array<vk::PipelineShaderStageCreateInfo,2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/computenbody/particle.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/computenbody/particle.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/particle.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/particle.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -588,7 +588,7 @@ public:
 		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout);
 
 		// 1st pass
-		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computenbody/particle_calculate.comp.spv", vk::ShaderStageFlagBits::eCompute);
+		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/particle_calculate.comp.spv", vk::ShaderStageFlagBits::eCompute);
 
 		// Set shader parameters via specialization constants
 		struct SpecializationData {
@@ -617,7 +617,7 @@ public:
 		compute.pipelineCalculate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo)[0];
 
 		// 2nd pass
-		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computenbody/particle_integrate.comp.spv", vk::ShaderStageFlagBits::eCompute);
+		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/particle_integrate.comp.spv", vk::ShaderStageFlagBits::eCompute);
 		compute.pipelineIntegrate = device.createComputePipelines(pipelineCache, computePipelineCreateInfo)[0];
 
 		// Separate command pool as queue family for compute may be different than graphics

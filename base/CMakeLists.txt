@@ -7,3 +7,8 @@ set(SOURCE
 )
 
 add_library(VulkanBase ${SOURCE})
+
+compile_shaders(VulkanBase
+	shaders/textoverlay.vert
+	shaders/textoverlay.frag
+)

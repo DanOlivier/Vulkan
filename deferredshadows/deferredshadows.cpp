@@ -883,8 +883,8 @@ public:
 		// Final fullscreen pass pipeline
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredshadows/deferred.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferredshadows/deferred.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferred.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferred.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -905,13 +905,13 @@ public:
 		pipelines.deferred = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Debug display pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredshadows/debug.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferredshadows/debug.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/debug.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/debug.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.debug = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// Offscreen pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/deferredshadows/mrt.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/deferredshadows/mrt.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/mrt.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/mrt.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		// Separate render pass
 		pipelineCreateInfo.renderPass = frameBuffers.deferred->renderPass;
@@ -934,9 +934,9 @@ public:
 		// The shadow mapping pipeline uses geometry shader instancing (invocations layout modifier) to output
 		// shadow maps for multiple lights sources into the different shadow map layers in one single render pass
 		std::array<vk::PipelineShaderStageCreateInfo, 3> shadowStages;
-		shadowStages[0] = loadShader(getAssetPath() + "shaders/deferredshadows/shadow.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shadowStages[1] = loadShader(getAssetPath() + "shaders/deferredshadows/shadow.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		shadowStages[2] = loadShader(getAssetPath() + "shaders/deferredshadows/shadow.geom.spv", vk::ShaderStageFlagBits::eGeometry);
+		shadowStages[0] = loadShader(getAssetPath() + "shaders/shadow.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shadowStages[1] = loadShader(getAssetPath() + "shaders/shadow.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shadowStages[2] = loadShader(getAssetPath() + "shaders/shadow.geom.spv", vk::ShaderStageFlagBits::eGeometry);
 
 		pipelineCreateInfo.pStages = shadowStages.data();
 		pipelineCreateInfo.stageCount = static_cast<uint32_t>(shadowStages.size());

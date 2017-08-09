@@ -410,8 +410,8 @@ public:
 		// Wire frame rendering pipeline
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/textoverlay/mesh.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/textoverlay/mesh.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/mesh.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/mesh.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -437,8 +437,8 @@ public:
 
 		rasterizationState.polygonMode = vk::PolygonMode::eFill;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/textoverlay/background.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/textoverlay/background.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/background.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/background.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		pipelines.background = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
@@ -478,8 +478,8 @@ public:
 	{
 		// Load the text rendering shaders
 		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
-		shaderStages.push_back(loadShader(getAssetPath() + "shaders/textoverlay/text.vert.spv", vk::ShaderStageFlagBits::eVertex));
-		shaderStages.push_back(loadShader(getAssetPath() + "shaders/textoverlay/text.frag.spv", vk::ShaderStageFlagBits::eFragment));
+		shaderStages.push_back(loadShader(getAssetPath() + "shaders/text.vert.spv", vk::ShaderStageFlagBits::eVertex));
+		shaderStages.push_back(loadShader(getAssetPath() + "shaders/text.frag.spv", vk::ShaderStageFlagBits::eFragment));
 
 		textOverlay = new TextOverlay(
 			vulkanDevice,

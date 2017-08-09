@@ -399,10 +399,10 @@ public:
 		// Load shaders
 		std::array<vk::PipelineShaderStageCreateInfo, 4> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/tessellation/base.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/tessellation/base.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		shaderStages[2] = loadShader(getAssetPath() + "shaders/tessellation/pntriangles.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
-		shaderStages[3] = loadShader(getAssetPath() + "shaders/tessellation/pntriangles.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/base.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/base.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[2] = loadShader(getAssetPath() + "shaders/pntriangles.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
+		shaderStages[3] = loadShader(getAssetPath() + "shaders/pntriangles.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -433,8 +433,8 @@ public:
 
 		// Pass through pipelines
 		// Load pass through tessellation shaders (Vert and frag are reused)
-		shaderStages[2] = loadShader(getAssetPath() + "shaders/tessellation/passthrough.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
-		shaderStages[3] = loadShader(getAssetPath() + "shaders/tessellation/passthrough.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
+		shaderStages[2] = loadShader(getAssetPath() + "shaders/passthrough.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
+		shaderStages[3] = loadShader(getAssetPath() + "shaders/passthrough.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
 
 		// Solid
 		rasterizationState.polygonMode = vk::PolygonMode::eFill;

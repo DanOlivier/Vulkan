@@ -518,8 +518,8 @@ public:
 		// Load shaders
 		std::array<vk::PipelineShaderStageCreateInfo,2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/computeshader/texture.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/computeshader/texture.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/texture.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/texture.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -649,7 +649,7 @@ public:
 		std::vector<std::string> shaderNames = { "sharpen", "edgedetect", "emboss" };
 		for (auto& shaderName : shaderNames)
 		{
-			std::string fileName = getAssetPath() + "shaders/computeshader/" + shaderName + ".comp.spv";
+			std::string fileName = getAssetPath() + "shaders/" + shaderName + ".comp.spv";
 			computePipelineCreateInfo.stage = loadShader(fileName.c_str(), vk::ShaderStageFlagBits::eCompute);
 			vk::Pipeline pipeline;
 			pipeline = device.createComputePipelines(pipelineCache, computePipelineCreateInfo)[0];

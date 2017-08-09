@@ -778,10 +778,10 @@ public:
 		std::array<vk::PipelineShaderStageCreateInfo, 4> shaderStages;
 
 		// Terrain tessellation pipeline
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/terraintessellation/terrain.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/terraintessellation/terrain.frag.spv", vk::ShaderStageFlagBits::eFragment);
-		shaderStages[2] = loadShader(getAssetPath() + "shaders/terraintessellation/terrain.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
-		shaderStages[3] = loadShader(getAssetPath() + "shaders/terraintessellation/terrain.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/terrain.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/terrain.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[2] = loadShader(getAssetPath() + "shaders/terrain.tesc.spv", vk::ShaderStageFlagBits::eTessellationControl);
+		shaderStages[3] = loadShader(getAssetPath() + "shaders/terrain.tese.spv", vk::ShaderStageFlagBits::eTessellationEvaluation);
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(
@@ -819,8 +819,8 @@ public:
 		depthStencilState.depthWriteEnable = VK_FALSE;
 		pipelineCreateInfo.stageCount = 2;
 		pipelineCreateInfo.layout = pipelineLayouts.skysphere;
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/terraintessellation/skysphere.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/terraintessellation/skysphere.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/skysphere.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/skysphere.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.skysphere = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 

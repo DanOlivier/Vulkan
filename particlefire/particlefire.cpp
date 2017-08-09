@@ -561,8 +561,8 @@ public:
 		// Particle rendering pipeline
 		{
 			// Shaders
-			shaderStages[0] = loadShader(getAssetPath() + "shaders/particlefire/particle.vert.spv", vk::ShaderStageFlagBits::eVertex);
-			shaderStages[1] = loadShader(getAssetPath() + "shaders/particlefire/particle.frag.spv", vk::ShaderStageFlagBits::eFragment);
+			shaderStages[0] = loadShader(getAssetPath() + "shaders/particle.vert.spv", vk::ShaderStageFlagBits::eVertex);
+			shaderStages[1] = loadShader(getAssetPath() + "shaders/particle.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 			// Vertex input state
 			vk::VertexInputBindingDescription vertexInputBinding =
@@ -604,8 +604,8 @@ public:
 		// Environment rendering pipeline (normal mapped)
 		{
 			// Shaders
-			shaderStages[0] = loadShader(getAssetPath() + "shaders/particlefire/normalmap.vert.spv", vk::ShaderStageFlagBits::eVertex);
-			shaderStages[1] = loadShader(getAssetPath() + "shaders/particlefire/normalmap.frag.spv", vk::ShaderStageFlagBits::eFragment);
+			shaderStages[0] = loadShader(getAssetPath() + "shaders/normalmap.vert.spv", vk::ShaderStageFlagBits::eVertex);
+			shaderStages[1] = loadShader(getAssetPath() + "shaders/normalmap.frag.spv", vk::ShaderStageFlagBits::eFragment);
 
 			// Vertex input state
 			vk::VertexInputBindingDescription vertexInputBinding =

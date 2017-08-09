@@ -448,8 +448,8 @@ public:
 		pipelineCreateInfo.pStages = shaderStages.data();
 
 		// Indirect (and instanced) pipeline for the plants
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/computecullandlod/indirectdraw.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/computecullandlod/indirectdraw.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/indirectdraw.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/indirectdraw.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.plants = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 	}
 
@@ -683,7 +683,7 @@ public:
 
 		// Create pipeline		
 		vk::ComputePipelineCreateInfo computePipelineCreateInfo = vks::initializers::computePipelineCreateInfo(compute.pipelineLayout);
-		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/computecullandlod/cull.comp.spv", vk::ShaderStageFlagBits::eCompute);
+		computePipelineCreateInfo.stage = loadShader(getAssetPath() + "shaders/cull.comp.spv", vk::ShaderStageFlagBits::eCompute);
 
 		// Use specialization constants to pass max. level of detail (determined by no. of meshes)
 		vk::SpecializationMapEntry specializationEntry{};

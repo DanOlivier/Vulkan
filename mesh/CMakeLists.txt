@@ -1,5 +1,10 @@
 buildExample(mesh mesh.cpp)
 
+compile_shaders(mesh
+    shaders/mesh.frag
+    shaders/mesh.vert
+)
+
 copy_assets(mesh
     models/voyager/voyager.dae
     models/voyager/voyager_bc3_unorm.ktx
