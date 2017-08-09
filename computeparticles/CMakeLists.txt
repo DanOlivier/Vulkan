@@ -1,6 +1,7 @@
 buildExample(computeparticles computeparticles.cpp)
 
 compile_shaders(computeparticles
+    shaders/particle.comp
     shaders/particle.frag
     shaders/particle.vert
 )

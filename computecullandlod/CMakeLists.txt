@@ -1,6 +1,7 @@
 buildExample(computecullandlod computecullandlod.cpp)
 
 compile_shaders(computecullandlod
+    shaders/cull.comp
     shaders/indirectdraw.frag
     shaders/indirectdraw.vert
 )
