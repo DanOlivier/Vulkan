@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 cmake_policy(VERSION 2.8)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 set(NAME vulkanExamples)
-
 project(${NAME})
+
+include(CMakeParseArguments)
 
 include_directories(external)
 #include_directories(external/glm)
@@ -65,6 +67,8 @@ else()
 	message(STATUS ${Vulkan_LIBRARY})
 endif()
 
+find_program(GLSLANG_VALIDATOR NAMES glslangValidator)
+
 # Set preprocessor defines
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -D_USE_MATH_DEFINES")
 
@@ -84,27 +88,79 @@ add_definitions(-std=c++11)
 
 add_subdirectory(base)
 
+function(copy_assets EXAMPLE_NAME)
+    foreach(ASSET ${ARGN})
+        set(input_file ${CMAKE_SOURCE_DIR}/data/${ASSET})
+        get_filename_component(DIR_NAME ${ASSET} DIRECTORY)
+        set(output_file ${ASSET})
+        # Must do this in two steps to propagate value
+        set(all_assets ${all_assets} ${output_file})
+        set(all_assets ${all_assets} PARENT_SCOPE)
+        message("Generating: ${ASSET} -> ${output_file}")
+        add_custom_command(
+            OUTPUT ${output_file} POST_BUILD
+            COMMAND mkdir -p ${DIR_NAME}
+            COMMAND cp ${input_file} ${output_file}
+            DEPENDS ${input_file}
+            COMMENT "Copying asset ${ASSET} to ${output_file}"
+        )
+    endforeach()
+    add_custom_target(copy_assets-${EXAMPLE_NAME} ALL DEPENDS ${all_assets})
+    add_dependencies(${EXAMPLE_NAME} copy_assets-${EXAMPLE_NAME})
+    #file(COPY ${assets} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/assets)
+endfunction()
+
 # Function for building single example
 function(buildExample EXAMPLE_NAME)
+    list(REMOVE_AT ARGV 0)
+	cmake_parse_arguments(ARGS "" "" "TEXTURES;MODELS" ${ARGN})
+	#message("ARGN: ${ARGN}")
+	#message("ARGV: ${ARGV}")
+	#message("ARGS_TEXTURES: ${ARGS_TEXTURES}")
+	#message("ARGS_MODELS: ${ARGS_MODELS}")
+	#message("ARGS_UNPARSED_ARGUMENTS: ${ARGS_UNPARSED_ARGUMENTS}")
 	
 	# Add shaders
-	set(SHADER_DIR data/shaders/${EXAMPLE_NAME})
 	file(GLOB SHADERS
-		"${SHADER_DIR}/*.vert" 
-		"${SHADER_DIR}/*.frag"
-		"${SHADER_DIR}/*.geom"
-		"${SHADER_DIR}/*.tesc"
-		"${SHADER_DIR}/*.tese"
+		"*.vert" 
+		"*.frag"
+		"*.geom"
+		"*.tesc"
+		"*.tese"
 	)
 	source_group("Shaders" FILES ${SHADERS})
+
+    foreach(SHADER ${SHADERS})
+        get_filename_component(FILE_NAME ${SHADER} NAME)
+		set(output_file shaders/${FILE_NAME}.spv)
+		list(APPEND compiled_shaders ${output_file})
+        add_custom_command(
+            OUTPUT ${output_file}
+            COMMAND mkdir -p shaders
+            COMMAND ${GLSLANG_VALIDATOR} -w -V ${SHADER} -o ${output_file}
+            DEPENDS ${SHADER}
+            COMMENT "Generating ${output_file}"
+        )
+    endforeach()
+
 	if(WIN32)
-		add_executable(${EXAMPLE_NAME} WIN32 ${ARGN} ${SHADERS})
+		add_executable(${EXAMPLE_NAME} WIN32 
+			${ARGS_UNPARSED_ARGUMENTS} 
+			#${ARGS_TEXTURES}
+			#${ARGS_MODELS}
+			${compiled_shaders}
+		)
 		target_link_libraries(${EXAMPLE_NAME}
 			${Vulkan_LIBRARY}
 			${ASSIMP_LIBRARIES}
 			${WINLIBS})
 	else()
-		add_executable(${EXAMPLE_NAME} ${ARGN} ${SHADERS})
+		add_executable(${EXAMPLE_NAME} 
+			${ARGS_UNPARSED_ARGUMENTS}
+			#${ARGS_TEXTURES}
+			#${ARGS_MODELS}
+			${compiled_shaders}
+		)
 		target_link_libraries(${EXAMPLE_NAME}
 			VulkanBase
 			${Vulkan_LIBRARY} VkLayer_api_dump
@@ -120,7 +176,7 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 endif()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
 set(EXAMPLES 
 	bloom
