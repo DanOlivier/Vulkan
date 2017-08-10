@@ -1,6 +1,9 @@
 buildExample(texturearray texturearray.cpp)
 
 compile_shaders(texturearray
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/instancing.frag
     shaders/instancing.vert
 )

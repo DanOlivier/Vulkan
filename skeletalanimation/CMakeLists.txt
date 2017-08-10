@@ -1,6 +1,9 @@
 buildExample(skeletalanimation skeletalanimation.cpp)
 
 compile_shaders(skeletalanimation
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/mesh.frag
     shaders/mesh.vert
     shaders/texture.frag

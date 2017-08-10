@@ -90,7 +90,7 @@ function(copy_assets EXAMPLE_NAME)
     foreach(ASSET ${ARGN})
         set(input_file ${CMAKE_SOURCE_DIR}/data/${ASSET})
         get_filename_component(DIR_NAME ${ASSET} DIRECTORY)
-        set(output_file ${CMAKE_BINARY_DIR}/${ASSET})
+        set(output_file ${CMAKE_CURRENT_BINARY_DIR}/${ASSET})
         # Must do this in two steps to propagate value
         set(all_assets ${all_assets} ${output_file})
         set(all_assets ${all_assets} PARENT_SCOPE)
@@ -123,13 +123,13 @@ function(compile_shaders EXAMPLE_NAME)
 	#message("SHADERS: ${SHADERS}")
 
     foreach(SHADER ${SHADERS})
-        get_filename_component(DIR_NAME ${SHADER} DIRECTORY)
-		set(output_file ${CMAKE_BINARY_DIR}/${SHADER}.spv)
+        get_filename_component(FILE_NAME ${SHADER} NAME)
+		set(output_file ${CMAKE_CURRENT_BINARY_DIR}/shaders/${FILE_NAME}.spv)
         set(compiled_shaders ${compiled_shaders} ${output_file})
         set(compiled_shaders ${compiled_shaders} PARENT_SCOPE)
         add_custom_command(
             OUTPUT ${output_file}
-            COMMAND mkdir -p ${DIR_NAME}
+            COMMAND mkdir -p shaders
             COMMAND ${GLSLANG_VALIDATOR} -w -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER} -o ${output_file}
             DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}
             COMMENT "Compiling shader ${output_file}"
@@ -138,6 +138,8 @@ function(compile_shaders EXAMPLE_NAME)
     add_custom_target(shader-${EXAMPLE_NAME} ALL DEPENDS ${compiled_shaders})
     add_dependencies(${EXAMPLE_NAME} shader-${EXAMPLE_NAME})
 endfunction()
+
+add_custom_target(run-all)
 
 # Function for building single example
 function(buildExample EXAMPLE_NAME)
@@ -177,6 +179,13 @@ function(buildExample EXAMPLE_NAME)
 	endif()
 	#compile_shaders(${EXAMPLE_NAME})
 
+	add_custom_target(run-${EXAMPLE_NAME}
+        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXAMPLE_NAME}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXAMPLE_NAME}
+    )
+    add_dependencies(run-all run-${EXAMPLE_NAME})
+
 endfunction()
 
 # Compiler specific stuff
@@ -186,65 +195,59 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
-set(EXAMPLES 
-	bloom
-	computecloth
-	computecullandlod
-	computenbody
-	computeparticles
-	computeshader
-	debugmarker
-	deferred
-	deferredmultisampling
-	deferredshadows
-	displacement
-	distancefieldfonts
-	dynamicuniformbuffer
-	gears
-	geometryshader
-	hdr
-	imgui
-	indirectdraw	
-	instancing
-	mesh
-	multisampling
-	multithreading
-	occlusionquery
-	offscreen
-	parallaxmapping
-	particlefire
-	pbrbasic
-	pbribl
-	pbrtexture
-	pipelines
-	pushconstants
-	radialblur
-	raytracing
-	scenerendering
-	screenshot
-	shadowmapping
-	shadowmappingomni
-	skeletalanimation
-	specializationconstants
-	sphericalenvmapping
-	ssao
-	subpasses
-	terraintessellation
-	tessellation
-	textoverlay
-	texture
-	texture3d
-	texturearray
-	texturecubemap
-	texturemipmapgen
-	texturesparseresidency
-	triangle
-	viewportarray
-	vulkanscene
-)
-
 add_subdirectory(base)
 
-foreach(EXAMPLE ${EXAMPLES})
-	add_subdirectory(${EXAMPLE})
-endforeach()
+add_subdirectory(bloom)
+add_subdirectory(computecloth)
+add_subdirectory(computecullandlod)
+add_subdirectory(computenbody)
+add_subdirectory(computeparticles)
+add_subdirectory(computeshader)
+add_subdirectory(debugmarker)
+add_subdirectory(deferred)
+add_subdirectory(deferredmultisampling)
+add_subdirectory(deferredshadows)
+add_subdirectory(displacement)
+add_subdirectory(distancefieldfonts)
+add_subdirectory(dynamicuniformbuffer)
+add_subdirectory(gears)
+add_subdirectory(geometryshader)
+add_subdirectory(hdr)
+add_subdirectory(imgui)
+add_subdirectory(indirectdraw)	
+add_subdirectory(instancing)
+add_subdirectory(mesh)
+add_subdirectory(multisampling)
+add_subdirectory(multithreading)
+add_subdirectory(occlusionquery)
+add_subdirectory(offscreen)
+add_subdirectory(parallaxmapping)
+add_subdirectory(particlefire)
+add_subdirectory(pbrbasic)
+add_subdirectory(pbribl)
+add_subdirectory(pbrtexture)
+add_subdirectory(pipelines)
+add_subdirectory(pushconstants)
+add_subdirectory(radialblur)
+add_subdirectory(raytracing)
+add_subdirectory(scenerendering)
+add_subdirectory(screenshot)
+add_subdirectory(shadowmapping)
+add_subdirectory(shadowmappingomni)
+add_subdirectory(skeletalanimation)
+add_subdirectory(specializationconstants)
+add_subdirectory(sphericalenvmapping)
+add_subdirectory(ssao)
+add_subdirectory(subpasses)
+add_subdirectory(terraintessellation)
+add_subdirectory(tessellation)
+add_subdirectory(textoverlay)
+add_subdirectory(texture)
+add_subdirectory(texture3d)
+add_subdirectory(texturearray)
+add_subdirectory(texturecubemap)
+add_subdirectory(texturemipmapgen)
+add_subdirectory(texturesparseresidency)
+add_subdirectory(triangle)
+add_subdirectory(viewportarray)
+add_subdirectory(vulkanscene)

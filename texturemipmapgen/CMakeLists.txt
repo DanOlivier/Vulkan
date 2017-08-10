@@ -1,6 +1,9 @@
 buildExample(texturemipmapgen texturemipmapgen.cpp)
 
 compile_shaders(texturemipmapgen
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/texture.frag
     shaders/texture.vert
 )

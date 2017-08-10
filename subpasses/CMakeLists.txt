@@ -1,6 +1,9 @@
 buildExample(subpasses subpasses.cpp)
 
 compile_shaders(subpasses
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/composition.frag
     shaders/composition.vert
     shaders/gbuffer.frag

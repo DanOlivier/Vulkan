@@ -1,6 +1,9 @@
 buildExample(computeparticles computeparticles.cpp)
 
 compile_shaders(computeparticles
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/particle.comp
     shaders/particle.frag
     shaders/particle.vert

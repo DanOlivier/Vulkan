@@ -140,7 +140,7 @@ public:
 	void loadAssets()
 	{
 		textureCloth.loadFromFile(getAssetPath() + "textures/vulkan_cloth_rgba.ktx", vk::Format::eR8G8B8A8Unorm, vulkanDevice, queue);
-		modelSphere.loadFromFile(ASSET_PATH "models/geosphere.obj", vertexLayout, compute.ubo.sphereRadius * 0.05f, vulkanDevice, queue);
+		modelSphere.loadFromFile(getAssetPath() + "models/geosphere.obj", vertexLayout, compute.ubo.sphereRadius * 0.05f, vulkanDevice, queue);
 	}
 
 	void buildCommandBuffers()

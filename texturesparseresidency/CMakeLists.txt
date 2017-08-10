@@ -1,6 +1,9 @@
 buildExample(texturesparseresidency texturesparseresidency.cpp)
 
 compile_shaders(texturesparseresidency
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/sparseresidency.frag
     shaders/sparseresidency.vert
 )

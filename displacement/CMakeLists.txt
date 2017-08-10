@@ -1,6 +1,9 @@
 buildExample(displacement displacement.cpp)
 
 compile_shaders(displacement
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/base.frag
     shaders/base.vert
     shaders/displacement.tesc

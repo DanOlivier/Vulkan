@@ -8,6 +8,9 @@ copy_assets(bloom
 )
 
 compile_shaders(bloom
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/colorpass.frag
     shaders/colorpass.vert
     shaders/gaussblur.frag

@@ -1,6 +1,9 @@
 buildExample(instancing instancing.cpp)
 
 compile_shaders(instancing
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/instancing.frag
     shaders/instancing.vert
     shaders/planet.frag

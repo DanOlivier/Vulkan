@@ -1,6 +1,9 @@
 buildExample(occlusionquery occlusionquery.cpp)
 
 compile_shaders(occlusionquery
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/mesh.frag
     shaders/mesh.vert
     shaders/occluder.frag

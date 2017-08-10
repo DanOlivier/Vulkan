@@ -1,6 +1,9 @@
 buildExample(scenerendering scenerendering.cpp)
 
 compile_shaders(scenerendering
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/scene.frag
     shaders/scene.vert
 )

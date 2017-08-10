@@ -1,6 +1,9 @@
 buildExample(parallaxmapping parallaxmapping.cpp)
 
 compile_shaders(parallaxmapping
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/parallax.frag
     shaders/parallax.vert
 )

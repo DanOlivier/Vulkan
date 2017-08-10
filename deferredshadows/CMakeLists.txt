@@ -1,6 +1,9 @@
 buildExample(deferredshadows deferredshadows.cpp)
 
 compile_shaders(deferredshadows
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/debug.frag
     shaders/debug.vert
     shaders/deferred.frag

@@ -1,6 +1,9 @@
 buildExample(textoverlay textoverlay.cpp)
 
 compile_shaders(textoverlay
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/background.frag
     shaders/background.vert
     shaders/mesh.frag

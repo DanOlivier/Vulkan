@@ -1,6 +1,9 @@
 buildExample(offscreen offscreen.cpp)
 
 compile_shaders(offscreen
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/mirror.frag
     shaders/mirror.vert
     shaders/phong.frag

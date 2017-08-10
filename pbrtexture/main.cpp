@@ -188,15 +188,15 @@ public:
 
 	void loadAssets()
 	{
-		textures.environmentCube.loadFromFile(ASSET_PATH "textures/hdr/gcanyon_cube.ktx", vk::Format::eR16G16B16A16Sfloat, vulkanDevice, queue);
-		models.skybox.loadFromFile(ASSET_PATH "models/cube.obj", vertexLayout, 1.0f, vulkanDevice, queue);
+		textures.environmentCube.loadFromFile(getAssetPath() + "textures/hdr/gcanyon_cube.ktx", vk::Format::eR16G16B16A16Sfloat, vulkanDevice, queue);
+		models.skybox.loadFromFile(getAssetPath() + "models/cube.obj", vertexLayout, 1.0f, vulkanDevice, queue);
 		// PBR model
-		models.object.loadFromFile(ASSET_PATH "models/cerberus/cerberus.fbx", vertexLayout, 0.05f, vulkanDevice, queue);
-		textures.albedoMap.loadFromFile(ASSET_PATH "models/cerberus/albedo.ktx", vk::Format::eR8G8B8A8Unorm, vulkanDevice, queue);
-		textures.normalMap.loadFromFile(ASSET_PATH "models/cerberus/normal.ktx", vk::Format::eR8G8B8A8Unorm, vulkanDevice, queue);
-		textures.aoMap.loadFromFile(ASSET_PATH "models/cerberus/ao.ktx", vk::Format::eR8Unorm, vulkanDevice, queue);
-		textures.metallicMap.loadFromFile(ASSET_PATH "models/cerberus/metallic.ktx", vk::Format::eR8Unorm, vulkanDevice, queue);
-		textures.roughnessMap.loadFromFile(ASSET_PATH "models/cerberus/roughness.ktx", vk::Format::eR8Unorm, vulkanDevice, queue);
+		models.object.loadFromFile(getAssetPath() + "models/cerberus/cerberus.fbx", vertexLayout, 0.05f, vulkanDevice, queue);
+		textures.albedoMap.loadFromFile(getAssetPath() + "models/cerberus/albedo.ktx", vk::Format::eR8G8B8A8Unorm, vulkanDevice, queue);
+		textures.normalMap.loadFromFile(getAssetPath() + "models/cerberus/normal.ktx", vk::Format::eR8G8B8A8Unorm, vulkanDevice, queue);
+		textures.aoMap.loadFromFile(getAssetPath() + "models/cerberus/ao.ktx", vk::Format::eR8Unorm, vulkanDevice, queue);
+		textures.metallicMap.loadFromFile(getAssetPath() + "models/cerberus/metallic.ktx", vk::Format::eR8Unorm, vulkanDevice, queue);
+		textures.roughnessMap.loadFromFile(getAssetPath() + "models/cerberus/roughness.ktx", vk::Format::eR8Unorm, vulkanDevice, queue);
 	}
 
 	void setupDescriptors()
@@ -325,14 +325,14 @@ public:
 		pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
 		// Skybox pipeline (background cube)
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbrtexture/skybox.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbrtexture/skybox.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbrtexture/skybox.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbrtexture/skybox.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.skybox = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// PBR pipeline
 		rasterizationState.cullMode = vk::CullModeFlagBits::eFront;
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbrtexture/pbrtexture.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbrtexture/pbrtexture.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbrtexture/pbrtexture.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbrtexture/pbrtexture.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		// Enable depth test and write
 		depthStencilState.depthWriteEnable = VK_TRUE;
 		depthStencilState.depthTestEnable = VK_TRUE;
@@ -498,8 +498,8 @@ public:
 		pipelineCI.pVertexInputState = &emptyInputState;
 
 		// Look-up-table (from BRDF) pipeline
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbrtexture/genbrdflut.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbrtexture/genbrdflut.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbrtexture/genbrdflut.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbrtexture/genbrdflut.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		vk::Pipeline pipeline;
 		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCI)[0];
 
@@ -780,8 +780,8 @@ public:
 		pipelineCI.pVertexInputState = &vertexInputState;
 		pipelineCI.renderPass = renderpass;
 
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbrtexture/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbrtexture/irradiancecube.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbrtexture/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbrtexture/irradiancecube.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		vk::Pipeline pipeline;
 		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCI)[0];
 
@@ -1168,8 +1168,8 @@ public:
 		pipelineCI.pVertexInputState = &vertexInputState;
 		pipelineCI.renderPass = renderpass;
 
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbrtexture/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbrtexture/prefilterenvmap.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbrtexture/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbrtexture/prefilterenvmap.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		vk::Pipeline pipeline;
 		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCI)[0];
 

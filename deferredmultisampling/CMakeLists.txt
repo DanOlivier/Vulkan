@@ -1,6 +1,9 @@
 buildExample(deferredmultisampling deferredmultisampling.cpp)
 
 compile_shaders(deferredmultisampling
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/debug.frag
     shaders/debug.vert
     shaders/deferred.frag

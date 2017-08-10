@@ -1,6 +1,9 @@
 buildExample(indirectdraw indirectdraw.cpp)
 
 compile_shaders(indirectdraw
+    ../base/shaders/textoverlay.vert
+    ../base/shaders/textoverlay.frag
+
     shaders/ground.frag
     shaders/ground.vert
     shaders/indirectdraw.frag

@@ -243,15 +243,15 @@ public:
 	void loadAssets()
 	{
 		// Skybox
-		models.skybox.loadFromFile(ASSET_PATH "models/cube.obj", vertexLayout, 1.0f, vulkanDevice, queue);
+		models.skybox.loadFromFile(getAssetPath() + "models/cube.obj", vertexLayout, 1.0f, vulkanDevice, queue);
 		// Objects
 		std::vector<std::string> filenames = { "geosphere.obj", "teapot.dae", "torusknot.obj", "venus.fbx" };
 		for (auto file : filenames) {
 			vks::Model model;
-			model.loadFromFile(ASSET_PATH "models/" + file, vertexLayout, 0.05f * (file == "venus.fbx" ? 3.0f : 1.0f), vulkanDevice, queue);
+			model.loadFromFile(getAssetPath() + "models/" + file, vertexLayout, 0.05f * (file == "venus.fbx" ? 3.0f : 1.0f), vulkanDevice, queue);
 			models.objects.push_back(model);
 		}
-		textures.environmentCube.loadFromFile(ASSET_PATH "textures/hdr/pisa_cube.ktx", vk::Format::eR16G16B16A16Sfloat, vulkanDevice, queue);
+		textures.environmentCube.loadFromFile(getAssetPath() + "textures/hdr/pisa_cube.ktx", vk::Format::eR16G16B16A16Sfloat, vulkanDevice, queue);
 	}
 
 	void setupDescriptors()
@@ -377,13 +377,13 @@ public:
 		pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
 		// Skybox pipeline (background cube)
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbribl/skybox.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbribl/skybox.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/skybox.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/skybox.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		pipelines.skybox = device.createGraphicsPipelines(pipelineCache, pipelineCreateInfo)[0];
 
 		// PBR pipeline
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbribl/pbribl.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbribl/pbribl.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/pbribl.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/pbribl.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		// Enable depth test and write
 		depthStencilState.depthWriteEnable = VK_TRUE;
 		depthStencilState.depthTestEnable = VK_TRUE;
@@ -550,8 +550,8 @@ public:
 		pipelineCI.pVertexInputState = &emptyInputState;
 
 		// Look-up-table (from BRDF) pipeline
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbribl/genbrdflut.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbribl/genbrdflut.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/genbrdflut.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/genbrdflut.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		vk::Pipeline pipeline;
 		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCI)[0];
 
@@ -832,8 +832,8 @@ public:
 		pipelineCI.pVertexInputState = &vertexInputState;
 		pipelineCI.renderPass = renderpass;
 
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbribl/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbribl/irradiancecube.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/irradiancecube.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		vk::Pipeline pipeline;
 		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCI)[0];
 
@@ -1220,8 +1220,8 @@ public:
 		pipelineCI.pVertexInputState = &vertexInputState;
 		pipelineCI.renderPass = renderpass;
 
-		shaderStages[0] = loadShader(ASSET_PATH "shaders/pbribl/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
-		shaderStages[1] = loadShader(ASSET_PATH "shaders/pbribl/prefilterenvmap.frag.spv", vk::ShaderStageFlagBits::eFragment);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/filtercube.vert.spv", vk::ShaderStageFlagBits::eVertex);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/prefilterenvmap.frag.spv", vk::ShaderStageFlagBits::eFragment);
 		vk::Pipeline pipeline;
 		pipeline = device.createGraphicsPipelines(pipelineCache, pipelineCI)[0];
 
