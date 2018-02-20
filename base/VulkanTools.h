@@ -62,7 +62,7 @@
 #if defined(__ANDROID__)
 #define ASSET_PATH ""
 #else
-#define ASSET_PATH "./../data/"
+#define ASSET_PATH "./"
 #endif
 
 namespace vks

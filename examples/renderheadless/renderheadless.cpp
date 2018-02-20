@@ -572,11 +572,11 @@ public:
 			shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 			shaderStages[1].pName = "main";
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-			shaderStages[0].module = vks::tools::loadShader(androidapp->activity->assetManager, ASSET_PATH "shaders/renderheadless/triangle.vert.spv", device);
-			shaderStages[1].module = vks::tools::loadShader(androidapp->activity->assetManager, ASSET_PATH "shaders/renderheadless/triangle.frag.spv", device);
+			shaderStages[0].module = vks::tools::loadShader(androidapp->activity->assetManager, ASSET_PATH "shaders/triangle.vert.spv", device);
+			shaderStages[1].module = vks::tools::loadShader(androidapp->activity->assetManager, ASSET_PATH "shaders/triangle.frag.spv", device);
 #else
-			shaderStages[0].module = vks::tools::loadShader(ASSET_PATH "shaders/renderheadless/triangle.vert.spv", device);
-			shaderStages[1].module = vks::tools::loadShader(ASSET_PATH "shaders/renderheadless/triangle.frag.spv", device);
+			shaderStages[0].module = vks::tools::loadShader(ASSET_PATH "shaders/triangle.vert.spv", device);
+			shaderStages[1].module = vks::tools::loadShader(ASSET_PATH "shaders/triangle.frag.spv", device);
 #endif
 			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 		}
@@ -780,9 +780,9 @@ public:
 			colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), VK_FORMAT_R8G8B8A8_UNORM) != formatsBGR.end());
 
 			// ppm binary pixel data
-			for (uint32_t y = 0; y < height; y++) {
+			for (int32_t y = 0; y < height; y++) {
 				unsigned int *row = (unsigned int*)imagedata;
-				for (uint32_t x = 0; x < width; x++) {
+				for (int32_t x = 0; x < width; x++) {
 					if (colorSwizzle) {
 						file.write((char*)row + 2, 1);
 						file.write((char*)row + 1, 1);

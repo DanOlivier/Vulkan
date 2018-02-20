@@ -13,6 +13,7 @@ compile_shaders(distancefieldfonts
 )
 
 copy_assets(distancefieldfonts
+    #font.fnt
     textures/font_sdf_rgba.ktx
     textures/font_bitmap_rgba.ktx
 )

@@ -208,8 +208,8 @@ public:
 			vkCmdBindVertexBuffers(drawCmdBuffers[i], 0, 1, &models.objects[models.objectIndex].vertices.buffer, offsets);
 			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.objects[models.objectIndex].indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-			for (uint32_t y = 0; y < gridSize; y++) {
-				for (uint32_t x = 0; x < gridSize; x++) {
+			for (int32_t y = 0; y < gridSize; y++) {
+				for (int32_t x = 0; x < gridSize; x++) {
 					glm::vec3 pos = glm::vec3(float(x - (gridSize / 2.0f)) * 2.5f, 0.0f, float(y - (gridSize / 2.0f)) * 2.5f);
 					vkCmdPushConstants(drawCmdBuffers[i], pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec3), &pos);
 					vkCmdDrawIndexed(drawCmdBuffers[i], models.objects[models.objectIndex].indexCount, 1, 0, 0, 0);
@@ -479,7 +479,7 @@ public:
 		}
 		if (!pipelineStats.empty()) {
 			if (overlay->header("Pipeline statistics")) {
-				for (auto i = 0; i < pipelineStats.size(); i++) {
+				for (uint32_t i = 0; i < pipelineStats.size(); i++) {
 					std::string caption = pipelineStatNames[i] + ": %d";
 					overlay->text(caption.c_str(), pipelineStats[i]);
 				}
