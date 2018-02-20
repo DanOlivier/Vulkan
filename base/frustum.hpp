@@ -50,7 +50,7 @@ namespace vks
 			planes[FRONT].z = matrix[2].w - matrix[2].z;
 			planes[FRONT].w = matrix[3].w - matrix[3].z;
 
-			for (auto i = 0; i < planes.size(); i++)
+			for (uint32_t i = 0; i < planes.size(); i++)
 			{
 				float length = sqrtf(planes[i].x * planes[i].x + planes[i].y * planes[i].y + planes[i].z * planes[i].z);
 				planes[i] /= length;
@@ -59,7 +59,7 @@ namespace vks
 		
 		bool checkSphere(glm::vec3 pos, float radius)
 		{
-			for (auto i = 0; i < planes.size(); i++)
+			for (uint32_t i = 0; i < planes.size(); i++)
 			{
 				if ((planes[i].x * pos.x) + (planes[i].y * pos.y) + (planes[i].z * pos.z) + planes[i].w <= -radius)
 				{

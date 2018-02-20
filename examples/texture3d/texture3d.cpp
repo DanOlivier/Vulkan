@@ -130,7 +130,7 @@ public:
 		T frequency = (T)1;
 		T amplitude = (T)1;
 		T max = (T)0;  
-		for (int32_t i = 0; i < octaves; i++)
+		for (uint32_t i = 0; i < octaves; i++)
 		{
 			sum += perlinNoise.noise(x * frequency, y * frequency, z * frequency) * amplitude;
 			max += amplitude;
@@ -331,11 +331,11 @@ public:
 		const float noiseScale = static_cast<float>(rand() % 10) + 4.0f;
 
 #pragma omp parallel for
-		for (int32_t z = 0; z < texture.depth; z++)
+		for (uint32_t z = 0; z < texture.depth; z++)
 		{
 			for (uint32_t y = 0; y < texture.height; y++)
 			{
-				for (int32_t x = 0; x < texture.width; x++)
+				for (uint32_t x = 0; x < texture.width; x++)
 				{
 					float nx = (float)x / (float)texture.width;
 					float ny = (float)y / (float)texture.height;
@@ -472,7 +472,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
@@ -720,8 +720,8 @@ public:
 		// Load shaders
 		std::array<VkPipelineShaderStageCreateInfo,2> shaderStages;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/texture3d/texture3d.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/texture3d/texture3d.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/texture3d.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/texture3d.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		VkGraphicsPipelineCreateInfo pipelineCreateInfo =
 			vks::initializers::pipelineCreateInfo(

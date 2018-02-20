@@ -780,9 +780,9 @@ public:
 			colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), VK_FORMAT_R8G8B8A8_UNORM) != formatsBGR.end());
 
 			// ppm binary pixel data
-			for (int32_t y = 0; y < height; y++) {
+			for (uint32_t y = 0; y < height; y++) {
 				unsigned int *row = (unsigned int*)imagedata;
-				for (int32_t x = 0; x < width; x++) {
+				for (uint32_t x = 0; x < width; x++) {
 					if (colorSwizzle) {
 						file.write((char*)row + 2, 1);
 						file.write((char*)row + 1, 1);

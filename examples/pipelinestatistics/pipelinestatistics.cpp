@@ -182,7 +182,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i) {
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i) {
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
 			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
@@ -208,8 +208,8 @@ public:
 			vkCmdBindVertexBuffers(drawCmdBuffers[i], 0, 1, &models.objects[models.objectIndex].vertices.buffer, offsets);
 			vkCmdBindIndexBuffer(drawCmdBuffers[i], models.objects[models.objectIndex].indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-			for (int32_t y = 0; y < gridSize; y++) {
-				for (int32_t x = 0; x < gridSize; x++) {
+			for (uint32_t y = 0; y < gridSize; y++) {
+				for (uint32_t x = 0; x < gridSize; x++) {
 					glm::vec3 pos = glm::vec3(float(x - (gridSize / 2.0f)) * 2.5f, 0.0f, float(y - (gridSize / 2.0f)) * 2.5f);
 					vkCmdPushConstants(drawCmdBuffers[i], pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec3), &pos);
 					vkCmdDrawIndexed(drawCmdBuffers[i], models.objects[models.objectIndex].indexCount, 1, 0, 0, 0);
@@ -378,14 +378,14 @@ public:
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 		shaderStages.resize(tessellation ? 4 : 2);
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/pipelinestatistics/scene.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/pipelinestatistics/scene.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/scene.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/scene.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		if (tessellation) {
 			inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 			pipelineCreateInfo.pTessellationState = &tessellationState;
-			shaderStages[2] = loadShader(getAssetPath() + "shaders/pipelinestatistics/scene.tesc.spv", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-			shaderStages[3] = loadShader(getAssetPath() + "shaders/pipelinestatistics/scene.tese.spv", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+			shaderStages[2] = loadShader(getAssetPath() + "shaders/scene.tesc.spv", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+			shaderStages[3] = loadShader(getAssetPath() + "shaders/scene.tese.spv", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 		}
 
 		pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());

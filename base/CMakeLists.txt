@@ -1,4 +1,8 @@
-file(GLOB BASE_SRC "*.cpp" "../external/imgui/imgui.cpp" "../external/imgui/imgui_draw.cpp")
+file(GLOB BASE_SRC "*.cpp" 
+    ../external/imgui/imgui.cpp 
+    ../external/imgui/imgui_draw.cpp
+    ../external/imgui/imgui_demo.cpp
+)
 file(GLOB BASE_HEADERS "*.hpp")
 
 if(WIN32)
@@ -8,3 +12,10 @@ if(WIN32)
     add_library(base STATIC ${BASE_SRC})
     target_link_libraries(base ${Vulkan_LIBRARY} ${ASSIMP_LIBRARIES} ${XCB_LIBRARIES} ${WAYLAND_CLIENT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 endif(WIN32)
+
+compile_shaders(base
+    shaders/textoverlay.vert
+    shaders/textoverlay.frag
+    shaders/uioverlay.vert
+    shaders/uioverlay.frag
+)

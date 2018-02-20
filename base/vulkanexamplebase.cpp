@@ -80,13 +80,13 @@ std::string VulkanExampleBase::getWindowTitle()
 // iOS & macOS: VulkanExampleBase::getAssetPath() implemented externally to allow access to Objective-C components
 const std::string VulkanExampleBase::getAssetPath()
 {
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	return "";
-#elif defined(VK_EXAMPLE_DATA_DIR)
-	return VK_EXAMPLE_DATA_DIR;
-#else
-	return "./../data/";
-#endif
+//#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+	return "./";
+//#elif defined(VK_EXAMPLE_DATA_DIR)
+//	return VK_EXAMPLE_DATA_DIR;
+//#else
+//	return "./../data/";
+//#endif
 }
 #endif
 
@@ -202,8 +202,8 @@ void VulkanExampleBase::prepare()
 		// Load default shaders if not specified by example
 		if (overlayCreateInfo.shaders.size() == 0) {
 			overlayCreateInfo.shaders = {
-				loadShader(getAssetPath() + "shaders/base/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-				loadShader(getAssetPath() + "shaders/base/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
+				loadShader(getAssetPath() + "shaders/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+				loadShader(getAssetPath() + "shaders/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 			};
 		}
 		UIOverlay = new vks::UIOverlay(overlayCreateInfo);

@@ -97,7 +97,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
 
@@ -236,8 +236,8 @@ public:
 		pipelineCreateInfo.pStages = shaderStages.data();
 
 		// Toon render and stencil fill pass
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/stencilbuffer/toon.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/stencilbuffer/toon.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/toon.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/toon.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		rasterizationState.cullMode = VK_CULL_MODE_NONE;
 
@@ -262,8 +262,8 @@ public:
 		depthStencilState.front = depthStencilState.back;
 		depthStencilState.depthTestEnable = VK_FALSE;
 
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/stencilbuffer/outline.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/stencilbuffer/outline.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/outline.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/outline.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipelines.outline));
 	}
 

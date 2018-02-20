@@ -113,7 +113,7 @@ public:
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
 
-		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+		for (uint32_t i = 0; i < drawCmdBuffers.size(); ++i)
 		{
 			// Set target frame buffer
 			renderPassBeginInfo.framebuffer = frameBuffers[i];
@@ -369,8 +369,8 @@ public:
 
 		// Create pipelines
 		// All pipelines will use the same "uber" shader and specialization constants to change branching and parameters of that shader
-		shaderStages[0] = loadShader(getAssetPath() + "shaders/specializationconstants/uber.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		shaderStages[1] = loadShader(getAssetPath() + "shaders/specializationconstants/uber.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		shaderStages[0] = loadShader(getAssetPath() + "shaders/uber.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shaderStages[1] = loadShader(getAssetPath() + "shaders/uber.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 		// Specialization info is assigned is part of the shader stage (modul) and must be set after creating the module and before creating the pipeline
 		shaderStages[1].pSpecializationInfo = &specializationInfo;
 

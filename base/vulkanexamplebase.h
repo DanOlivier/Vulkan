@@ -483,7 +483,7 @@ static void handleEvent(const xcb_generic_event_t *event)											\
 }																									\
 int main(const int argc, const char *argv[])													    \
 {																									\
-	for (size_t i = 0; i < argc; i++) { VulkanExample::args.push_back(argv[i]); };  				\
+	for (int i = 0; i < argc; i++) { VulkanExample::args.push_back(argv[i]); };  				\
 	vulkanExample = new VulkanExample();															\
 	vulkanExample->initVulkan();																	\
 	vulkanExample->setupWindow();					 												\

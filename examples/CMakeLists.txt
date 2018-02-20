@@ -1,103 +1,61 @@
-# Function for building single example
-function(buildExample EXAMPLE_NAME)
-	SET(EXAMPLE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME})
-	message(STATUS "Generating project file for example in ${EXAMPLE_FOLDER}")
-	# Main
-	file(GLOB SOURCE *.cpp ${BASE_HEADERS} ${EXAMPLE_FOLDER}/*.cpp)
-	SET(MAIN_CPP ${EXAMPLE_FOLDER}/${EXAMPLE_NAME}.cpp)
-	if(EXISTS ${EXAMPLE_FOLDER}/main.cpp)
-		SET(MAIN_CPP ${EXAMPLE_FOLDER}/main.cpp)
-	ENDIF()
-	# imgui example requires additional source files
-	IF(${EXAMPLE_NAME} STREQUAL "imgui")
-		file(GLOB ADD_SOURCE "../external/imgui/*.cpp")
-		SET(SOURCE ${SOURCE} ${ADD_SOURCE})
-	ENDIF()
-	# Add shaders
-	set(SHADER_DIR "../data/shaders/${EXAMPLE_NAME}")
-	file(GLOB SHADERS "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.comp" "${SHADER_DIR}/*.geom" "${SHADER_DIR}/*.tesc" "${SHADER_DIR}/*.tese")
-	source_group("Shaders" FILES ${SHADERS})
-	if(WIN32)
-		add_executable(${EXAMPLE_NAME} WIN32 ${MAIN_CPP} ${SOURCE} ${SHADERS})
-		target_link_libraries(${EXAMPLE_NAME} base ${Vulkan_LIBRARY} ${ASSIMP_LIBRARIES} ${WINLIBS})
-	else(WIN32)
-		add_executable(${EXAMPLE_NAME} ${MAIN_CPP} ${SOURCE} ${SHADERS})
-		target_link_libraries(${EXAMPLE_NAME} base )
-	endif(WIN32)
-
-	if(RESOURCE_INSTALL_DIR)
-		install(TARGETS ${EXAMPLE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
-	endif()
-endfunction(buildExample)
-
 # Build all examples
-function(buildExamples)
-	foreach(EXAMPLE ${EXAMPLES})
-		buildExample(${EXAMPLE})
-	endforeach(EXAMPLE)
-endfunction(buildExamples)
-
-set(EXAMPLES
-	bloom
-	computecloth
-	computecullandlod
-	computeheadless
-	computenbody
-	computeparticles
-	computeshader
-	debugmarker
-	deferred
-	deferredmultisampling
-	deferredshadows
-	displacement
-	distancefieldfonts
-	dynamicuniformbuffer
-	gears
-	geometryshader
-	hdr
-	imgui
-	indirectdraw
-	instancing
-	mesh
-	multisampling
-	multithreading
-	occlusionquery
-	offscreen
-	parallaxmapping
-	particlefire
-	pbrbasic
-	pbribl
-	pbrtexture
-	pipelines
-	pipelinestatistics
-	pushconstants
-	radialblur
-	raytracing
-	renderheadless
-	scenerendering
-	screenshot
-	shadowmapping
-	shadowmappingomni
-	shadowmappingcascade
-	skeletalanimation
-	specializationconstants
-	sphericalenvmapping
-	ssao
-	stencilbuffer
-	subpasses
-	terraintessellation
-	tessellation
-	textoverlay
-	texture
-	texture3d
-	texturearray
-	texturecubemap
-	texturemipmapgen
-	texturesparseresidency
-	timestampquery
-	triangle
-	viewportarray
-	vulkanscene
-)
-
-buildExamples()
+add_subdirectory(bloom)
+add_subdirectory(computecloth)
+add_subdirectory(computecullandlod)
+#add_subdirectory(computeheadless)
+add_subdirectory(computenbody)
+add_subdirectory(computeparticles)
+add_subdirectory(computeshader)
+add_subdirectory(debugmarker)
+add_subdirectory(deferred)
+add_subdirectory(deferredmultisampling)
+add_subdirectory(deferredshadows)
+add_subdirectory(displacement)
+add_subdirectory(distancefieldfonts)
+add_subdirectory(dynamicuniformbuffer)
+add_subdirectory(gears)
+add_subdirectory(geometryshader)
+add_subdirectory(hdr)
+add_subdirectory(imgui)
+add_subdirectory(indirectdraw)
+add_subdirectory(instancing)
+add_subdirectory(mesh)
+add_subdirectory(multisampling)
+add_subdirectory(multithreading)
+add_subdirectory(occlusionquery)
+add_subdirectory(offscreen)
+add_subdirectory(parallaxmapping)
+add_subdirectory(particlefire)
+add_subdirectory(pbrbasic)
+add_subdirectory(pbribl)
+add_subdirectory(pbrtexture)
+add_subdirectory(pipelines)
+#add_subdirectory(pipelinestatistics)
+add_subdirectory(pushconstants)
+add_subdirectory(radialblur)
+add_subdirectory(raytracing)
+#add_subdirectory(renderheadless)
+add_subdirectory(scenerendering)
+add_subdirectory(screenshot)
+add_subdirectory(shadowmapping)
+add_subdirectory(shadowmappingomni)
+#add_subdirectory(shadowmappingcascade)
+add_subdirectory(skeletalanimation)
+add_subdirectory(specializationconstants)
+add_subdirectory(sphericalenvmapping)
+add_subdirectory(ssao)
+#add_subdirectory(stencilbuffer)
+add_subdirectory(subpasses)
+add_subdirectory(terraintessellation)
+add_subdirectory(tessellation)
+add_subdirectory(textoverlay)
+add_subdirectory(texture)
+add_subdirectory(texture3d)
+add_subdirectory(texturearray)
+add_subdirectory(texturecubemap)
+add_subdirectory(texturemipmapgen)
+add_subdirectory(texturesparseresidency)
+#add_subdirectory(timestampquery)
+add_subdirectory(triangle)
+add_subdirectory(viewportarray)
+add_subdirectory(vulkanscene)
