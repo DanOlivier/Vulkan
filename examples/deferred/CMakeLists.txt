@@ -1,11 +1,6 @@
 buildExample(deferred deferred.cpp)
 
 compile_shaders(deferred
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/debug.frag
     shaders/debug.vert
     shaders/deferred.frag

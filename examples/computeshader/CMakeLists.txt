@@ -1,11 +1,6 @@
 buildExample(computeshader computeshader.cpp)
 
 compile_shaders(computeshader
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/edgedetect.comp
     shaders/emboss.comp
     shaders/sharpen.comp

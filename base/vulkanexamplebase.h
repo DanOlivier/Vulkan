@@ -473,18 +473,10 @@ int main(const int argc, const char *argv[])													    \
 }
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
 #define VULKAN_EXAMPLE_MAIN()																		\
-VulkanExample *vulkanExample;																		\
-static void handleEvent(const xcb_generic_event_t *event)											\
+int main(const int argc, const char *argv[])														\
 {																									\
-	if (vulkanExample != NULL)																		\
-	{																								\
-		vulkanExample->handleEvent(event);															\
-	}																								\
-}																									\
-int main(const int argc, const char *argv[])													    \
-{																									\
-	for (int i = 0; i < argc; i++) { VulkanExample::args.push_back(argv[i]); };  				\
-	vulkanExample = new VulkanExample();															\
+	for (int i = 0; i < argc; i++) { VulkanExample::args.push_back(argv[i]); };						\
+	VulkanExample *vulkanExample = new VulkanExample();												\
 	vulkanExample->initVulkan();																	\
 	vulkanExample->setupWindow();					 												\
 	vulkanExample->prepare();																		\

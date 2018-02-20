@@ -1,11 +1,6 @@
 buildExample(hdr hdr.cpp)
 
 compile_shaders(hdr
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/bloom.frag
     shaders/bloom.vert
     shaders/composition.frag

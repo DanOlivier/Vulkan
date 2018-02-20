@@ -1,17 +1,10 @@
 buildExample(texturecubemap texturecubemap.cpp)
 
 compile_shaders(texturecubemap
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/cubemapdisplay.vert
     shaders/cubemapdisplay.frag
-
     shaders/skybox.vert
     shaders/skybox.frag
-
     shaders/reflect.vert
     shaders/reflect.frag
 )

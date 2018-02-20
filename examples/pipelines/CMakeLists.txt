@@ -1,11 +1,6 @@
 buildExample(pipelines pipelines.cpp)
 
 compile_shaders(pipelines
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/phong.frag
     shaders/phong.vert
     shaders/toon.frag

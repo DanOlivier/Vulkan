@@ -1,11 +1,6 @@
 buildExample(vulkanscene vulkanscene.cpp)
 
 compile_shaders(vulkanscene
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/logo.frag
     shaders/logo.vert
     shaders/mesh.frag

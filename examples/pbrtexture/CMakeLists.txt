@@ -1,11 +1,6 @@
 buildExample(pbrtexture main.cpp)
 
 compile_shaders(pbrtexture
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/filtercube.vert
     shaders/genbrdflut.frag
     shaders/genbrdflut.vert

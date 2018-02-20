@@ -5,11 +5,6 @@ target_compile_options(imgui PRIVATE
 )
 
 compile_shaders(imgui
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/scene.frag
     shaders/scene.vert
     shaders/ui.frag

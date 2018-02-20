@@ -1,11 +1,6 @@
 buildExample(radialblur radialblur.cpp)
 
 compile_shaders(radialblur
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/colorpass.frag
     shaders/colorpass.vert
     shaders/phongpass.frag

@@ -1,11 +1,6 @@
 buildExample(offscreen offscreen.cpp)
 
 compile_shaders(offscreen
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/mirror.frag
     shaders/mirror.vert
     shaders/phong.frag

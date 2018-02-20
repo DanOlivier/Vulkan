@@ -8,11 +8,6 @@ link_assets(bloom
 )
 
 compile_shaders(bloom
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/colorpass.frag
     shaders/colorpass.vert
     shaders/gaussblur.frag

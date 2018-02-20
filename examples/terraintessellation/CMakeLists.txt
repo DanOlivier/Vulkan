@@ -1,11 +1,6 @@
 buildExample(terraintessellation terraintessellation.cpp)
 
 compile_shaders(terraintessellation
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/skysphere.frag
     shaders/skysphere.vert
     shaders/terrain.frag

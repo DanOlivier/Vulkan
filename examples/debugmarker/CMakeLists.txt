@@ -1,11 +1,6 @@
 buildExample(debugmarker debugmarker.cpp)
 
 compile_shaders(debugmarker
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/colorpass.frag
     shaders/colorpass.vert
     shaders/postprocess.frag

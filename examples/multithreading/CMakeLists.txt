@@ -1,11 +1,6 @@
 buildExample(multithreading multithreading.cpp)
 
 compile_shaders(multithreading
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/phong.frag
     shaders/phong.vert
     shaders/starsphere.frag

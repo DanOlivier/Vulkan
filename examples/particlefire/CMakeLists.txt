@@ -1,11 +1,6 @@
 buildExample(particlefire particlefire.cpp)
 
 compile_shaders(particlefire
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/normalmap.frag
     shaders/normalmap.vert
     shaders/particle.frag

@@ -1,11 +1,6 @@
 buildExample(shadowmapping shadowmapping.cpp)
 
 compile_shaders(shadowmapping
-    ../../base/shaders/textoverlay.vert
-    ../../base/shaders/textoverlay.frag
-    ../../base/shaders/uioverlay.vert
-    ../../base/shaders/uioverlay.frag
-
     shaders/offscreen.frag
     shaders/offscreen.vert
     shaders/quad.frag

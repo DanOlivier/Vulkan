@@ -93,8 +93,8 @@ function(link_assets EXAMPLE_NAME)
             COMMENT "Linking ${output_file} to asset ${ASSET}"
         )
     endforeach()
-    add_custom_target(link_assets-${EXAMPLE_NAME} ALL DEPENDS ${all_assets})
-    add_dependencies(${EXAMPLE_NAME} link_assets-${EXAMPLE_NAME})
+    add_custom_target(linkassets-${EXAMPLE_NAME} ALL DEPENDS ${all_assets})
+    add_dependencies(${EXAMPLE_NAME} linkassets-${EXAMPLE_NAME})
 endfunction()
 
 function(compile_shaders EXAMPLE_NAME)
@@ -113,8 +113,8 @@ function(compile_shaders EXAMPLE_NAME)
             COMMENT "Compiling shader ${output_file}"
         )
     endforeach()
-    add_custom_target(shader-${EXAMPLE_NAME} ALL DEPENDS ${compiled_shaders})
-    add_dependencies(${EXAMPLE_NAME} shader-${EXAMPLE_NAME})
+    add_custom_target(shaders-${EXAMPLE_NAME} ALL DEPENDS ${compiled_shaders})
+    add_dependencies(${EXAMPLE_NAME} shaders-${EXAMPLE_NAME})
 endfunction()
 
 add_custom_target(run-all)
@@ -124,19 +124,18 @@ add_custom_target(run-all)
 # Function for building single example
 function(buildExample EXAMPLE_NAME)
     list(REMOVE_AT ARGV 0)
-    cmake_parse_arguments(ARGS "" "" "TEXTURES;MODELS" ${ARGN})
+    cmake_parse_arguments(ARGS "" "" "ASSETS;SHADERS" ${ARGN})
     #message("ARGN: ${ARGN}")
     #message("ARGV: ${ARGV}")
-    #message("ARGS_TEXTURES: ${ARGS_TEXTURES}")
-    #message("ARGS_MODELS: ${ARGS_MODELS}")
+    #message("ARGS_ASSETS: ${ARGS_ASSETS}")
+    #message("ARGS_SHADERS: ${ARGS_SHADERS}")
     #message("ARGS_UNPARSED_ARGUMENTS: ${ARGS_UNPARSED_ARGUMENTS}")
     
     if(WIN32)
         add_executable(${EXAMPLE_NAME} WIN32 
             ${ARGS_UNPARSED_ARGUMENTS} 
-            #${ARGS_TEXTURES}
-            #${ARGS_MODELS}
-            #${compiled_shaders}
+            ${ARGS_ASSETS}
+            ${ARGS_SHADERS}
         )
         target_link_libraries(${EXAMPLE_NAME}
             ${Vulkan_LIBRARY}
@@ -145,9 +144,8 @@ function(buildExample EXAMPLE_NAME)
     else()
         add_executable(${EXAMPLE_NAME} 
             ${ARGS_UNPARSED_ARGUMENTS}
-            #${ARGS_TEXTURES}
-            #${ARGS_MODELS}
-            #${compiled_shaders}
+            ${ARGS_ASSETS}
+            ${ARGS_SHADERS}
         )
         target_link_libraries(${EXAMPLE_NAME}
             base
