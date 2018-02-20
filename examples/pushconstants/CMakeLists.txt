@@ -10,7 +10,7 @@ compile_shaders(pushconstants
     shaders/lights.vert
 )
 
-copy_assets(pushconstants
+link_assets(pushconstants
     models/samplescene.dae
 )
 

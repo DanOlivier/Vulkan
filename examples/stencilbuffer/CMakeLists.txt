@@ -13,7 +13,7 @@ compile_shaders(stencilbuffer
     shaders/outline.vert
 )
 
-copy_assets(stencilbuffer
+link_assets(stencilbuffer
     models/venus.fbx
 )
 

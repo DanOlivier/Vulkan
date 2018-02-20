@@ -10,7 +10,7 @@ compile_shaders(screenshot
     shaders/mesh.vert
 )
 
-copy_assets(screenshot
+link_assets(screenshot
     models/chinesedragon.dae
 )
 

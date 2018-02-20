@@ -14,7 +14,7 @@ compile_shaders(occlusionquery
     shaders/simple.vert
 )
 
-copy_assets(occlusionquery
+link_assets(occlusionquery
     models/plane_z.3ds
     models/teapot.3ds
     models/sphere.3ds

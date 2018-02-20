@@ -13,7 +13,7 @@ compile_shaders(geometryshader
     shaders/normaldebug.geom
 )
 
-copy_assets(geometryshader
+link_assets(geometryshader
     models/suzanne.obj
 )
 

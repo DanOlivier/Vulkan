@@ -10,7 +10,7 @@ compile_shaders(texturemipmapgen
     shaders/texture.vert
 )
 
-copy_assets(texturemipmapgen
+link_assets(texturemipmapgen
     models/tunnel_cylinder.dae
     textures/metalplate_nomips_rgba.ktx
 )

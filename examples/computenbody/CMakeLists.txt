@@ -12,7 +12,7 @@ compile_shaders(computenbody
     shaders/particle_integrate.comp
 )
 
-copy_assets(computenbody
+link_assets(computenbody
     textures/particle01_rgba.ktx
     textures/particle_gradient_rgba.ktx
 )

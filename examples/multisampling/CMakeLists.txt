@@ -10,7 +10,7 @@ compile_shaders(multisampling
     shaders/mesh.vert
 )
 
-copy_assets(multisampling
+link_assets(multisampling
     models/voyager/voyager.dae
     models/voyager/voyager_bc3_unorm.ktx
     models/voyager/voyager_astc_8x8_unorm.ktx

@@ -14,7 +14,7 @@ compile_shaders(terraintessellation
     shaders/terrain.vert
 )
 
-copy_assets(terraintessellation
+link_assets(terraintessellation
     models/geosphere.obj
     textures/skysphere_bc3_unorm.ktx
     textures/skysphere_astc_8x8_unorm.ktx

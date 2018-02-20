@@ -12,7 +12,7 @@ compile_shaders(displacement
     shaders/displacement.tese
 )
 
-copy_assets(displacement
+link_assets(displacement
     models/plane.obj
     textures/stonefloor03_color_bc3_unorm.ktx
     textures/stonefloor03_color_astc_8x8_unorm.ktx

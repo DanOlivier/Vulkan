@@ -17,7 +17,7 @@ compile_shaders(deferredshadows
     shaders/shadow.vert
 )
 
-copy_assets(deferredshadows
+link_assets(deferredshadows
     models/openbox.dae
 
     models/armor/armor.dae

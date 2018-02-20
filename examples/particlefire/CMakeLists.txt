@@ -12,7 +12,7 @@ compile_shaders(particlefire
     shaders/particle.vert
 )
 
-copy_assets(particlefire
+link_assets(particlefire
     textures/particle_smoke.ktx
     textures/particle_fire.ktx
     textures/fireplace_colormap_astc_8x8_unorm.ktx

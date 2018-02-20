@@ -16,7 +16,7 @@ compile_shaders(shadowmappingcascade
     shaders/scene.frag
 )
 
-copy_assets(shadowmappingcascade
+link_assets(shadowmappingcascade
     textures/gridlines.ktx
     textures/oak_bark.ktx
     textures/oak_leafs.ktx

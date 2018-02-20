@@ -14,7 +14,7 @@ compile_shaders(shadowmapping
     shaders/scene.vert
 )
 
-copy_assets(shadowmapping
+link_assets(shadowmapping
     models/vulkanscene_shadow.dae
     models/samplescene.dae
 )

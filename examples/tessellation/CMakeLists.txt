@@ -14,7 +14,7 @@ compile_shaders(tessellation
     shaders/pntriangles.tese
 )
 
-copy_assets(tessellation
+link_assets(tessellation
     models/lowpoly/deer.dae
     textures/deer_bc3_unorm.ktx
     textures/deer_astc_8x8_unorm.ktx

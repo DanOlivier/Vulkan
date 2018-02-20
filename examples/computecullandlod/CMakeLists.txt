@@ -11,7 +11,7 @@ compile_shaders(computecullandlod
     shaders/indirectdraw.vert
 )
 
-copy_assets(computecullandlod
+link_assets(computecullandlod
     models/suzanne_lods.dae
 )
 

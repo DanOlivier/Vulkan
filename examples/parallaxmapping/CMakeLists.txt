@@ -10,7 +10,7 @@ compile_shaders(parallaxmapping
     shaders/parallax.vert
 )
 
-copy_assets(parallaxmapping
+link_assets(parallaxmapping
     models/plane_z.obj
     textures/rocks_normal_height_rgba.dds
     textures/rocks_color_bc3_unorm.dds

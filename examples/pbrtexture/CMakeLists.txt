@@ -17,7 +17,7 @@ compile_shaders(pbrtexture
     shaders/skybox.vert
 )
 
-copy_assets(pbrtexture
+link_assets(pbrtexture
     textures/hdr/gcanyon_cube.ktx
     models/cube.obj
     models/cerberus/cerberus.fbx

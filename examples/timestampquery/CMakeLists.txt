@@ -16,7 +16,7 @@ compile_shaders(timestampquery
     shaders/occluder.frag
 )
 
-copy_assets(timestampquery
+link_assets(timestampquery
     models/geosphere.obj
     models/teapot.dae
     models/torusknot.obj

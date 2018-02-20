@@ -10,7 +10,7 @@ compile_shaders(pipelinestatistics
     shaders/scene.vert
 )
 
-copy_assets(pipelinestatistics
+link_assets(pipelinestatistics
     models/geosphere.obj
     models/teapot.dae
     models/torusknot.obj

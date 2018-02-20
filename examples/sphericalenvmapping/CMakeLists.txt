@@ -10,7 +10,7 @@ compile_shaders(sphericalenvmapping
     shaders/sem.vert
 )
 
-copy_assets(sphericalenvmapping
+link_assets(sphericalenvmapping
     models/chinesedragon.dae
     textures/matcap_array_rgba.ktx
 )

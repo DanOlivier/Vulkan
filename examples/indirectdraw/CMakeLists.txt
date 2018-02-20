@@ -14,7 +14,7 @@ compile_shaders(indirectdraw
     shaders/skysphere.vert
 )
 
-copy_assets(indirectdraw
+link_assets(indirectdraw
     models/plants.dae
     models/plane_circle.dae
     models/skysphere.dae

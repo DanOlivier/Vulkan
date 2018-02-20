@@ -16,7 +16,7 @@ compile_shaders(imgui
     shaders/ui.vert
 )
 
-copy_assets(imgui
+link_assets(imgui
     models/vulkanscenemodels.dae
     models/vulkanscenebackground.dae
     models/vulkanscenelogos.dae

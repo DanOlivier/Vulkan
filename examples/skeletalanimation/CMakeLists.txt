@@ -12,7 +12,7 @@ compile_shaders(skeletalanimation
     shaders/texture.vert
 )
 
-copy_assets(skeletalanimation
+link_assets(skeletalanimation
     models/goblin.dae
     models/plane_z.obj
     textures/goblin_astc_8x8_unorm.ktx

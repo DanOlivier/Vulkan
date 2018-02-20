@@ -14,7 +14,7 @@ compile_shaders(debugmarker
     shaders/toon.vert
 )
 
-copy_assets(debugmarker
+link_assets(debugmarker
     models/treasure_smooth.dae
     models/treasure_glow.dae
 )

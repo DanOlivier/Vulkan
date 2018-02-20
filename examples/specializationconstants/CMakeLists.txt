@@ -10,7 +10,7 @@ compile_shaders(specializationconstants
     shaders/uber.vert
 )
 
-copy_assets(specializationconstants
+link_assets(specializationconstants
     models/color_teapot_spheres.dae
     textures/metalplate_nomips_rgba.ktx
 )

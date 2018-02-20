@@ -14,7 +14,7 @@ compile_shaders(shadowmappingomni
     shaders/offscreen.frag
 )
 
-copy_assets(shadowmappingomni
+link_assets(shadowmappingomni
     models/cube.obj
     models/shadowscene_fire.dae
 )

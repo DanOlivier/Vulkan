@@ -11,6 +11,6 @@ compile_shaders(raytracing
     shaders/raytracing.comp
 )
 
-copy_assets(raytracing
+link_assets(raytracing
 )
 

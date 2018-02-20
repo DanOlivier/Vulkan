@@ -14,7 +14,7 @@ compile_shaders(instancing
     shaders/starfield.vert
 )
 
-copy_assets(instancing
+link_assets(instancing
     models/rock01.dae
     models/sphere.obj
     textures/texturearray_rocks_astc_8x8_unorm.ktx

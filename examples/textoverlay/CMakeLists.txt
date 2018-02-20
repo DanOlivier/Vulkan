@@ -14,7 +14,7 @@ compile_shaders(textoverlay
     shaders/text.vert
 )
 
-copy_assets(textoverlay
+link_assets(textoverlay
     models/cube.dae
     textures/skysphere_bc3_unorm.ktx
     textures/skysphere_astc_8x8_unorm.ktx

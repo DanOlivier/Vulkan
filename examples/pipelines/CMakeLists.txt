@@ -14,7 +14,7 @@ compile_shaders(pipelines
     shaders/wireframe.vert
 )
 
-copy_assets(pipelines
+link_assets(pipelines
     models/treasure_smooth.dae
 )
 

@@ -11,7 +11,7 @@ compile_shaders(computeparticles
     shaders/particle.vert
 )
 
-copy_assets(computeparticles
+link_assets(computeparticles
     textures/particle01_rgba.ktx
     textures/particle_gradient_rgba.ktx
 )

@@ -14,7 +14,7 @@ compile_shaders(hdr
     shaders/gbuffer.vert
 )
 
-copy_assets(hdr
+link_assets(hdr
     models/cube.obj
     models/geosphere.obj
     models/teapot.dae

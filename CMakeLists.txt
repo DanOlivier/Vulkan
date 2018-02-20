@@ -74,10 +74,11 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-std=c++11)
 
-function(copy_assets EXAMPLE_NAME)
+function(link_assets EXAMPLE_NAME)
     foreach(ASSET ${ARGN})
         set(input_file ${CMAKE_SOURCE_DIR}/data/${ASSET})
-        get_filename_component(DIR_NAME ${ASSET} DIRECTORY)
+        get_filename_component(ASSET_DIR ${ASSET} DIRECTORY)
+        get_filename_component(ASSET_NAME ${ASSET} NAME)
         set(output_file ${CMAKE_CURRENT_BINARY_DIR}/${ASSET})
         # Must do this in two steps to propagate value
         set(all_assets ${all_assets} ${output_file})
@@ -85,31 +86,19 @@ function(copy_assets EXAMPLE_NAME)
         #message("Generating: ${input_file} -> ${output_file}")
         add_custom_command(
             OUTPUT ${output_file} POST_BUILD
-            COMMAND mkdir -p ${DIR_NAME}
-            COMMAND cp ${input_file} ${output_file}
-            DEPENDS ${input_file}
-            COMMENT "Copying asset ${ASSET} to ${output_file}"
+            COMMAND mkdir -p ${ASSET_DIR}
+            #COMMAND cp ${input_file} ${output_file} DEPENDS ${input_file}
+            COMMAND ln -s ${input_file} -r -f ${ASSET}
+                DEPENDS ${input_file}
+            COMMENT "Linking ${output_file} to asset ${ASSET}"
         )
     endforeach()
-    add_custom_target(copy_assets-${EXAMPLE_NAME} ALL DEPENDS ${all_assets})
-    add_dependencies(${EXAMPLE_NAME} copy_assets-${EXAMPLE_NAME})
-    #file(COPY ${assets} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/assets)
+    add_custom_target(link_assets-${EXAMPLE_NAME} ALL DEPENDS ${all_assets})
+    add_dependencies(${EXAMPLE_NAME} link_assets-${EXAMPLE_NAME})
 endfunction()
 
 function(compile_shaders EXAMPLE_NAME)
     set(SHADERS ${ARGN})
-    # Add shaders
-    #file(GLOB SHADERS
-    #	RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    #	"shaders/*.vert" 
-    #	"shaders/*.frag"
-    #	"shaders/*.geom"
-    #	"shaders/*.tesc"
-    #	"shaders/*.tese"
-    #)
-    #source_group("Shaders" FILES ${SHADERS})
-    #message("EXAMPLE_NAME: ${EXAMPLE_NAME}, SHADERS: ${SHADERS}")
-
     foreach(SHADER ${SHADERS})
         
         get_filename_component(FILE_NAME ${SHADER} NAME)

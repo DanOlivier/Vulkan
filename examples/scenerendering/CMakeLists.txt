@@ -10,7 +10,7 @@ compile_shaders(scenerendering
     shaders/scene.vert
 )
 
-copy_assets(scenerendering
+link_assets(scenerendering
     models/sibenik/dummy_rgba_unorm.ktx
     models/sibenik/kamen_astc_8x8_unorm.ktx
     models/sibenik/kamen_bc3_unorm.ktx

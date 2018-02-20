@@ -13,7 +13,7 @@ compile_shaders(computecloth
     shaders/sphere.vert
 )
 
-copy_assets(computecloth
+link_assets(computecloth
     models/geosphere.obj
     textures/vulkan_cloth_rgba.ktx
 )

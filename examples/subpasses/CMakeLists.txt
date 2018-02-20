@@ -14,7 +14,7 @@ compile_shaders(subpasses
     shaders/transparent.vert
 )
 
-copy_assets(subpasses
+link_assets(subpasses
     models/samplebuilding.dae
     models/samplebuilding_glass.dae
     textures/colored_glass_bc3_unorm.ktx

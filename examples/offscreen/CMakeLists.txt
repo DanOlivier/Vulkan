@@ -14,7 +14,7 @@ compile_shaders(offscreen
     shaders/quad.vert
 )
 
-copy_assets(offscreen
+link_assets(offscreen
     models/plane.obj
     models/chinesedragon.dae
     textures/darkmetal_bc3_unorm.ktx

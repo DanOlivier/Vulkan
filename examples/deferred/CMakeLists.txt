@@ -14,7 +14,7 @@ compile_shaders(deferred
     shaders/mrt.vert
 )
 
-copy_assets(deferred
+link_assets(deferred
     models/plane.obj
 
     models/armor/armor.dae

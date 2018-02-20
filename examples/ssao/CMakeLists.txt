@@ -14,7 +14,7 @@ compile_shaders(ssao
     shaders/ssao.frag
 )
 
-copy_assets(ssao
+link_assets(ssao
     models/sibenik/sibenik.dae
 )
 

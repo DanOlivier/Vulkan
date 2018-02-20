@@ -10,6 +10,6 @@ compile_shaders(texture
     shaders/texture.vert
 )
 
-copy_assets(texture
+link_assets(texture
     textures/metalplate01_rgba.ktx
 )

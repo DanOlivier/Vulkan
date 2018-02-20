@@ -12,7 +12,7 @@ compile_shaders(distancefieldfonts
     shaders/sdf.vert
 )
 
-copy_assets(distancefieldfonts
+link_assets(distancefieldfonts
     #font.fnt
     textures/font_sdf_rgba.ktx
     textures/font_bitmap_rgba.ktx

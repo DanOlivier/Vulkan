@@ -11,6 +11,6 @@ compile_shaders(viewportarray
     shaders/scene.vert
 )
 
-copy_assets(viewportarray
+link_assets(viewportarray
     models/sampleroom.dae
 )

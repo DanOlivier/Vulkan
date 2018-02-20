@@ -14,7 +14,7 @@ compile_shaders(vulkanscene
     shaders/skybox.vert
 )
 
-copy_assets(vulkanscene
+link_assets(vulkanscene
     models/cube.obj
     models/vulkanscenelogos.dae
     models/vulkanscenebackground.dae

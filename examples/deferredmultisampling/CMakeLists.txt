@@ -14,7 +14,7 @@ compile_shaders(deferredmultisampling
     shaders/mrt.vert
 )
 
-copy_assets(deferredmultisampling
+link_assets(deferredmultisampling
     models/openbox.dae
 
     models/armor/armor.dae

@@ -14,7 +14,7 @@ compile_shaders(radialblur
     shaders/radialblur.vert
 )
 
-copy_assets(radialblur
+link_assets(radialblur
     models/glowsphere.dae
     textures/particle_gradient_rgba.ktx
 )

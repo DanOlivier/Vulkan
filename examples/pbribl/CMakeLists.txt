@@ -17,7 +17,7 @@ compile_shaders(pbribl
     shaders/skybox.vert
 )
 
-copy_assets(pbribl
+link_assets(pbribl
     models/cube.obj
     models/geosphere.obj
     models/teapot.dae

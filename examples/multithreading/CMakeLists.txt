@@ -12,7 +12,7 @@ compile_shaders(multithreading
     shaders/starsphere.vert
 )
 
-copy_assets(multithreading
+link_assets(multithreading
     models/retroufo_red_lowpoly.dae
     models/sphere.obj
 )
