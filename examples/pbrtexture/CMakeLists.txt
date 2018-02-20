@@ -1,6 +1,6 @@
-buildExample(pbrtexture main.cpp)
-
-compile_shaders(pbrtexture
+buildExample(pbrtexture
+    main.cpp
+SHADERS
     shaders/filtercube.vert
     shaders/genbrdflut.frag
     shaders/genbrdflut.vert
@@ -10,9 +10,7 @@ compile_shaders(pbrtexture
     shaders/prefilterenvmap.frag
     shaders/skybox.frag
     shaders/skybox.vert
-)
-
-link_assets(pbrtexture
+ASSETS
     textures/hdr/gcanyon_cube.ktx
     models/cube.obj
     models/cerberus/cerberus.fbx

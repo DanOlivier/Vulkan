@@ -1,6 +1,6 @@
-buildExample(triangle triangle.cpp)
-
-compile_shaders(triangle
+buildExample(triangle
+    triangle.cpp
+SHADERS
     shaders/triangle.frag
     shaders/triangle.vert
 )

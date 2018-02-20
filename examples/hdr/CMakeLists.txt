@@ -1,15 +1,13 @@
-buildExample(hdr hdr.cpp)
-
-compile_shaders(hdr
+buildExample(hdr
+    hdr.cpp
+SHADERS
     shaders/bloom.frag
     shaders/bloom.vert
     shaders/composition.frag
     shaders/composition.vert
     shaders/gbuffer.frag
     shaders/gbuffer.vert
-)
-
-link_assets(hdr
+ASSETS
     models/cube.obj
     models/geosphere.obj
     models/teapot.dae
@@ -17,4 +15,3 @@ link_assets(hdr
     models/venus.fbx
     textures/hdr/uffizi_cube.ktx
 )
-

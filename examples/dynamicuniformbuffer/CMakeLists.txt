@@ -1,6 +1,6 @@
-buildExample(dynamicuniformbuffer dynamicuniformbuffer.cpp)
-
-compile_shaders(dynamicuniformbuffer
+buildExample(dynamicuniformbuffer
+    dynamicuniformbuffer.cpp
+SHADERS
     shaders/base.frag
     shaders/base.vert
 )

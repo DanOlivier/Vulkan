@@ -1,12 +1,9 @@
-buildExample(specializationconstants specializationconstants.cpp)
-
-compile_shaders(specializationconstants
+buildExample(specializationconstants
+    specializationconstants.cpp
+SHADERS
     shaders/uber.frag
     shaders/uber.vert
-)
-
-link_assets(specializationconstants
+ASSETS
     models/color_teapot_spheres.dae
     textures/metalplate_nomips_rgba.ktx
 )
-

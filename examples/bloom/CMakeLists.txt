@@ -1,13 +1,10 @@
-buildExample(bloom bloom.cpp)
-
-link_assets(bloom
+buildExample(bloom bloom.cpp
+ASSETS
     models/retroufo.dae
     models/retroufo_glow.dae
     models/cube.obj
     textures/cubemap_space.ktx
-)
-
-compile_shaders(bloom
+SHADERS
     shaders/colorpass.frag
     shaders/colorpass.vert
     shaders/gaussblur.frag

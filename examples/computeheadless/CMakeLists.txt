@@ -1,5 +1,5 @@
-buildExample(computeheadless computeheadless.cpp)
-
-compile_shaders(computeheadless
+buildExample(computeheadless
+    computeheadless.cpp
+SHADERS
     shaders/headless.comp
 )

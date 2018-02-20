@@ -1,15 +1,12 @@
-buildExample(ssao ssao.cpp)
-
-compile_shaders(ssao
+buildExample(ssao
+    ssao.cpp
+SHADERS
     shaders/blur.frag
     shaders/composition.frag
     shaders/fullscreen.vert
     shaders/gbuffer.frag
     shaders/gbuffer.vert
     shaders/ssao.frag
-)
-
-link_assets(ssao
+ASSETS
     models/sibenik/sibenik.dae
 )
-

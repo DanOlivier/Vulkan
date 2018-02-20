@@ -1,6 +1,6 @@
-buildExample(renderheadless renderheadless.cpp)
-
-compile_shaders(renderheadless
+buildExample(renderheadless
+    renderheadless.cpp
+SHADERS
     shaders/triangle.frag
     shaders/triangle.vert
 )

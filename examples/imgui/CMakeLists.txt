@@ -1,18 +1,17 @@
-buildExample(imgui main.cpp)
-target_compile_options(imgui PRIVATE
-    -fpermissive
-    -Wno-overlength-strings
-)
-
-compile_shaders(imgui
+buildExample(imgui
+    main.cpp
+SHADERS
     shaders/scene.frag
     shaders/scene.vert
     shaders/ui.frag
     shaders/ui.vert
-)
-
-link_assets(imgui
+ASSETS
     models/vulkanscenemodels.dae
     models/vulkanscenebackground.dae
     models/vulkanscenelogos.dae
+)
+
+target_compile_options(imgui PRIVATE
+    -fpermissive
+    -Wno-overlength-strings
 )

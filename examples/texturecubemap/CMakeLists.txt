@@ -1,23 +1,19 @@
-buildExample(texturecubemap texturecubemap.cpp)
-
-compile_shaders(texturecubemap
+buildExample(texturecubemap
+    texturecubemap.cpp
+SHADERS
     shaders/cubemapdisplay.vert
     shaders/cubemapdisplay.frag
     shaders/skybox.vert
     shaders/skybox.frag
     shaders/reflect.vert
     shaders/reflect.frag
-)
-
-link_assets(texturecubemap
+ASSETS
     textures/cubemap_yokohama_bc3_unorm.ktx
     textures/cubemap_yokohama_astc_8x8_unorm.ktx
     textures/cubemap_yokohama_etc2_unorm.ktx
-
     models/cube.obj
     models/sphere.obj
     models/teapot.dae
     models/torusknot.obj
     models/venus.fbx
 )
-

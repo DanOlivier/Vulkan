@@ -1,11 +1,9 @@
-buildExample(pipelinestatistics pipelinestatistics.cpp)
-
-compile_shaders(pipelinestatistics
+buildExample(pipelinestatistics
+    pipelinestatistics.cpp
+SHADERS
     shaders/scene.frag
     shaders/scene.vert
-)
-
-link_assets(pipelinestatistics
+ASSETS
     models/geosphere.obj
     models/teapot.dae
     models/torusknot.obj

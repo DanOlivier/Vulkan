@@ -1,14 +1,12 @@
-buildExample(computecloth computecloth.cpp)
-
-compile_shaders(computecloth
+buildExample(computecloth
+    computecloth.cpp
+SHADERS
     shaders/cloth.comp
     shaders/cloth.frag
     shaders/cloth.vert
     shaders/sphere.frag
     shaders/sphere.vert
-)
-
-link_assets(computecloth
+ASSETS
     models/geosphere.obj
     textures/vulkan_cloth_rgba.ktx
 )

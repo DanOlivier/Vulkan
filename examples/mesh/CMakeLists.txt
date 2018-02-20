@@ -1,11 +1,9 @@
-buildExample(mesh mesh.cpp)
-
-compile_shaders(mesh
+buildExample(mesh
+    mesh.cpp
+SHADERS
     shaders/mesh.frag
     shaders/mesh.vert
-)
-
-link_assets(mesh
+ASSETS
     models/voyager/voyager.dae
     models/voyager/voyager_bc3_unorm.ktx
     models/voyager/voyager_astc_8x8_unorm.ktx

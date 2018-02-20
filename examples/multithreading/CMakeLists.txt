@@ -1,13 +1,11 @@
-buildExample(multithreading multithreading.cpp)
-
-compile_shaders(multithreading
+buildExample(multithreading
+    multithreading.cpp
+SHADERS
     shaders/phong.frag
     shaders/phong.vert
     shaders/starsphere.frag
     shaders/starsphere.vert
-)
-
-link_assets(multithreading
+ASSETS
     models/retroufo_red_lowpoly.dae
     models/sphere.obj
 )

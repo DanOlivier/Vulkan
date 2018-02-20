@@ -1,12 +1,9 @@
-buildExample(computecullandlod computecullandlod.cpp)
-
-compile_shaders(computecullandlod
+buildExample(computecullandlod
+    computecullandlod.cpp
+SHADERS
     shaders/cull.comp
     shaders/indirectdraw.frag
     shaders/indirectdraw.vert
-)
-
-link_assets(computecullandlod
+ASSETS
     models/suzanne_lods.dae
 )
-

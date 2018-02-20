@@ -1,16 +1,13 @@
-buildExample(radialblur radialblur.cpp)
-
-compile_shaders(radialblur
+buildExample(radialblur
+    radialblur.cpp
+SHADERS
     shaders/colorpass.frag
     shaders/colorpass.vert
     shaders/phongpass.frag
     shaders/phongpass.vert
     shaders/radialblur.frag
     shaders/radialblur.vert
-)
-
-link_assets(radialblur
+ASSETS
     models/glowsphere.dae
     textures/particle_gradient_rgba.ktx
 )
-

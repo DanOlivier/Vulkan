@@ -1,6 +1,6 @@
-buildExample(pbribl pbribl.cpp)
-
-compile_shaders(pbribl
+buildExample(pbribl
+    pbribl.cpp
+SHADERS
     shaders/filtercube.vert
     shaders/genbrdflut.frag
     shaders/genbrdflut.vert
@@ -10,14 +10,11 @@ compile_shaders(pbribl
     shaders/prefilterenvmap.frag
     shaders/skybox.frag
     shaders/skybox.vert
-)
-
-link_assets(pbribl
+ASSETS
     models/cube.obj
     models/geosphere.obj
     models/teapot.dae
     models/torusknot.obj
     models/venus.fbx
-    
     textures/hdr/pisa_cube.ktx
 )

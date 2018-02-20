@@ -1,11 +1,9 @@
-buildExample(scenerendering scenerendering.cpp)
-
-compile_shaders(scenerendering
+buildExample(scenerendering
+    scenerendering.cpp
+SHADERS
     shaders/scene.frag
     shaders/scene.vert
-)
-
-link_assets(scenerendering
+ASSETS
     models/sibenik/dummy_rgba_unorm.ktx
     models/sibenik/kamen_astc_8x8_unorm.ktx
     models/sibenik/kamen_bc3_unorm.ktx
@@ -18,4 +16,3 @@ link_assets(scenerendering
     models/sibenik/mramor6x6_etc2_unorm.ktx
     models/sibenik/sibenik.dae
 )
-

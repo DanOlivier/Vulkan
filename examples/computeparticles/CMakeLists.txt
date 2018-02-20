@@ -1,13 +1,10 @@
-buildExample(computeparticles computeparticles.cpp)
-
-compile_shaders(computeparticles
+buildExample(computeparticles
+    computeparticles.cpp
+SHADERS
     shaders/particle.comp
     shaders/particle.frag
     shaders/particle.vert
-)
-
-link_assets(computeparticles
+ASSETS
     textures/particle01_rgba.ktx
     textures/particle_gradient_rgba.ktx
 )
-

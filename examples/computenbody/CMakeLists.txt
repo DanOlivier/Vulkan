@@ -1,14 +1,11 @@
-buildExample(computenbody computenbody.cpp)
-
-compile_shaders(computenbody
+buildExample(computenbody
+    computenbody.cpp
+SHADERS
     shaders/particle.frag
     shaders/particle.vert
     shaders/particle_calculate.comp
     shaders/particle_integrate.comp
-)
-
-link_assets(computenbody
+ASSETS
     textures/particle01_rgba.ktx
     textures/particle_gradient_rgba.ktx
 )
-

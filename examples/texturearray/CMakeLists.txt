@@ -1,13 +1,10 @@
-buildExample(texturearray texturearray.cpp)
-
-compile_shaders(texturearray
+buildExample(texturearray
+    texturearray.cpp
+SHADERS
     shaders/instancing.frag
     shaders/instancing.vert
-)
-
-link_assets(texturearray
+ASSETS
     textures/texturearray_astc_8x8_unorm.ktx
     textures/texturearray_bc3_unorm.ktx
     textures/texturearray_etc2_unorm.ktx
 )
-

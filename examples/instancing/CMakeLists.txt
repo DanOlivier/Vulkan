@@ -1,15 +1,13 @@
-buildExample(instancing instancing.cpp)
-
-compile_shaders(instancing
+buildExample(instancing
+    instancing.cpp
+SHADERS
     shaders/instancing.frag
     shaders/instancing.vert
     shaders/planet.frag
     shaders/planet.vert
     shaders/starfield.frag
     shaders/starfield.vert
-)
-
-link_assets(instancing
+ASSETS
     models/rock01.dae
     models/sphere.obj
     textures/texturearray_rocks_astc_8x8_unorm.ktx
@@ -19,4 +17,3 @@ link_assets(instancing
     textures/lavaplanet_bc3_unorm.ktx
     textures/lavaplanet_etc2_unorm.ktx
 )
-

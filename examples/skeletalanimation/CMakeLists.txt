@@ -1,13 +1,11 @@
-buildExample(skeletalanimation skeletalanimation.cpp)
-
-compile_shaders(skeletalanimation
+buildExample(skeletalanimation
+    skeletalanimation.cpp
+SHADERS
     shaders/mesh.frag
     shaders/mesh.vert
     shaders/texture.frag
     shaders/texture.vert
-)
-
-link_assets(skeletalanimation
+ASSETS
     models/goblin.dae
     models/plane_z.obj
     textures/goblin_astc_8x8_unorm.ktx
@@ -17,4 +15,3 @@ link_assets(skeletalanimation
     textures/trail_etc2_unorm.ktx
     textures/trail_astc_8x8_unorm.ktx
 )
-

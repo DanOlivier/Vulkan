@@ -1,13 +1,11 @@
-buildExample(particlefire particlefire.cpp)
-
-compile_shaders(particlefire
+buildExample(particlefire
+    particlefire.cpp
+SHADERS
     shaders/normalmap.frag
     shaders/normalmap.vert
     shaders/particle.frag
     shaders/particle.vert
-)
-
-link_assets(particlefire
+ASSETS
     textures/particle_smoke.ktx
     textures/particle_fire.ktx
     textures/fireplace_colormap_astc_8x8_unorm.ktx
@@ -18,4 +16,3 @@ link_assets(particlefire
     textures/fireplace_normalmap_bc3_unorm.ktx
     models/fireplace.obj
 )
-

@@ -1,14 +1,11 @@
-buildExample(geometryshader geometryshader.cpp)
-
-compile_shaders(geometryshader
+buildExample(geometryshader
+    geometryshader.cpp
+SHADERS
     shaders/base.frag
     shaders/base.vert
     shaders/mesh.frag
     shaders/mesh.vert
     shaders/normaldebug.geom
-)
-
-link_assets(geometryshader
+ASSETS
     models/suzanne.obj
 )
-

@@ -1,11 +1,8 @@
-buildExample(pushconstants pushconstants.cpp)
-
-compile_shaders(pushconstants
+buildExample(pushconstants
+    pushconstants.cpp
+SHADERS
     shaders/lights.frag
     shaders/lights.vert
-)
-
-link_assets(pushconstants
+ASSETS
     models/samplescene.dae
 )
-

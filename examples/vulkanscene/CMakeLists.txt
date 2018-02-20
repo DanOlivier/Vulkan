@@ -1,19 +1,16 @@
-buildExample(vulkanscene vulkanscene.cpp)
-
-compile_shaders(vulkanscene
+buildExample(vulkanscene 
+    vulkanscene.cpp
+SHADERS
     shaders/logo.frag
     shaders/logo.vert
     shaders/mesh.frag
     shaders/mesh.vert
     shaders/skybox.frag
     shaders/skybox.vert
-)
-
-link_assets(vulkanscene
+ASSETS
     models/cube.obj
     models/vulkanscenelogos.dae
     models/vulkanscenebackground.dae
     models/vulkanscenemodels.dae
     textures/cubemap_vulkan.ktx
 )
-

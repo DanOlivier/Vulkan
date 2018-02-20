@@ -1,14 +1,11 @@
-buildExample(computeshader computeshader.cpp)
-
-compile_shaders(computeshader
+buildExample(computeshader
+    computeshader.cpp
+SHADERS
     shaders/edgedetect.comp
     shaders/emboss.comp
     shaders/sharpen.comp
     shaders/texture.frag
     shaders/texture.vert
-)
-
-link_assets(computeshader
+ASSETS
     textures/het_kanonschot_rgba8.ktx
 )
-

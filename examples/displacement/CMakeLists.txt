@@ -1,16 +1,13 @@
-buildExample(displacement displacement.cpp)
-
-compile_shaders(displacement
+buildExample(displacement
+    displacement.cpp
+SHADERS
     shaders/base.frag
     shaders/base.vert
     shaders/displacement.tesc
     shaders/displacement.tese
-)
-
-link_assets(displacement
+ASSETS
     models/plane.obj
     textures/stonefloor03_color_bc3_unorm.ktx
     textures/stonefloor03_color_astc_8x8_unorm.ktx
     textures/stonefloor03_color_etc2_unorm.ktx
 )
-

@@ -1,15 +1,12 @@
-buildExample(pipelines pipelines.cpp)
-
-compile_shaders(pipelines
+buildExample(pipelines
+    pipelines.cpp
+SHADERS
     shaders/phong.frag
     shaders/phong.vert
     shaders/toon.frag
     shaders/toon.vert
     shaders/wireframe.frag
     shaders/wireframe.vert
-)
-
-link_assets(pipelines
+ASSETS
     models/treasure_smooth.dae
 )
-

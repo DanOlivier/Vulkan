@@ -1,11 +1,9 @@
-buildExample(viewportarray viewportarray.cpp)
-
-compile_shaders(viewportarray
+buildExample(viewportarray
+    viewportarray.cpp
+SHADERS
     shaders/multiview.geom
     shaders/scene.frag
     shaders/scene.vert
-)
-
-link_assets(viewportarray
+ASSETS
     models/sampleroom.dae
 )

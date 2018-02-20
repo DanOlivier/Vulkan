@@ -1,16 +1,13 @@
-buildExample(shadowmapping shadowmapping.cpp)
-
-compile_shaders(shadowmapping
+buildExample(shadowmapping
+    shadowmapping.cpp
+SHADERS
     shaders/offscreen.frag
     shaders/offscreen.vert
     shaders/quad.frag
     shaders/quad.vert
     shaders/scene.frag
     shaders/scene.vert
-)
-
-link_assets(shadowmapping
+ASSETS
     models/vulkanscene_shadow.dae
     models/samplescene.dae
 )
-

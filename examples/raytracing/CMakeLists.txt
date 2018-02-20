@@ -1,11 +1,8 @@
-buildExample(raytracing raytracing.cpp)
-
-compile_shaders(raytracing
+buildExample(raytracing
+    raytracing.cpp
+SHADERS
     shaders/texture.frag
     shaders/texture.vert
     shaders/raytracing.comp
+ASSETS
 )
-
-link_assets(raytracing
-)
-

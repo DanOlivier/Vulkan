@@ -13,9 +13,10 @@ if(WIN32)
     target_link_libraries(base ${Vulkan_LIBRARY} ${ASSIMP_LIBRARIES} ${XCB_LIBRARIES} ${WAYLAND_CLIENT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 endif(WIN32)
 
-compile_shaders(base
-    shaders/textoverlay.vert
-    shaders/textoverlay.frag
-    shaders/uioverlay.vert
-    shaders/uioverlay.frag
-)
+ 
+list(APPEND SHADERS shaders/textoverlay.vert)
+list(APPEND SHADERS shaders/textoverlay.frag)
+list(APPEND SHADERS shaders/uioverlay.vert)
+list(APPEND SHADERS shaders/uioverlay.frag)
+
+set_target_properties(base PROPERTIES SHADERS "${SHADERS}")

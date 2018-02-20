@@ -1,13 +1,10 @@
-buildExample(texturesparseresidency texturesparseresidency.cpp)
-
-compile_shaders(texturesparseresidency
+buildExample(texturesparseresidency
+    texturesparseresidency.cpp
+SHADERS
     shaders/sparseresidency.frag
     shaders/sparseresidency.vert
-)
-
-link_assets(texturesparseresidency
+ASSETS
     textures/ground_dry_bc3_unorm.ktx
     textures/terrain_heightmap_r16.ktx
     textures/terrain_heightmap_r16.ktx
 )
-

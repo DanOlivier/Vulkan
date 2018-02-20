@@ -1,12 +1,9 @@
-buildExample(sphericalenvmapping sphericalenvmapping.cpp)
-
-compile_shaders(sphericalenvmapping
+buildExample(sphericalenvmapping
+    sphericalenvmapping.cpp
+SHADERS
     shaders/sem.frag
     shaders/sem.vert
-)
-
-link_assets(sphericalenvmapping
+ASSETS
     models/chinesedragon.dae
     textures/matcap_array_rgba.ktx
 )
-

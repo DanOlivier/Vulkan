@@ -1,11 +1,8 @@
-buildExample(screenshot screenshot.cpp)
-
-compile_shaders(screenshot
+buildExample(screenshot
+    screenshot.cpp
+SHADERS
     shaders/mesh.frag
     shaders/mesh.vert
-)
-
-link_assets(screenshot
+ASSETS
     models/chinesedragon.dae
 )
-

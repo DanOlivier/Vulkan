@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
 cmake_policy(VERSION 3.7)
+#cmake_policy(SET CMP0046 OLD)
+cmake_policy(SET CMP0057 NEW)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -8,6 +10,7 @@ set(NAME vulkanExamples)
 project(${NAME})
 
 include(CMakeParseArguments)
+include(CustomLinkLibraries)
 
 include_directories(external)
 find_package(glm REQUIRED)
@@ -68,13 +71,17 @@ endif()
 # Debug flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 if(CMAKE_COMPILER_IS_GNUCXX)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wextra -Wundef -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-function")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wextra -Wundef -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-function")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-std=c++11)
 
 function(link_assets EXAMPLE_NAME)
+    if (NOT ARGN)
+        return()
+    endif()
+    #message("ASSETS: ${ARGN}")
     foreach(ASSET ${ARGN})
         set(input_file ${CMAKE_SOURCE_DIR}/data/${ASSET})
         get_filename_component(ASSET_DIR ${ASSET} DIRECTORY)
@@ -85,22 +92,28 @@ function(link_assets EXAMPLE_NAME)
         set(all_assets ${all_assets} PARENT_SCOPE)
         #message("Generating: ${input_file} -> ${output_file}")
         add_custom_command(
-            OUTPUT ${output_file} POST_BUILD
+            OUTPUT ${output_file} #POST_BUILD
             COMMAND mkdir -p ${ASSET_DIR}
             #COMMAND cp ${input_file} ${output_file} DEPENDS ${input_file}
             COMMAND ln -s ${input_file} -r -f ${ASSET}
-                DEPENDS ${input_file}
+            DEPENDS ${input_file}
             COMMENT "Linking ${output_file} to asset ${ASSET}"
         )
     endforeach()
     add_custom_target(linkassets-${EXAMPLE_NAME} ALL DEPENDS ${all_assets})
     add_dependencies(${EXAMPLE_NAME} linkassets-${EXAMPLE_NAME})
+    #add_dependencies(${EXAMPLE_NAME} ${all_assets})
 endfunction()
 
 function(compile_shaders EXAMPLE_NAME)
-    set(SHADERS ${ARGN})
-    foreach(SHADER ${SHADERS})
-        
+    if(NOT ARGN)
+        return()
+    endif()
+    #message("SHADERS:")
+    #foreach(f ${ARGN})
+    #    message("\t- ${f}")
+    #endforeach(f)
+    foreach(SHADER ${ARGN})
         get_filename_component(FILE_NAME ${SHADER} NAME)
         set(output_file ${CMAKE_CURRENT_BINARY_DIR}/shaders/${FILE_NAME}.spv)
         set(compiled_shaders ${compiled_shaders} ${output_file})
@@ -108,34 +121,43 @@ function(compile_shaders EXAMPLE_NAME)
         add_custom_command(
             OUTPUT ${output_file}
             COMMAND mkdir -p shaders
-            COMMAND ${GLSLANG_VALIDATOR} -w -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER} -o ${output_file}
-            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}
+            COMMAND ${GLSLANG_VALIDATOR} -w -V ${CMAKE_SOURCE_DIR}/${SHADER} -o ${output_file}
+            DEPENDS ${CMAKE_SOURCE_DIR}/${SHADER}
             COMMENT "Compiling shader ${output_file}"
         )
     endforeach()
+    #message(STATUS "add_custom_target: shaders-${EXAMPLE_NAME}")
     add_custom_target(shaders-${EXAMPLE_NAME} ALL DEPENDS ${compiled_shaders})
     add_dependencies(${EXAMPLE_NAME} shaders-${EXAMPLE_NAME})
+    #add_dependencies(${EXAMPLE_NAME} ${compiled_shaders})
 endfunction()
 
 add_custom_target(run-all)
 
 #file(GLOB SOURCE *.cpp )
 
+function(Prepend var prefix)
+   #message(STATUS "Prepend(${var}, ${prefix})")
+   set(listVar "")
+   foreach(f ${ARGN})
+      list(APPEND listVar "${prefix}/${f}")
+   endforeach(f)
+   set(${var} "${listVar}" PARENT_SCOPE)
+endfunction()
+
 # Function for building single example
 function(buildExample EXAMPLE_NAME)
     list(REMOVE_AT ARGV 0)
     cmake_parse_arguments(ARGS "" "" "ASSETS;SHADERS" ${ARGN})
-    #message("ARGN: ${ARGN}")
-    #message("ARGV: ${ARGV}")
-    #message("ARGS_ASSETS: ${ARGS_ASSETS}")
-    #message("ARGS_SHADERS: ${ARGS_SHADERS}")
-    #message("ARGS_UNPARSED_ARGUMENTS: ${ARGS_UNPARSED_ARGUMENTS}")
+    string(REPLACE "${CMAKE_SOURCE_DIR}/" "" src_dir "${CMAKE_CURRENT_SOURCE_DIR}")
+    Prepend(ARGS_SHADERS "${src_dir}" "${ARGS_SHADERS}")
+    #message("SHADERS: ${ARGS_SHADERS}")
     
     if(WIN32)
         add_executable(${EXAMPLE_NAME} WIN32 
             ${ARGS_UNPARSED_ARGUMENTS} 
-            ${ARGS_ASSETS}
-            ${ARGS_SHADERS}
+            #${ARGS_ASSETS}
+            #${ARGS_SHADERS}
         )
         target_link_libraries(${EXAMPLE_NAME}
             ${Vulkan_LIBRARY}
@@ -144,8 +166,8 @@ function(buildExample EXAMPLE_NAME)
     else()
         add_executable(${EXAMPLE_NAME} 
             ${ARGS_UNPARSED_ARGUMENTS}
-            ${ARGS_ASSETS}
-            ${ARGS_SHADERS}
+            #${ARGS_ASSETS}
+            #${ARGS_SHADERS}
         )
         target_link_libraries(${EXAMPLE_NAME}
             base
@@ -155,7 +177,28 @@ function(buildExample EXAMPLE_NAME)
             ${WAYLAND_CLIENT_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT})
     endif()
-    #compile_shaders(${EXAMPLE_NAME})
+
+    # Gather SHADERS and ASSETS from upstream dependencies
+    get_link_dependencies(${EXAMPLE_NAME} deps)
+    if(deps)
+        foreach(dep IN LISTS deps)
+            get_target_property(s ${dep} SHADERS)
+            if(s)
+                # Note the adjusted path
+                get_target_property(src_dir ${dep} SOURCE_DIR)
+                string(REPLACE "${CMAKE_SOURCE_DIR}/" "" src_dir "${src_dir}")
+                Prepend(s "${src_dir}" "${s}")
+                list(APPEND ARGS_SHADERS ${s})
+            endif()
+            get_target_property(a ${dep} ASSETS)
+            if(a)
+                list(APPEND ARGS_ASSETS ${a})
+            endif()
+        endforeach()
+    endif()
+
+    link_assets(${EXAMPLE_NAME} ${ARGS_ASSETS})
+    compile_shaders(${EXAMPLE_NAME} ${ARGS_SHADERS})
 
     add_custom_target(run-${EXAMPLE_NAME}
         COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXAMPLE_NAME}
@@ -194,3 +237,4 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
 add_subdirectory(base)
 add_subdirectory(examples)
+

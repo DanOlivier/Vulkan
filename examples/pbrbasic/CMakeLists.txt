@@ -1,11 +1,9 @@
-buildExample(pbrbasic pbrbasic.cpp)
-
-compile_shaders(pbrbasic
+buildExample(pbrbasic
+    pbrbasic.cpp
+SHADERS
     shaders/pbr.frag
     shaders/pbr.vert
-)
-
-link_assets(pbrbasic
+ASSETS
     models/cube.obj
     models/geosphere.obj
     models/teapot.dae

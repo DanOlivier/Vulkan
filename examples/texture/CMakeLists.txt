@@ -1,10 +1,8 @@
-buildExample(texture texture.cpp)
-
-compile_shaders(texture
+buildExample(texture
+    texture.cpp
+SHADERS
     shaders/texture.frag
     shaders/texture.vert
-)
-
-link_assets(texture
+ASSETS
     textures/metalplate01_rgba.ktx
 )

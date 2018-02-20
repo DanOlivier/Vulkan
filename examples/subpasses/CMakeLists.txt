@@ -1,15 +1,13 @@
-buildExample(subpasses subpasses.cpp)
-
-compile_shaders(subpasses
+buildExample(subpasses
+    subpasses.cpp
+SHADERS
     shaders/composition.frag
     shaders/composition.vert
     shaders/gbuffer.frag
     shaders/gbuffer.vert
     shaders/transparent.frag
     shaders/transparent.vert
-)
-
-link_assets(subpasses
+ASSETS
     models/samplebuilding.dae
     models/samplebuilding_glass.dae
     textures/colored_glass_bc3_unorm.ktx

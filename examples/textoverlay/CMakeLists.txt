@@ -1,15 +1,13 @@
-buildExample(textoverlay textoverlay.cpp)
-
-compile_shaders(textoverlay
+buildExample(textoverlay
+    textoverlay.cpp
+SHADERS
     shaders/background.frag
     shaders/background.vert
     shaders/mesh.frag
     shaders/mesh.vert
     shaders/text.frag
     shaders/text.vert
-)
-
-link_assets(textoverlay
+ASSETS
     models/cube.dae
     textures/skysphere_bc3_unorm.ktx
     textures/skysphere_astc_8x8_unorm.ktx

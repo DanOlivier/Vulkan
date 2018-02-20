@@ -1,16 +1,13 @@
-buildExample(debugmarker debugmarker.cpp)
-
-compile_shaders(debugmarker
+buildExample(debugmarker
+    debugmarker.cpp
+SHADERS
     shaders/colorpass.frag
     shaders/colorpass.vert
     shaders/postprocess.frag
     shaders/postprocess.vert
     shaders/toon.frag
     shaders/toon.vert
-)
-
-link_assets(debugmarker
+ASSETS
     models/treasure_smooth.dae
     models/treasure_glow.dae
 )
-
